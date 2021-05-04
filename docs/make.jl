@@ -5,12 +5,12 @@ DocMeta.setdocmeta!(GridAnalysis, :DocTestSetup, :(using GridAnalysis); recursiv
 
 makedocs(;
     modules=[GridAnalysis],
-    authors="Invenia Technical Computing Corporation",
-    repo="https://github.com/invenia/GridAnalysis.jl/blob/{commit}{path}#{line}",
+    authors="LAMPS",
+    repo="https://github.com/LAMPSPUC/GridAnalysis.jl/blob/{commit}{path}#{line}",
     sitename="GridAnalysis.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://invenia.github.io/GridAnalysis.jl",
+        canonical="https://github.com/LAMPSPUC/GridAnalysis.jl",
         assets=String[],
     ),
     pages=[
@@ -21,5 +21,5 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/invenia/GridAnalysis.jl",
+    repo="github.com/LAMPSPUC/GridAnalysis.jl",
 )

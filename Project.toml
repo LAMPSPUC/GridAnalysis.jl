@@ -1,6 +1,6 @@
 name = "GridAnalysis"
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
-authors = ["Invenia Technical Computing Corporation"]
+authors = ["LAMPS"]
 version = "0.1.0"
 
 [compat]
