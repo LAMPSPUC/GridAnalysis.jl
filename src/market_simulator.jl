@@ -25,8 +25,8 @@ struct UCED <: DayAhead
     system_ed::System
     template_uc::OperationsProblemTemplate
     template_ed::OperationsProblemTemplate
-    solver_uc
-    solver_ed
+    solver_uc::Any
+    solver_ed::Any
     kwargs::Dict
 end
 
@@ -37,16 +37,14 @@ function UCED(;
     template_ed::OperationsProblemTemplate,
     solver_uc,
     solver_ed,
-    kwargs= template_uc.transmission == StandardPTDFModel ? Dict(:PTDF => PSY.PTDF(system_ed)) : Dict(),
+    kwargs=if template_uc.transmission == StandardPTDFModel
+        Dict(:PTDF => PSY.PTDF(system_ed))
+    else
+        Dict()
+    end,
 )
-    UCED(
-        system_uc,
-        system_ed,
-        template_uc,
-        template_ed,
-        solver_uc,
-        solver_ed,
-        kwargs
+    return UCED(
+        system_uc, system_ed, template_uc, template_ed, solver_uc, solver_ed, kwargs
     )
 end
 

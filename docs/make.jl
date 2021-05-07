@@ -13,13 +13,9 @@ makedocs(;
         canonical="https://github.com/LAMPSPUC/GridAnalysis.jl",
         assets=String[],
     ),
-    pages=[
-        "Home" => "index.md",
-    ],
+    pages=["Home" => "index.md"],
     checkdocs=:exports,
     strict=true,
 )
 
-deploydocs(;
-    repo="github.com/LAMPSPUC/GridAnalysis.jl",
-)
+deploydocs(; repo="github.com/LAMPSPUC/GridAnalysis.jl")
