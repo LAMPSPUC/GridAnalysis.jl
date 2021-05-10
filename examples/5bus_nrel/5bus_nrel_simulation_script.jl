@@ -38,7 +38,7 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 # CopperPlate-OPF: network=CopperPlatePowerModel
 # DC-OPF: network=DCPPowerModel
 # NFA-OPF (only line limit constraints): network=NFAPowerModel
-# DC-PTDF-OPF (what ISOs do): network=PTDFPowerModel
+# DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
 template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
@@ -74,7 +74,7 @@ results = run_multiday_simulation(
     balance_slack_variables=true, # true because of a bug in PSI, but it wont affect prices
     constraint_duals=constraint_duals,
     name="test_case_5bus",
-    simulation_folder=joinpath(example_dir, "results"),
+    simulation_folder=mktempdir() # Locally can use: joinpath(example_dir, "results"),
 );
 
 @test isa(results, SimulationResults)
@@ -84,7 +84,7 @@ uc_results = get_problem_results(results, "UC");
 ed_results = get_problem_results(results, "ED");
 
 # TODO: add the following to a utility functiuon in GridAnalysis (and make it better):
-# calculate prices (it will be a bit more complicated for PTDFPowerModel)
+# calculate prices (it will be a bit more complicated for StandardPTDFModel)
 prices = if template_ed.transmission == CopperPlatePowerModel
     duals = read_dual(ed_results, :CopperPlateBalance)
     DataFrame(;
