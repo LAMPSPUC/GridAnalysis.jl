@@ -2,7 +2,6 @@ module GridAnalysis
 
 using Dates
 using Logging
-using MathOptInterface
 using PowerSystems
 using PowerSimulations
 
