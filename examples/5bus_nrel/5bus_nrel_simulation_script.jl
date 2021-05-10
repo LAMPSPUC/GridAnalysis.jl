@@ -6,9 +6,14 @@ using GridAnalysis
 using InfrastructureSystems
 using PowerSystems
 using PowerSimulations
-using PowerSystemCaseBuilder
+using Test
 
-include("utils.jl") # case utilities
+# might not work if running lines manually 
+# (solution: edit to be the path for this examples directory)
+example_dir = dirname(@__FILE__)
+data_dir = joinpath(example_dir, "data")
+
+include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for UC and ED
@@ -18,10 +23,10 @@ solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 # call our data preparation to build base system
 # corrently your REPL has to be on the folder for this example
 base_system = build_5_bus_matpower_DA(
-    "./data";
+    data_dir;
     # using a modified (mod) file that reduced load for feasibility in DC-OPF
     forecasts_pointers_file=joinpath(
-        "./data", "forecasts", "timeseries_pointers_da_7day_mod.json"
+        data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
     add_reserves=false,
 )
@@ -57,6 +62,8 @@ market_simulator = UCED(;
     solver_ed=solver_ed,
 )
 
+@test isa(market_simulator, UCED)
+
 #' Simulate market
 # build and run simulation
 results = run_multiday_simulation(
@@ -69,6 +76,8 @@ results = run_multiday_simulation(
     name="test_case_5bus",
     simulation_folder="./results",
 );
+
+@test isa(results, SimulationResults)
 
 # separate results
 uc_results = get_problem_results(results, "UC");

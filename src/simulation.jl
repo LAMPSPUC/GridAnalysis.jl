@@ -66,7 +66,7 @@ end
 # TODO: Create funtion to build UC simulator.
 
 """
-    run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int)
+    run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int) -> SimulationResults
 
 Runs a multiday PSI.Simulation from a MarketSimulator, a initial date and number of simulation steps.
 """
