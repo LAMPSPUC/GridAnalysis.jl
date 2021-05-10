@@ -21,7 +21,7 @@ solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap"
 solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 
 # call our data preparation to build base system
-# corrently your REPL has to be on the folder for this example
+# the case was modified to not have hydros nor transformers
 base_system = build_5_bus_matpower_DA(
     data_dir;
     # using a modified (mod) file that reduced load for feasibility in DC-OPF
