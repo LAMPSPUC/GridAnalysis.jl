@@ -74,7 +74,7 @@ results = run_multiday_simulation(
     balance_slack_variables=true, # true because of a bug in PSI, but it wont affect prices
     constraint_duals=constraint_duals,
     name="test_case_5bus",
-    simulation_folder="./results",
+    simulation_folder=joinpath(example_dir, "results"),
 );
 
 @test isa(results, SimulationResults)
