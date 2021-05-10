@@ -16,7 +16,7 @@ PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 julia = "1.5"
 InfrastructureSystems = "1.5.0"
 MathOptInterface = "0.9.21"
-PowerSimulations = "0.14.1"
+PowerSimulations = ">= 0.13"
 PowerSystems = "1.4.3"
 
 [extras]
