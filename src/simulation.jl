@@ -1,7 +1,7 @@
 """
     Simulation(simulator::UCED, initial_time::Date, steps::Int) -> PSI.Simulation
 
-Builds a multiday UC-ED PSI.Simulation from a UCED market simulator, a initial date and number of simulation steps.
+Builds a multiday UC-ED PSI.Simulation from a UCED market simulator, an initial date and number of simulation steps.
 """
 function PSI.Simulation(
     simulator::UCED,
@@ -68,7 +68,7 @@ end
 """
     run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int) -> SimulationResults
 
-Runs a multiday PSI.Simulation from a MarketSimulator, a initial date and number of simulation steps.
+Runs a multiday PSI.Simulation from a MarketSimulator, an initial date and number of simulation steps.
 """
 function run_multiday_simulation(
     simulator::MarketSimulator,

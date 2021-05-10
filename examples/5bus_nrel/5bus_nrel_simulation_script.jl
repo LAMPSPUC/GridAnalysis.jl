@@ -16,7 +16,7 @@ data_dir = joinpath(example_dir, "data")
 include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
-# define solvers for UC and ED
+# define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
 solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
 solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 
@@ -31,7 +31,7 @@ base_system = build_5_bus_matpower_DA(
     add_reserves=false,
 )
 
-# duplicate system and prepare times series for the time varying paramters (loads, renewables, ...)
+# duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
 
 # generic market formulation templates with defined network formulation
@@ -42,7 +42,7 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
-# TODO: add the following to a utility functiuon in GridAnalysis:
+# TODO: add the following to a utility function in GridAnalysis:
 # for each formulation you will need to save different dual variables:
 constraint_duals = if template_ed.transmission == CopperPlatePowerModel
     [:CopperPlateBalance]
@@ -64,7 +64,7 @@ market_simulator = UCED(;
 
 @test isa(market_simulator, UCED)
 
-#' Simulate market
+# Simulate market
 # build and run simulation
 results = run_multiday_simulation(
     market_simulator,
@@ -83,7 +83,7 @@ results = run_multiday_simulation(
 uc_results = get_problem_results(results, "UC");
 ed_results = get_problem_results(results, "ED");
 
-# TODO: add the following to a utility functiuon in GridAnalysis (and make it better):
+# TODO: add the following to a utility function in GridAnalysis (and make it better):
 # calculate prices (it will be a bit more complicated for StandardPTDFModel)
 prices = if template_ed.transmission == CopperPlatePowerModel
     duals = read_dual(ed_results, :CopperPlateBalance)

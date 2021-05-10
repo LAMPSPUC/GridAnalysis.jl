@@ -18,7 +18,7 @@ abstract type DayAhead <: MarketSimulator end
 Structure with two DA systems stored (`system_uc` and `system_ed`). One represents an 
 Unit Commitment (UC) used to fix binary variables, the other an Economic Dispatch (ED)
 defined by template `template_ed`. Each model needs its own solver (`solver_uc` and `solver_ed`). 
-`system_ed` and the resulting problem are defined as an heuristic to retrieve DA energy prices.
+`system_ed` and the resulting problem are defined as a heuristic to calculate DA energy prices.
 """
 struct UCED <: DayAhead
     system_uc::System
