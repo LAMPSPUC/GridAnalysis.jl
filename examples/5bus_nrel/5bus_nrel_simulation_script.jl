@@ -124,7 +124,7 @@ elseif template_ed.transmission == StandardPTDFModel
     congestion_lmp = Dict()
     for bus in buses
         congestion_lmp[get_name(bus)] =
-            -μ * [PTDF_matrix[line, get_number(bus)] for line in line_names]
+            μ * [PTDF_matrix[line, get_number(bus)] for line in line_names]
     end
     congestion_lmp["DateTime"] = collect(keys(duals_MEC))
     MCC = DataFrame(congestion_lmp)
