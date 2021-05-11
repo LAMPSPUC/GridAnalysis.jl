@@ -78,6 +78,8 @@ function run_multiday_simulation(
     constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
     name::String="test_case",
     simulation_folder=pwd(),
+    console_level=Logging.Warn,
+    recorders=[:simulation]
 )
     sim = Simulation(
         simulator,
@@ -91,7 +93,7 @@ function run_multiday_simulation(
         name=name,
     )
 
-    build!(sim; console_level=Logging.Warn, recorders=[:simulation])
+    build!(sim; console_level=console_level, recorders=recorders)
 
     execute!(sim)
 
