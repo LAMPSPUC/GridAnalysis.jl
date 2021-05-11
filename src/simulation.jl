@@ -63,8 +63,6 @@ function PSI.Simulation(
     return sim
 end
 
-# TODO: Create funtion to build UC simulator.
-
 """
     run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int) -> SimulationResults
 

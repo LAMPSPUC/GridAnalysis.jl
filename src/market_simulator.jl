@@ -48,6 +48,7 @@ function UCED(;
     )
 end
 
+# TODO: Create funtion to build UC simulator. Issue: https://github.com/LAMPSPUC/GridAnalysis.jl/issues/3
 # """
 #     UC <: DayAhead
 
