@@ -71,7 +71,8 @@ results = run_multiday_simulation(
     Date("2020-01-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
     services_slack_variables=false,
-    balance_slack_variables=true, # true because of a bug in PSI, but it wont affect prices
+    # balance_slack_variables=true because of a bug in PSI, but it wont affect prices. Issue: https://github.com/LAMPSPUC/GridAnalysis.jl/issues/2
+    balance_slack_variables=true,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir() # Locally can use: joinpath(example_dir, "results"),
