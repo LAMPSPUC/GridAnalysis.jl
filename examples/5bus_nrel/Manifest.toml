@@ -250,9 +250,7 @@ uuid = "781609d7-10c4-51f6-84f2-b8444358ff6d"
 
 [[GridAnalysis]]
 deps = ["DataFrames", "Dates", "Logging", "PowerSimulations", "PowerSystems"]
-git-tree-sha1 = "d5cacc1c5d94f7cab398194d7d34197a95d7e110"
-repo-rev = "ar/pq_curves"
-repo-url = "../.."
+path = "../.."
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
 version = "0.1.0"
 
