@@ -7,7 +7,7 @@ using PowerSystems
 using PowerSimulations
 using Test
 
-# if testing local changes, run `] add GridAnalysis` before. 
+# if testing local changes, run `] add <path GridAnalysis>` before. 
 # Might also need to `] rm GridAnalysis` before re-adding.
 using GridAnalysis
 
