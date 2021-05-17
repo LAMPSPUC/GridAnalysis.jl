@@ -44,13 +44,9 @@ template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
 # TODO: add the following to a utility function in GridAnalysis:
 # for each formulation you will need to save different dual variables:
-constraint_duals = if template_ed.transmission == CopperPlatePowerModel
-    [:CopperPlateBalance]
-elseif template_ed.transmission in [NFAPowerModel; DCPPowerModel]
-    [:nodal_balance_active__Bus]
-elseif template_ed.transmission == StandardPTDFModel
-    [:CopperPlateBalance, :network_flow__Line]
-end
+constraint_duals = get_duals(template_ed.transmission)
+
+@test isa(constraint_duals, AbstractVector{Symbol})
 
 # build a market clearing simulator (run `@doc UCED` for more information)
 market_simulator = UCED(;

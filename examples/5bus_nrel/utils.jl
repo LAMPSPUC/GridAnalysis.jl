@@ -63,3 +63,13 @@ function prep_systems_UCED(
 
     return system_uc, system_ed
 end
+
+
+"""
+    get_duals(<:AbstractPowerModel)
+
+Return the duals for the specified formulation.
+"""
+get_duals(::Type{CopperPlatePowerModel}) = [:CopperPlateBalance]
+get_duals(::Union{Type{NFAPowerModel}, Type{DCPPowerModel}}) = [:nodal_balance_active__Bus]
+get_duals(::Type{StandardPTDFModel}) = [:CopperPlateBalance, :network_flow__Line]
