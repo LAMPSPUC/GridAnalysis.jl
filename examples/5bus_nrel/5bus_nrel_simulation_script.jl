@@ -2,11 +2,14 @@ using Cbc
 using Dates
 using DataFrames
 using GLPK
-using GridAnalysis
 using InfrastructureSystems
 using PowerSystems
 using PowerSimulations
 using Test
+
+# if testing local changes, run `] add GridAnalysis` before. 
+# Might also need to `] rm GridAnalysis` before re-adding.
+using GridAnalysis
 
 # might not work if running lines manually 
 # (solution: edit to be the path for this examples directory)
