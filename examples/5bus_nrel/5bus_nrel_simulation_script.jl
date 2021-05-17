@@ -1,3 +1,6 @@
+# Make sure to run this file while in the examples 5bus_nrel enviroment.
+# '] activate ./examples/5bus_nrel'
+
 using Cbc
 using Dates
 using DataFrames
@@ -9,8 +12,10 @@ using PowerSimulations
 using Test
 
 # might not work if running lines manually 
-# (solution: edit to be the path for this examples directory)
+# (solution: edit to be the path for this examples directory 
+# for example: 'example_dir = "./examples/5bus_nrel/"')
 example_dir = dirname(@__FILE__)
+
 data_dir = joinpath(example_dir, "data")
 
 include(joinpath(example_dir, "utils.jl")) # case utilities
