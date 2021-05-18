@@ -62,9 +62,9 @@ end
 
 
 """
-    get_duals(<:AbstractPowerModel)
+    duals_constraint_names(<:AbstractPowerModel)
 
-Return the duals for the specified formulation.
+Return the constraints for which we care about the duals (because they form the energy prices) when using a specified network formulation.
 """
 get_duals(::Type{CopperPlatePowerModel}) = [:CopperPlateBalance]
 get_duals(::Union{Type{NFAPowerModel}, Type{DCPPowerModel}}) = [:nodal_balance_active__Bus]
