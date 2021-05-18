@@ -6,7 +6,6 @@ using GridAnalysis
 using PowerSystems
 using PowerSimulations
 using Test
-using RecipesBase
 using Measures
 using Plots
 
@@ -45,7 +44,7 @@ template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
 # for each formulation you will need to save different dual variables:
-constraint_duals = get_duals(template_ed.transmission)
+constraint_duals = duals_constraint_names(template_ed.transmission)
 
 @test isa(constraint_duals, AbstractVector{Symbol})
 
