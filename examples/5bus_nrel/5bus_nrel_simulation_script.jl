@@ -7,6 +7,9 @@ using InfrastructureSystems
 using PowerSystems
 using PowerSimulations
 using Test
+using RecipesBase
+using Measures
+using Plots
 
 # might not work if running lines manually 
 # (solution: edit to be the path for this examples directory)
@@ -42,7 +45,6 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
-# TODO: add the following to a utility function in GridAnalysis:
 # for each formulation you will need to save different dual variables:
 constraint_duals = get_duals(template_ed.transmission)
 
