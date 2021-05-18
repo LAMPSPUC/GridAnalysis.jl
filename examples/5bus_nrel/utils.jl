@@ -16,11 +16,7 @@ function build_5_bus_matpower_DA(
     add_reserves::Bool=true,
 )
     case_file_path = joinpath(data_dir, case_file)
-    pm_data = PowerSystems.PowerModelsData(case_file_path)
-
-    tsp = InfrastructureSystems.read_time_series_file_metadata(forecasts_pointers_file)
-
-    sys = System(pm_data)
+    sys = System(case_file_path)
     if add_reserves
         reserves = [
             VariableReserve{ReserveUp}("REG1", true, 5.0, 0.1),
@@ -34,7 +30,7 @@ function build_5_bus_matpower_DA(
         end
     end
 
-    add_time_series!(sys, tsp)
+    add_time_series!(sys, forecasts_pointers_file)
 
     return sys
 end
@@ -42,10 +38,10 @@ end
 """
     prep_systems_UCED(system::System)
 
-Duplicates the system to represent UC and ED for DA, transforming the time series 
+Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.
 
-PS.: Beacuse of a bug in PSI, we have to set the horizon of the ED problem, that 
+PS.: Beacuse of a bug in PSI, we have to set the horizon of the ED problem, that
 would normally be of 1 hour, to 2 hours.
 """
 function prep_systems_UCED(
