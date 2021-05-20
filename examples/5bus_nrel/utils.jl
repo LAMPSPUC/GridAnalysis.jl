@@ -40,14 +40,11 @@ end
 
 Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.
-
-PS.: Beacuse of a bug in PSI, we have to set the horizon of the ED problem, that
-would normally be of 1 hour, to 2 hours.
 """
 function prep_systems_UCED(
     system::System;
     horizon_uc::Int=24,
-    horizon_ed::Int=2,
+    horizon_ed::Int=1,
     interval_uc::TimePeriod=Hour(24),
     interval_ed::TimePeriod=Hour(1),
 )
@@ -59,3 +56,13 @@ function prep_systems_UCED(
 
     return system_uc, system_ed
 end
+
+
+"""
+    duals_constraint_names(<:AbstractPowerModel)
+
+Return the constraints for which we care about the duals (because they form the energy prices) when using a specified network formulation.
+"""
+duals_constraint_names(::Type{CopperPlatePowerModel}) = [:CopperPlateBalance]
+duals_constraint_names(::Union{Type{NFAPowerModel}, Type{DCPPowerModel}}) = [:nodal_balance_active__Bus]
+duals_constraint_names(::Type{StandardPTDFModel}) = [:CopperPlateBalance, :network_flow__Line]
