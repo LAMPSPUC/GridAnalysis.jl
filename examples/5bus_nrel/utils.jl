@@ -40,14 +40,11 @@ end
 
 Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.
-
-PS.: Beacuse of a bug in PSI, we have to set the horizon of the ED problem, that
-would normally be of 1 hour, to 2 hours.
 """
 function prep_systems_UCED(
     system::System;
     horizon_uc::Int=24,
-    horizon_ed::Int=2,
+    horizon_ed::Int=1,
     interval_uc::TimePeriod=Hour(24),
     interval_ed::TimePeriod=Hour(1),
 )

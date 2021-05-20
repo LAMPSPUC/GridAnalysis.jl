@@ -1,32 +1,50 @@
 """
     plot_generation_stack(
         system::System,
-        results::SimulationProblemResults)
+        results::SimulationProblemResults;
+        generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+        bus_names::AbstractArray=[])
 
-Plot the generation mix over the time period covered by the `results`. 
+Plot the generation mix over the time period covered by the `results`. The `bus_names`
+and `generator_fields` control which buses, and generator types we want to include the plot.
 """
 @userplot plot_generation_stack
-@recipe function f(p::plot_generation_stack)
+@recipe function f(p::plot_generation_stack;
+        generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+        bus_names::AbstractArray=[])
     system, system_results, = p.args
 
     # get mapping from busname to fuel type
     fuel_type_dict = fuel_type_mapping(system)
 
-    # get the output data for all fuel types
-    variable_results = read_realized_variables(system_results)
-    thermal_results = variable_results[:P__ThermalStandard]
-    renewable_results = variable_results[:P__RenewableDispatch]
-
-    all_generator_data = innerjoin(thermal_results, renewable_results, on = :DateTime)
+    # get the output data for given fuel types
+    variable_results = read_realized_variables(system_results, names = generator_fields)
+    generator_data = getindex.(Ref(variable_results), generator_fields)
+    if length(generator_data) > 1 
+        generator_data = innerjoin(generator_data..., on = :DateTime)
+    else 
+        generator_data = first(generator_data)
+    end
 
     # stack the data and aggregate by fuel type
-    stacked_data = stack(all_generator_data, variable_name = "bus_name", value_name = "output")
+    stacked_data = stack(generator_data, variable_name = "bus_name", value_name = "output")
+
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        bus_names = String.(bus_names)
+        @assert all(bus_names .∈ [stacked_data.bus_name])
+        filter!(:bus_name=>in(bus_names), stacked_data)
+    end
+
     stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.bus_name, missing)
 
     aggregated_data = combine(
         groupby(stacked_data, [:DateTime, :fuel_type,]),
         :output => sum => :output
     )
+
+    # convert the output units into MWh.
+    aggregated_data.output = aggregated_data.output .* get_base_power(system)
 
     # unstack aggregated data and make area plot 
     unstacked_data = unstack(aggregated_data, :fuel_type, :output)
