@@ -16,11 +16,7 @@ function build_5_bus_matpower_DA(
     add_reserves::Bool=true,
 )
     case_file_path = joinpath(data_dir, case_file)
-    pm_data = PowerSystems.PowerModelsData(case_file_path)
-
-    tsp = InfrastructureSystems.read_time_series_file_metadata(forecasts_pointers_file)
-
-    sys = System(pm_data)
+    sys = System(case_file_path)
     if add_reserves
         reserves = [
             VariableReserve{ReserveUp}("REG1", true, 5.0, 0.1),
@@ -34,7 +30,7 @@ function build_5_bus_matpower_DA(
         end
     end
 
-    add_time_series!(sys, tsp)
+    add_time_series!(sys, forecasts_pointers_file)
 
     return sys
 end
@@ -42,16 +38,13 @@ end
 """
     prep_systems_UCED(system::System)
 
-Duplicates the system to represent UC and ED for DA, transforming the time series 
+Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.
-
-PS.: Beacuse of a bug in PSI, we have to set the horizon of the ED problem, that 
-would normally be of 1 hour, to 2 hours.
 """
 function prep_systems_UCED(
     system::System;
     horizon_uc::Int=24,
-    horizon_ed::Int=2,
+    horizon_ed::Int=1,
     interval_uc::TimePeriod=Hour(24),
     interval_ed::TimePeriod=Hour(1),
 )
@@ -63,3 +56,13 @@ function prep_systems_UCED(
 
     return system_uc, system_ed
 end
+
+
+"""
+    duals_constraint_names(<:AbstractPowerModel)
+
+Return the constraints for which we care about the duals (because they form the energy prices) when using a specified network formulation.
+"""
+duals_constraint_names(::Type{CopperPlatePowerModel}) = [:CopperPlateBalance]
+duals_constraint_names(::Union{Type{NFAPowerModel}, Type{DCPPowerModel}}) = [:nodal_balance_active__Bus]
+duals_constraint_names(::Type{StandardPTDFModel}) = [:CopperPlateBalance, :network_flow__Line]

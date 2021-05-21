@@ -6,6 +6,8 @@ using RecipesBase
 using Plots
 using PowerSystems
 using PowerSimulations
+using RecipesBase
+using DataFrames
 
 import PowerSimulations.Simulation
 
@@ -17,6 +19,8 @@ export UCED
 #export plot_renweable_generation_stack
 #export plot_thermal_commit_stack
 #export plot_thermal_generation_stack
+export fuel_type_mapping
+export plot_generation_stack
 
 const PSY = PowerSystems
 const PSI = PowerSimulations
@@ -24,5 +28,8 @@ const PSI = PowerSimulations
 include("market_simulator.jl")
 include("simulation.jl")
 #include("plots.jl")
+include("plot.jl")
+include("utils.jl")
+
 
 end
