@@ -79,7 +79,7 @@ function run_multiday_simulation(
     name::String="test_case",
     simulation_folder=pwd(),
     console_level=Logging.Warn,
-    recorders=[:simulation]
+    recorders=[:simulation],
 )
     sim = Simulation(
         simulator,

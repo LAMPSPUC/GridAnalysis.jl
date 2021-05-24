@@ -70,7 +70,7 @@ results = run_multiday_simulation(
     balance_slack_variables=false,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
-    simulation_folder=mktempdir() # Locally can use: joinpath(example_dir, "results"),
+    simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
 @test isa(results, SimulationResults)
