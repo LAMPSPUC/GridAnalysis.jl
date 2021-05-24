@@ -90,6 +90,7 @@ prices = evaluate_prices(market_simulator, ed_results)
 @test isa(prices, DataFrame)
 
 # Plots
+plot_generation_stack(base_system, ed_results, xtickfontsize = 8, margin = 8mm, size = (800, 600))
 
 plot_demand_stack(sys_uc, uc_results, xtickfontsize = 8, size = (800, 600))
 
@@ -97,8 +98,5 @@ plot_net_demand_stack(sys_uc, uc_results, xtickfontsize = 8, size = (800, 600))
 
 plot_prices_stack(base_system, ed_results, xtickfontsize = 8, size = (800, 600))
 
-plot_renweable_generation_stack(base_system, ed_results, xtickfontsize = 8, size = (800, 600))
-
 plot_thermal_commit_stack(base_system, uc_results, xtickfontsize = 8, size = (800, 600))
 
-plot_thermal_generation_stack(base_system, ed_results, xtickfontsize = 8, size = (800, 600))
