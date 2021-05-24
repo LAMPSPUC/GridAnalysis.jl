@@ -43,11 +43,6 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
-# for each formulation you will need to save different dual variables:
-constraint_duals = duals_constraint_names(template_ed.transmission)
-
-@test isa(constraint_duals, AbstractVector{Symbol})
-
 # build a market clearing simulator (run `@doc UCED` for more information)
 market_simulator = UCED(;
     system_uc=sys_uc,
@@ -59,6 +54,11 @@ market_simulator = UCED(;
 )
 
 @test isa(market_simulator, UCED)
+
+# for each formulation you will need to save different dual variables:
+constraint_duals = duals_constraint_names(market_simulator)
+
+@test isa(constraint_duals, AbstractVector{Symbol})
 
 # Simulate market
 # build and run simulation
@@ -79,58 +79,7 @@ results = run_multiday_simulation(
 uc_results = get_problem_results(results, "UC");
 ed_results = get_problem_results(results, "ED");
 
-# TODO: add the following to a utility function in GridAnalysis (and make it better):
-# calculate prices (it will be a bit more complicated for StandardPTDFModel)
-prices = if template_ed.transmission == CopperPlatePowerModel
-    duals = read_dual(ed_results, :CopperPlateBalance)
-    DataFrame(;
-        DateTime=collect(keys(duals)),
-        lmp=[duals[i][1, 2] / get_base_power(base_system) for i in keys(duals)],
-    )
-elseif template_ed.transmission in [NFAPowerModel; DCPPowerModel]
-    duals = read_dual(ed_results, :nodal_balance_active__Bus)
-    # we only want the first hour of the ED prices (stored in the first row here)
-    # since the second hour is here given the bug in PSI (see `@doc prep_systems_UCED`)
-    df = vcat([DataFrame(duals[i][1, :]) for i in keys(duals)]...)
-    # in this case, the lmps are the negative of the duals
-    df[:, 2:end] = df[:, 2:end] ./ -get_base_power(base_system)
-    df
-elseif template_ed.transmission == StandardPTDFModel
-    # MEC
-    duals_MEC = read_dual(ed_results, :CopperPlateBalance)
-    MEC = DataFrame(;
-        DateTime=collect(keys(duals_MEC)),
-        MEC=[duals_MEC[i][1, 2] / get_base_power(base_system) for i in keys(duals_MEC)],
-    )
+# calculate prices
+prices = evaluate_prices(market_simulator, ed_results)
 
-    # MCC
-    PTDF_matrix = market_simulator.kwargs[:PTDF]
-    # get line limit duals
-    # ignoring transformer, because it seems that PSI is also ignoring
-    flow_duals = read_dual(ed_results, :network_flow__Line)
-    # we only want the first hour of the ED prices (stored in the first row here)
-    # since the second hour is here given the bug in PSI (see `@doc prep_systems_UCED`)
-    flow_duals = vcat([DataFrame(flow_duals[i][1, :]) for i in keys(flow_duals)]...)
-    # get duals in a matrix form ordered by the line names available in the PTDF
-    line_names = intersect(PTDF_matrix.axes[1], names(flow_duals[:, 2:end]))
-    μ = Matrix(flow_duals[:, line_names])
-    # calculate the congestion factor of the prices by multiplying the line duals by the PTDF
-    buses = get_components(Bus, sys_ed)
-    congestion_lmp = Dict()
-    for bus in buses
-        congestion_lmp[get_name(bus)] =
-            μ * [PTDF_matrix[line, get_number(bus)] for line in line_names]
-    end
-    congestion_lmp["DateTime"] = collect(keys(duals_MEC))
-    MCC = DataFrame(congestion_lmp)
-
-    # Calculate the final locational marginal prices: LMP (MEC + MCC)
-    LMP = deepcopy(MCC)
-    for row in eachrow(LMP)
-        for name in names(row[2:end])
-            row[name] /= get_base_power(base_system)
-            row[name] += .+MEC[MEC[:, "DateTime"] .== row["DateTime"], :MEC][1]
-        end
-    end
-    LMP
-end
+@test isa(prices, DataFrame)
