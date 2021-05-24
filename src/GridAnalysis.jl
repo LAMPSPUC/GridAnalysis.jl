@@ -9,10 +9,12 @@ using DataFrames
 
 import PowerSimulations.Simulation
 
-export run_multiday_simulation
-export UCED
+export duals_constraint_names
 export fuel_type_mapping
 export plot_generation_stack
+export evaluate_prices
+export run_multiday_simulation
+export UCED
 
 const PSY = PowerSystems
 const PSI = PowerSimulations
