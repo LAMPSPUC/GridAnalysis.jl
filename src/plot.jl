@@ -69,8 +69,44 @@ and `generator_fields` control which buses, and generator types we want to inclu
     end
 end
 
+"""
+    plot_prices(
+        market_simulator::MarketSimulator,
+        results::SimulationProblemResults;
+        bus_names::AbstractArray=[])
 
+Plot the simulation prices over the time period covered by the `results`. The `bus_names`
+control which buses we want to include the plot.
+"""
+@userplot plot_prices
+@recipe function f(p::plot_prices; bus_names::AbstractArray=[])
+    market_simulator, system_results, = p.args
 
+    prices = evaluate_prices(market_simulator, system_results)
+
+    plot_data = select(prices, Not(:DateTime))
+
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, names(plot_data))
+        select!(plot_data, bus_names)
+    end
+
+    times = prices[!, 1]
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Prices (\$/MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    for i in Base.axes(plot_data, 2)
+        @series begin
+            times, plot_data[:, i]
+        end
+    end
+end
 
 # Function to plot the Thermal Standard Commit
 # It needs the uc_results.
@@ -90,12 +126,13 @@ end
     thermal_commit_results = variable_results[:On__ThermalStandard]
 
     # stack the data and aggregate by fuel type
-    stacked_data = stack(thermal_commit_results, variable_name = "bus_name", value_name = "output")
+    stacked_data = stack(
+        thermal_commit_results; variable_name="bus_name", value_name="output"
+    )
     stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.bus_name, missing)
 
     aggregated_data = combine(
-        groupby(stacked_data, [:DateTime, :fuel_type,]),
-        :output => sum => :output
+        groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
     )
 
     # unstack aggregated data and make area plot 
@@ -110,9 +147,8 @@ end
     seriestype --> :line
     xrotation --> 45
 
-
     # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data), dims = 2)
+    data = cumsum(Matrix(plot_data); dims=2)
     for i in Base.axes(data, 2)
         @series begin
             fillrange := i > 1 ? data[:, i - 1] : 0
@@ -120,43 +156,6 @@ end
         end
     end
 end
-
-
-
-
-# Function to plot the Prices
-# TODO: - change from stack to lines 
-#       - update labels
-#       - change to """
-
-@userplot plot_prices_stack
-@recipe function f(p::plot_prices_stack)
-
-    prices = evaluate_prices(template_ed, ed_results)
-
-    plot_data = select(prices, Not(:DateTime))
-
-    times = prices[!,1]
-
-    label --> reduce(hcat, names(plot_data))
-    yguide --> "Output (MWh)"
-    legend --> :outertopright
-    seriestype --> :line
-    xrotation --> 45
-
-
-    # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data), dims = 2)
-    for i in Base.axes(data, 2)
-        @series begin
-            fillrange := i > 1 ? data[:, i - 1] : 0
-            times, data[:, i]
-        end
-    end
-end
-
-
-
 
 # Function to plot the Demmand
 # It needs the uc_results.
@@ -169,10 +168,10 @@ end
 
     load = collect(get_components(PowerLoad, system))
 
-    ts_array = zeros(24,length(load))
+    ts_array = zeros(24, length(load))
     ts_names = get_time_series_names(Deterministic, load[1])
     for i in 1:length(load)
-        ts_array[:,i] = get_time_series_values(Deterministic, load[i], ts_names[1])
+        ts_array[:, i] = get_time_series_values(Deterministic, load[i], ts_names[1])
     end
 
     times = get_time_series_timestamps(Deterministic, load[1], ts_names[1])
@@ -185,9 +184,8 @@ end
     seriestype --> :line
     xrotation --> 45
 
-
     # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data), dims = 2)
+    data = cumsum(Matrix(plot_data); dims=2)
     for i in Base.axes(data, 2)
         @series begin
             fillrange := i > 1 ? data[:, i - 1] : 0
@@ -195,8 +193,6 @@ end
         end
     end
 end
-
-
 
 # Function to plot the Net Demmand
 # It needs the sys_uc and uc_results.
@@ -209,19 +205,19 @@ end
 
     load = collect(get_components(PowerLoad, system))
 
-    ts_array = zeros(24,length(load))
+    ts_array = zeros(24, length(load))
     ts_names = get_time_series_names(Deterministic, load[1])
     for i in 1:length(load)
-        ts_array[:,i] = get_time_series_values(Deterministic, load[i], ts_names[1])
+        ts_array[:, i] = get_time_series_values(Deterministic, load[i], ts_names[1])
     end
 
     # Renewable Data
     variable_results = read_realized_variables(system_results)
     renewable_results = variable_results[:P__RenewableDispatch]
     row, col = size(renewable_results)
-    values = renewable_results[!,2:col]
+    values = renewable_results[!, 2:col]
 
-    all_data = sum(ts_array, dims = 2) - sum.(eachrow(values))
+    all_data = sum(ts_array; dims=2) - sum.(eachrow(values))
 
     times = get_time_series_timestamps(Deterministic, load[1], ts_names[1])
 
@@ -233,9 +229,8 @@ end
     seriestype --> :line
     xrotation --> 45
 
-
     # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data), dims = 2)
+    data = cumsum(Matrix(plot_data); dims=2)
     for i in Base.axes(data, 2)
         @series begin
             fillrange := i > 1 ? data[:, i - 1] : 0
@@ -244,7 +239,4 @@ end
     end
 end
 
-
-
 # TODO: - create a function that use the input data of Renewable Dispatch
-
