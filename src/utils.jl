@@ -39,7 +39,7 @@ end
 """
     MEC(system::System, problem_results::PSI.SimulationProblemResults)
 
-Returns the Marginal Energy Component (MEC) of OPF problem's solution. This component is defined as the the dual value
+Returns the Marginal Energy Component (MEC) of OPF problem's solution. This component is defined as the dual value
 (or lagrangian multiplier) of a grid-wide energy balance constraint (named in PSI `CopperPlateBalance`)
 """
 function MEC(system::System, problem_results::PSI.SimulationProblemResults)
