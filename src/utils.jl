@@ -111,7 +111,6 @@ function evaluate_prices(
     # ignoring transformer, because it seems that PSI is also ignoring
     flow_duals = read_dual(problem_results, :network_flow__Line)
     # we only want the first hour of the ED prices (stored in the first row here)
-    # since the second hour is here given the bug in PSI (see `@doc prep_systems_UCED`)
     flow_duals = vcat([DataFrame(flow_duals[i][1, :]) for i in keys(flow_duals)]...)
     # get duals in a matrix form ordered by the line names available in the PTDF
     line_names = intersect(PTDF_matrix.axes[1], names(flow_duals[:, 2:end]))
