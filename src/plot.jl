@@ -108,60 +108,68 @@ control which buses we want to include the plot.
     end
 end
 
-# Function to plot the Thermal Standard Commit
-# It needs the uc_results.
-# TODO: - change from stack to lines 
-#       - update labels
-#       - change to """
 
-@userplot plot_thermal_commit_stack
-@recipe function f(p::plot_thermal_commit_stack)
+
+# TODO: - Fix this function for the case when you define which bus you want.
+"""
+    plot_thermal_commit(
+        system::System,
+        results::SimulationProblemResults)
+
+Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
+The `results` should be from the unit commitment problem.
+1 is ON, 0 is OFF.
+"""
+@userplot plot_thermal_commit
+@recipe function f(p::plot_thermal_commit,
+    bus_names::AbstractArray=[],
+)
     system, system_results, = p.args
-
-    # get mapping from busname to fuel type
-    fuel_type_dict = fuel_type_mapping(system)
 
     # get the output data for all fuel types
     variable_results = read_realized_variables(system_results)
     thermal_commit_results = variable_results[:On__ThermalStandard]
 
-    # stack the data and aggregate by fuel type
-    stacked_data = stack(
-        thermal_commit_results; variable_name="bus_name", value_name="output"
-    )
-    stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.bus_name, missing)
+    plot_data = select(thermal_commit_results, Not(:DateTime))
 
-    aggregated_data = combine(
-        groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
-    )
+    times = thermal_commit_results[!, 1]
 
-    # unstack aggregated data and make area plot 
-    unstacked_data = unstack(aggregated_data, :fuel_type, :output)
-    times = unstacked_data.DateTime
-
-    plot_data = select(unstacked_data, Not(:DateTime))
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        generator_names = names(plot_data)
+        bus_map = bus_mapping(system)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, get_generator_bus_name.(get_components(Generator, sys_uc)))
+        generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
+        select!(plot_data, generator_names)
+    end
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Output (MWh)"
+    yguide --> "Commitment"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Thermal Standard Commit over the hours"
 
-    # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data); dims=2)
-    for i in Base.axes(data, 2)
+    for i in Base.axes(plot_data, 2)
         @series begin
-            fillrange := i > 1 ? data[:, i - 1] : 0
-            times, data[:, i]
+            times, plot_data[:, i]
         end
     end
 end
 
-# Function to plot the Demmand
-# It needs the uc_results.
-# TODO: - update labels
-#       - change to """
 
+
+# TODO: - update labels
+#       - add the option to chose which bus and/or generator to plot
+"""
+    plot_demand_stack(
+        system::System,
+        results::SimulationProblemResults)
+
+Function to plot the Demand over the time period covered by the `results`.
+The `results` should be from the unit commitment problem.
+"""
 @userplot plot_demand_stack
 @recipe function f(p::plot_demand_stack)
     system, system_results, = p.args
@@ -179,10 +187,11 @@ end
     plot_data = DataFrame(ts_array, [:Bus4, :Bus2, :Bus3])
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Output (MWh)"
+    yguide --> "Demand (pu)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Demand over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -194,11 +203,20 @@ end
     end
 end
 
-# Function to plot the Net Demmand
-# It needs the sys_uc and uc_results.
-# TODO: - update labels
-#       - change to """
 
+
+
+# TODO: - update labels
+#       - add the option to chose which bus and/or generator to plot
+"""
+    plot_net_demand_stack(
+        system::System,
+        results::SimulationProblemResults)
+
+Function to plot the Demand over the time period covered by the `results`.
+The `results` should be from the unit commitment problem and the `system` should be from the
+unit commitment system.
+"""
 @userplot plot_net_demand_stack
 @recipe function f(p::plot_net_demand_stack)
     system, system_results, = p.args
@@ -224,10 +242,11 @@ end
     plot_data = DataFrame(all_data, [:net_demand])
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Output (MWh)"
+    yguide --> "Net Demand (pu)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Net Demand over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)

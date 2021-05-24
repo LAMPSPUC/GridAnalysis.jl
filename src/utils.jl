@@ -21,6 +21,32 @@ function fuel_type_mapping(system::System)
 end
 
 """
+    get_generator_bus_name(gen::Generator)
+
+Returns the bus name of a generator.
+"""
+function get_generator_bus_name(gen::Generator)
+    return get_name(get_bus(gen))
+end
+
+"""
+    bus_mapping(system::System)
+
+Returns generator to bus mapping.
+"""
+function bus_mapping(system::System)
+    generator_metadata = [gen for gen in get_components(Generator, system)]
+
+    bus_map = Dict()
+    for generator in generator_metadata
+        name = generator.name
+        bus_map[name] = get_generator_bus_name(generator)
+    end
+
+    return bus_map
+end
+
+"""
     duals_constraint_names(<:AbstractPowerModel)
 
 Return the constraints for which we care about the duals (because they form the energy prices) when using a specified network formulation.
