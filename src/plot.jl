@@ -167,8 +167,7 @@ end
         results::SimulationProblemResults)
 
 Function to plot the Demand over the time period covered by the `results`.
-The `results` should be from the unit commitment problem and the `system` should be from the
-unit commitment system.
+The `bus_names` controls which buses we want to include in the plot.
 """
 @userplot plot_demand_stack
 @recipe function f(
@@ -177,20 +176,23 @@ unit commitment system.
 )
     system, system_results, = p.args
 
-    load = collect(get_components(PowerLoad, system))
+    loads = collect(get_components(PowerLoad, system))
 
-    ts_array = zeros(24, length(load))
-    names_bus = ["a" for i in 1:length(load)]
-    ts_names = get_time_series_names(Deterministic, load[1])
-    for i in 1:length(load)
-        ts_array[:, i] = get_time_series_values(Deterministic, load[i], ts_names[1])
-        names_bus[i] = get_name(load[i,1])
+    ts_array = Dict()
+    ts_names = get_time_series_names(Deterministic, loads[1])
+    for load in loads
+        if !haskey(ts_array, get_bus_name(load))
+            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+        else
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+        end
     end
 
-    times = get_time_series_timestamps(Deterministic, load[1], ts_names[1])
+    ts_array = DataFrame(ts_array)
+
+    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
     
     plot_data = ts_array .* get_base_power(system)
-    plot_data = DataFrame(plot_data, names_bus)
 
     if !isempty(bus_names)
         bus_names = String.(bus_names)
@@ -223,8 +225,7 @@ end
         system::System,
         results::SimulationProblemResults)
 Function to plot the Demand over the time period covered by the `results`.
-The `results` should be from the unit commitment problem and the `system` should be from the
-unit commitment system.
+The `bus_names` controls which buses we want to include in the plot.
 """
 @userplot plot_net_demand_stack
 @recipe function f(p::plot_net_demand_stack;
@@ -251,7 +252,7 @@ unit commitment system.
     # Renewable Data
     variable_results = read_realized_variables(system_results)
     renewable_results = variable_results[:P__RenewableDispatch]
-    select(renewable_results, Not(:DateTime))
+    values = select(renewable_results, Not(:DateTime))
     
     bus_map = bus_mapping(system)
     rename!(values, [bus_map[gen] for gen in names(values)])
@@ -277,7 +278,7 @@ unit commitment system.
     
     @series begin
         fillrange := 0
-        times, data[:, i]
+        times, plot_data[:, i]
     end
 end
 
