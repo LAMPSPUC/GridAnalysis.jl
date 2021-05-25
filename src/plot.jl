@@ -112,7 +112,6 @@ end
 
 
 
-# TODO: - Fix this function for the case when you define which bus you want.
 """
     plot_thermal_commit(
         system::System,
@@ -162,34 +161,45 @@ end
 
 
 
-# TODO: - update labels
-#       - add the option to chose which bus and/or generator to plot
 """
     plot_demand_stack(
         system::System,
         results::SimulationProblemResults)
 
 Function to plot the Demand over the time period covered by the `results`.
-The `results` should be from the unit commitment problem.
+The `results` should be from the unit commitment problem and the `system` should be from the
+unit commitment system.
 """
 @userplot plot_demand_stack
-@recipe function f(p::plot_demand_stack)
+@recipe function f(
+    p::plot_demand_stack;
+    bus_names::AbstractArray=[],
+)
     system, system_results, = p.args
 
     load = collect(get_components(PowerLoad, system))
 
     ts_array = zeros(24, length(load))
+    names_bus = ["a" for i in 1:length(load)]
     ts_names = get_time_series_names(Deterministic, load[1])
     for i in 1:length(load)
         ts_array[:, i] = get_time_series_values(Deterministic, load[i], ts_names[1])
+        names_bus[i] = get_name(load[i,1])
     end
 
     times = get_time_series_timestamps(Deterministic, load[1], ts_names[1])
+    
+    plot_data = ts_array .* get_base_power(system)
+    plot_data = DataFrame(plot_data, names_bus)
 
-    plot_data = DataFrame(ts_array, [:Bus4, :Bus2, :Bus3])
+    if !isempty(bus_names)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, names(plot_data))
+        select!(plot_data, bus_names)
+    end
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Demand (pu)"
+    yguide --> "Demand (MWh)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
@@ -208,55 +218,66 @@ end
 
 
 
-# TODO: - update labels
-#       - add the option to chose which bus and/or generator to plot
 """
     plot_net_demand_stack(
         system::System,
         results::SimulationProblemResults)
-
 Function to plot the Demand over the time period covered by the `results`.
 The `results` should be from the unit commitment problem and the `system` should be from the
 unit commitment system.
 """
 @userplot plot_net_demand_stack
-@recipe function f(p::plot_net_demand_stack)
+@recipe function f(p::plot_net_demand_stack;
+    bus_names::AbstractArray=[],
+)
+    
     system, system_results, = p.args
-
-    load = collect(get_components(PowerLoad, system))
-
-    ts_array = zeros(24, length(load))
-    ts_names = get_time_series_names(Deterministic, load[1])
-    for i in 1:length(load)
-        ts_array[:, i] = get_time_series_values(Deterministic, load[i], ts_names[1])
+    
+    loads = collect(get_components(PowerLoad, system))
+    
+    ts_array = Dict()
+    ts_names = get_time_series_names(Deterministic, loads[1])
+    
+    for load in loads
+        if !haskey(ts_array, get_bus_name(load))
+            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+        else
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+        end
     end
-
+    
+    ts_array = DataFrame(ts_array)
+    
     # Renewable Data
     variable_results = read_realized_variables(system_results)
     renewable_results = variable_results[:P__RenewableDispatch]
-    row, col = size(renewable_results)
-    values = renewable_results[!, 2:col]
-
-    all_data = sum(ts_array; dims=2) - sum.(eachrow(values))
-
-    times = get_time_series_timestamps(Deterministic, load[1], ts_names[1])
-
-    plot_data = DataFrame(all_data, [:net_demand])
-
+    select(renewable_results, Not(:DateTime))
+    
+    bus_map = bus_mapping(system)
+    rename!(values, [bus_map[gen] for gen in names(values)])
+    
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, [names(values); names(ts_array)])
+        select!(values, intersect(bus_names, names(values)))
+        select!(ts_array, intersect(bus_names, names(ts_array)))
+    end
+    
+    all_data = sum.(eachrow(ts_array)) - sum.(eachrow(values))
+    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+    plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
+    
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Net Demand (pu)"
+    yguide --> "Net Demand (MWh)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
     title --> "Net Demand over the hours"
-
-    # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data); dims=2)
-    for i in Base.axes(data, 2)
-        @series begin
-            fillrange := i > 1 ? data[:, i - 1] : 0
-            times, data[:, i]
-        end
+    
+    @series begin
+        fillrange := 0
+        times, data[:, i]
     end
 end
 

@@ -100,5 +100,10 @@ plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+# Do not work because bus1 is not defined on the load
+# plot_demand_stack(sys_uc, uc_results; bus_names = ["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+
