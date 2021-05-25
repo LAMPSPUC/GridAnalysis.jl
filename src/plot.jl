@@ -29,7 +29,9 @@ and `generator_fields` control which buses, and generator types we want to inclu
     end
 
     # stack the data and aggregate by fuel type
-    stacked_data = stack(generator_data; variable_name="bus_name", value_name="output")
+    stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
+    bus_map = bus_mapping(system)
+    stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
 
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
@@ -38,7 +40,7 @@ and `generator_fields` control which buses, and generator types we want to inclu
         filter!(:bus_name => in(bus_names), stacked_data)
     end
 
-    stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.bus_name, missing)
+    stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
 
     aggregated_data = combine(
         groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
@@ -121,7 +123,7 @@ The `results` should be from the unit commitment problem.
 1 is ON, 0 is OFF.
 """
 @userplot plot_thermal_commit
-@recipe function f(p::plot_thermal_commit,
+@recipe function f(p::plot_thermal_commit;
     bus_names::AbstractArray=[],
 )
     system, system_results, = p.args
@@ -139,7 +141,7 @@ The `results` should be from the unit commitment problem.
         generator_names = names(plot_data)
         bus_map = bus_mapping(system)
         bus_names = String.(bus_names)
-        @assert issubset(bus_names, get_generator_bus_name.(get_components(Generator, sys_uc)))
+        @assert issubset(bus_names, [bus_map[gen] for gen in generator_names])
         generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
         select!(plot_data, generator_names)
     end

@@ -90,14 +90,15 @@ prices = evaluate_prices(market_simulator, ed_results)
 
 # Plots
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
 
 plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(base_system, uc_results; bus_names = ["bus1"], xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-
-
