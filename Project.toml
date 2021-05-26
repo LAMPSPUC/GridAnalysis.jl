@@ -1,7 +1,7 @@
 name = "GridAnalysis"
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
 authors = ["LAMPS"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
@@ -12,8 +12,10 @@ PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 
 [compat]
+DataFrames = "1.1"
 PowerSimulations = ">= 0.13"
 PowerSystems = ">= 1.0.0"
+RecipesBase = "1.1"
 julia = "1.5"
 
 [extras]
