@@ -1,3 +1,5 @@
+# Make sure to run this file while in the examples 5bus_nrel enviroment.
+# '] activate ./examples/5bus_nrel'
 using Cbc
 using Dates
 using DataFrames
@@ -9,9 +11,11 @@ using Test
 using Measures
 using Plots
 
-# might not work if running lines manually
-# (solution: edit to be the path for this examples directory)
+# might not work if running lines manually 
+# (solution: edit to be the path for this examples directory 
+# for example: 'example_dir = "./examples/5bus_nrel/"')
 example_dir = dirname(@__FILE__)
+
 data_dir = joinpath(example_dir, "data")
 
 include(joinpath(example_dir, "utils.jl")) # case utilities
@@ -83,3 +87,25 @@ ed_results = get_problem_results(results, "ED");
 prices = evaluate_prices(market_simulator, ed_results)
 
 @test isa(prices, DataFrame)
+
+# Plots
+plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+
+plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
