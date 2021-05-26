@@ -11,6 +11,7 @@ using DataFrames
 import PowerSimulations.Simulation
 
 export bus_mapping
+export create_generator_bids
 export duals_constraint_names
 export evaluate_prices
 export fuel_type_mapping
@@ -29,5 +30,6 @@ include("market_simulator.jl")
 include("simulation.jl")
 include("utils.jl")
 include("plot.jl")
+include("modifying_functions.jl")
 
 end

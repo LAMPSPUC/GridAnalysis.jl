@@ -24,7 +24,7 @@ end
     get_bus_name(gen::Generator)
 Returns the bus name of a generator or load.
 """
-function get_bus_name(gen::Union{Generator, PowerLoad})
+function get_bus_name(gen::Union{Generator,PowerLoad})
     return get_name(get_bus(gen))
 end
 
