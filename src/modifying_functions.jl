@@ -58,11 +58,11 @@ function add_gerator!(system::System, node::String, active_power_limits::NamedTu
     return gen
 end
 
-#= TODO: Finish implementation 
-function add_bidding_generators(system, nodal_bids)
+#  TODO: Finish implementation 
+# function add_bidding_generators(system, nodal_bids)
 
-    generators = add_generator!.(system, nodes, active_power_limits)
-    add_timeSeries!.(generators, costs) 
+#     generators = add_generator!.(system, nodes, active_power_limits)
+#     add_timeSeries!.(generators, costs) 
     
 
-end
+# end
