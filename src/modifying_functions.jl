@@ -11,7 +11,7 @@ function create_generator_bids(;
     system::System,
     costs::Vector{T},
 ) where {T<:AbstractFloat}
-    load = collect(get_components(PowerLoad, system))[1]
+    load = first(get_components(PowerLoad, system))
     timestamps = get_time_series_timestamps(SingleTimeSeries, load, "max_active_power")
     @assert initial_bidding_time in timestamps
     
