@@ -249,7 +249,7 @@ It uses the Renewable Dispatch from the `results`.
     values = select(renewable_results, Not(:DateTime))
 
     bus_map = bus_mapping(system)
-    rename!(values, [bus_map[gen] for gen in names(values)])
+    DataFrames.rename!(values, [bus_map[gen] for gen in names(values)])
 
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
