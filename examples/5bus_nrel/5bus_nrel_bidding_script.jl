@@ -10,6 +10,7 @@ using PowerSimulations
 using Test
 using Measures
 using Plots
+using Gurobi
 
 # might not work if running lines manually 
 # (solution: edit to be the path for this examples directory 
@@ -22,8 +23,8 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
-solver_ed = optimizer_with_attributes(GLPK.Optimizer)
+solver_uc = optimizer_with_attributes(Gurobi.Optimizer)#(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
+solver_ed = optimizer_with_attributes(Gurobi.Optimizer)#(GLPK.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
