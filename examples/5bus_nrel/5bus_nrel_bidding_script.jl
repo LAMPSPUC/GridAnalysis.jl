@@ -36,4 +36,13 @@ base_system = build_5_bus_matpower_DA(
     add_reserves=false,
 )
 
-create_generator_bids(initial_bidding_time, bidding_periods, system, costs)
+# Add single generator
+node = "bus1"
+active_power_limits = (min=0.0, max=1.0)
+ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=[1,5,16], system=base_system, costs=[10.0,15.0,16.0])
+
+gen = add_gerator!(base_system, node, active_power_limits)
+
+set_variable_cost!(base_system, gen, ts_array)
+
+sys_uc, sys_ed = prep_systems_UCED(base_system)

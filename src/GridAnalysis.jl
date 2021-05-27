@@ -1,15 +1,17 @@
 module GridAnalysis
 
+using DataFrames
 using Dates
+using PowerSimulations
+using PowerSystems
 using Logging
 using RecipesBase
-using PowerSystems
-using PowerSimulations
 using RecipesBase
-using DataFrames
+using TimeSeries
 
 import PowerSimulations.Simulation
 
+export add_gerator!
 export bus_mapping
 export create_generator_bids
 export duals_constraint_names
