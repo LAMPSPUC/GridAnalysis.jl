@@ -42,7 +42,6 @@ end
 Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
  - A matpower file containing grid information (case_file);
  - A file describing forecasts locations and details (forecasts_pointers_file);
- - A simple definition of reserves.
 """
 function build_5_bus_matpower_RT(; kwargs...)
     sys_kwargs = filter_kwargs(; kwargs...)
