@@ -94,6 +94,13 @@ ed_results = get_problem_results(results, "ED");
 # calculate prices
 prices = evaluate_prices(market_simulator, ed_results)
 
+p_5=prices[!,:"bus5"]
+
+variable_results = read_realized_variables(uc_results, names=[:P__ThermalStandard])
+generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+
+vitual_gen=generator_data[1][!,:7]
+revenue=p_5.*virtual_gen
 @test isa(prices, DataFrame)
 
 # Plots
