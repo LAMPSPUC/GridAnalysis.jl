@@ -1,9 +1,7 @@
 # Make sure to run this file while in the examples 5bus_nrel enviroment.
 # '] activate ./examples/5bus_nrel'
-using Cbc
 using Dates
 using DataFrames
-using GLPK
 using GridAnalysis
 using PowerSystems
 using PowerSimulations
@@ -38,12 +36,12 @@ base_system = build_5_bus_matpower_DA(
 )
 
 # Add single generator at a defined bus
-node = "bus1" # define bus
-active_power_limits = (min=0.0, max=1.0) # define maximum bid for generator
+node = "bus5" # define bus
+active_power_limits = (min=0.0, max=0.5) # define maximum bid for generator
 gen = add_gerator!(base_system, node, active_power_limits)
 
 # create and set variable cost time-series for the generator
-ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=[1,5,16], system=base_system, costs=[10.0,15.0,16.0])
+ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], system=base_system, costs=ones(24).*0)
 set_variable_cost!(base_system, gen, ts_array)
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
@@ -103,7 +101,7 @@ plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size
 plot_generation_stack(
     base_system,
     ed_results;
-    bus_names=["bus1", "bus3"],
+    bus_names=["bus5"],
     xtickfontsize=8,
     margin=8mm,
     size=(800, 600),
@@ -146,7 +144,7 @@ plot_prices(
 
 plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(
-    base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
+    base_system, uc_results; bus_names=["bus1", "bus2"], xtickfontsize=8, size=(800, 600)
 )
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
@@ -163,3 +161,4 @@ plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
     sys_uc, uc_results; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
+

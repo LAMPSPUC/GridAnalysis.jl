@@ -42,7 +42,7 @@ function add_gerator!(system::System, node::String, active_power_limits::NamedTu
         reactive_power=0.0,
         rating=active_power_limits.max,
         prime_mover=PrimeMovers.ST,
-        fuel=ThermalFuels.COAL, #TODO: Creat virtual thermalfuel
+        fuel=ThermalFuels.NATURAL_GAS, #TODO: Creat virtual thermalfuel
         active_power_limits=active_power_limits,
         reactive_power_limits=(min=-0.0, max=0.0), # won't influence our simulations
         time_limits=(up = 0.0, down = 0.0),
