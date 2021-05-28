@@ -41,7 +41,7 @@ active_power_limits = (min=0.0, max=0.5) # define maximum bid for generator
 gen = add_gerator!(base_system, node, active_power_limits)
 
 # create and set variable cost time-series for the generator
-ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24], system=base_system, costs=ones(24).*0)
+ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
 set_variable_cost!(base_system, gen, ts_array)
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
@@ -94,6 +94,11 @@ ed_results = get_problem_results(results, "ED");
 # calculate prices
 prices = evaluate_prices(market_simulator, ed_results)
 
+@test isa(prices, DataFrame)
+
+# virtual generation
+get_fuel(gen)
+
 p_5=prices[!,:"bus5"]
 
 variable_results = read_realized_variables(uc_results, names=[:P__ThermalStandard])
@@ -101,7 +106,6 @@ generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
 
 vitual_gen=generator_data[1][!,:7]
 revenue=p_5.*virtual_gen
-@test isa(prices, DataFrame)
 
 # Plots
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
