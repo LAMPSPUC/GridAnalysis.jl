@@ -37,12 +37,15 @@ base_system = build_5_bus_matpower_DA(
 
 # Add single generator at a defined bus
 node = "bus5" # define bus
-active_power_limits = (min=0.0, max=0.5) # define maximum bid for generator
+active_power_limits = (min=0.0, max=0.0) # define maximum bid for generator
 gen = add_gerator!(base_system, node, active_power_limits)
 
 # create and set variable cost time-series for the generator
 ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
 set_variable_cost!(base_system, gen, ts_array)
+
+#Define range quota
+range_quota=collect(0:0.1:8)
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -66,6 +69,20 @@ market_simulator = UCED(;
 )
 
 @test isa(market_simulator, UCED)
+
+# Virtual Bids Simulation 
+initial_time = DateTime("2020-01-01")
+lmps_df, results_df = pq_curves_da(
+    base_system;
+    gen,
+    range_quota,
+    initial_time, #: TODO: The same as ts_array
+    market_simulator,
+    steps = 1,
+    simulation_folder = joinpath(example_dir, "results")
+) #:TODO: Plots
+
+#=
 
 # for each formulation you will need to save different dual variables:
 constraint_duals = duals_constraint_names(market_simulator)
@@ -106,6 +123,7 @@ generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
 
 vitual_gen=generator_data[1][!,:7]
 revenue=p_5.*virtual_gen
+=#
 
 # Plots
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
@@ -172,4 +190,3 @@ plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
     sys_uc, uc_results; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
-

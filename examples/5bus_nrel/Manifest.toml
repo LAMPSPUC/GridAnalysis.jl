@@ -390,7 +390,7 @@ uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.59.0+4"
 
 [[GridAnalysis]]
-deps = ["DataFrames", "Dates", "Logging", "PowerSimulations", "PowerSystems", "RecipesBase"]
+deps = ["DataFrames", "Dates", "Logging", "PowerSimulations", "PowerSystems", "RecipesBase", "TimeSeries"]
 path = "../.."
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
 version = "0.1.2"

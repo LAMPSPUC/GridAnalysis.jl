@@ -22,6 +22,7 @@ export plot_demand_stack
 export plot_net_demand_stack
 export plot_prices
 export plot_thermal_commit
+export pq_curves_da
 export run_multiday_simulation
 export UCED
 
@@ -33,5 +34,6 @@ include("simulation.jl")
 include("utils.jl")
 include("plot.jl")
 include("modifying_functions.jl")
+include("gen_curves.jl")
 
 end
