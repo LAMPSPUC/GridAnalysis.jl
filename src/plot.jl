@@ -226,6 +226,7 @@ It uses the Renewable Dispatch from the `results`.
 """
 @userplot plot_net_demand_stack_prev
 @recipe function f(p::plot_net_demand_stack_prev;
+    x_ticks::StepRange{Int64, Int64}=nothing,
     bus_names::AbstractArray=[],
 )
     
@@ -269,6 +270,7 @@ It uses the Renewable Dispatch from the `results`.
         hours[h] = Dates.hour(times[h])+1
     end
     plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
+    x_ticks = isnothing(x_ticks) ? (0:1:length(times)) : x_ticks
     
     label --> reduce(hcat, names(plot_data))
     yguide --> "Net Demand (MWh)"
@@ -276,7 +278,7 @@ It uses the Renewable Dispatch from the `results`.
     seriestype --> :line
     xrotation --> 0
     title --> "Net Demand over the hours"
-    xticks --> 0:1:24
+    xticks --> x_ticks
     
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)

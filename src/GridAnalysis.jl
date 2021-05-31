@@ -21,6 +21,8 @@ export plot_prices
 export plot_thermal_commit
 export run_multiday_simulation
 export UCED
+export UCEDRT
+export UCRT
 
 const PSY = PowerSystems
 const PSI = PowerSimulations

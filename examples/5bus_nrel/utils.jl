@@ -43,21 +43,17 @@ Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
  - A matpower file containing grid information (case_file);
  - A file describing forecasts locations and details (forecasts_pointers_file);
 """
-function build_5_bus_matpower_RT(; kwargs...)
-    sys_kwargs = filter_kwargs(; kwargs...)
-    file_path = get_raw_data(; kwargs...)
-    data_dir = dirname(dirname(file_path))
-    pm_data = PowerSystems.PowerModelsData(file_path)
-
-    FORECASTS_DIR = joinpath(data_dir, "forecasts", "5bus_ts", "7day")
-
-    tsp = IS.read_time_series_file_metadata(
-        joinpath(FORECASTS_DIR, "timeseries_pointers_rt_7day.json"),
+function build_5_bus_matpower_RT(data_dir::AbstractString;
+    case_file::AbstractString="case5_re_uc.m",
+    FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
+    forecasts_pointers_file::AbstractString=joinpath(
+        FORECASTS_DIR, "timeseries_pointers_rt_7day.json"
     )
+)
+    case_file_path = joinpath(data_dir, case_file)
+    sys = System(case_file_path)
 
-    sys = System(pm_data)
-
-    add_time_series!(sys, tsp)
+    add_time_series!(sys, forecasts_pointers_file)
     transform_single_time_series!(sys, 12, Hour(1))
 
     return sys

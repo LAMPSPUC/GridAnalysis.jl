@@ -21,13 +21,18 @@ data_dir = joinpath(example_dir, "data")
 include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
-# define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
+# define solvers for Unit Commitment (UC), Real Time (RT) and Economic Dispatch (ED)
 solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
+solver_rt = optimizer_with_attributes(Cbc.Optimizer)
 solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
-base_system = build_5_bus_matpower_DA(
+sys_rt = build_5_bus_matpower_RT(
+    data_dir
+)
+
+base_da_system = build_5_bus_matpower_DA(
     data_dir;
     # using a modified (mod) file that reduced load for feasibility in DC-OPF
     forecasts_pointers_file=joinpath(
@@ -37,7 +42,7 @@ base_system = build_5_bus_matpower_DA(
 )
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
-sys_uc, sys_ed = prep_systems_UCED(base_system)
+sys_uc, sys_ed = prep_systems_UCED(base_da_system)
 
 # generic market formulation templates with defined network formulation
 # CopperPlate-OPF: network=CopperPlatePowerModel
@@ -45,19 +50,20 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 # NFA-OPF (only line limit constraints): network=NFAPowerModel
 # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
 template_uc = template_unit_commitment(; network=DCPPowerModel)
+template_rt = template_economic_dispatch(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
 # build a market clearing simulator (run `@doc UCED` for more information)
-market_simulator = UCED(;
+market_simulator = UCRT(;
     system_uc=sys_uc,
-    system_ed=sys_ed,
+    system_rt=sys_rt,
     template_uc=template_uc,
-    template_ed=template_ed,
+    template_rt=template_rt,
     solver_uc=solver_uc,
-    solver_ed=solver_ed,
+    solver_rt=solver_rt
 )
 
-@test isa(market_simulator, UCED)
+@test isa(market_simulator, UCRT)
 
 # for each formulation you will need to save different dual variables:
 constraint_duals = duals_constraint_names(market_simulator)
@@ -81,6 +87,79 @@ results = run_multiday_simulation(
 
 # separate results
 uc_results = get_problem_results(results, "UC");
+rt_results = get_problem_results(results, "RT");
+
+# calculate prices
+prices = evaluate_prices(market_simulator, rt_results)
+
+@test isa(prices, DataFrame)
+
+# Plots
+plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+
+plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+
+
+
+# RT with ED
+
+# build a market clearing simulator (run `@doc UCED` for more information)
+market_simulator = UCEDRT(;
+    system_uc=sys_uc,
+    system_rt=sys_rt,
+    system_ed=sys_ed,
+    template_uc=template_uc,
+    template_rt=template_rt,
+    template_ed=template_ed,
+    solver_uc=solver_uc,
+    solver_rt=solver_rt,
+    solver_ed=solver_ed,
+)
+
+@test isa(market_simulator, UCEDRT)
+
+# for each formulation you will need to save different dual variables:
+constraint_duals = duals_constraint_names(market_simulator)
+
+@test isa(constraint_duals[1], AbstractVector{Symbol})
+@test isa(constraint_duals[2], AbstractVector{Symbol})
+
+# Simulate market
+# build and run simulation
+# TODO: Rewiew functions
+result, result2 = run_multiday_simulation(
+    market_simulator,
+    Date("2020-01-01"), # initial time for simulation
+    1; # number of steps in simulation (normally number of days to simulate)
+    services_slack_variables=false,
+    balance_slack_variables=false,
+    constraint_duals=constraint_duals,
+    name="test_case_5bus",
+    simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
+);
+
+@test isa(results, SimulationResults)
+
+# separate results
+uc_results = get_problem_results(results, "UC");
+rt_results = get_problem_results(results, "RT");
 ed_results = get_problem_results(results, "ED");
 
 # calculate prices
@@ -105,7 +184,7 @@ plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, x_ticks = 0:1:24, size=(800, 600))
+plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
