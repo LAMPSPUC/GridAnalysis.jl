@@ -177,18 +177,18 @@ The `bus_names` controls which buses we want to include in the plot.
     loads = collect(get_components(PowerLoad, system))
 
     ts_array = Dict()
-    ts_names = get_time_series_names(Deterministic, loads[1])
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
     for load in loads
         if !haskey(ts_array, get_bus_name(load))
-            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = get_time_series_values(SingleTimeSeries, load, ts_names[1])
         else
-            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(SingleTimeSeries, load, ts_names[1])
         end
     end
 
     ts_array = DataFrame(ts_array)
 
-    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+    times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     
     plot_data = ts_array .* get_base_power(system)
 

@@ -22,14 +22,14 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC), Real Time (RT) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
-solver_rt = optimizer_with_attributes(Cbc.Optimizer)
+solver_uc = optimizer_with_attributes(Cbc.Optimizer)
+solver_rt = optimizer_with_attributes(GLPK.Optimizer)
 solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
 sys_rt = build_5_bus_matpower_RT(
-    data_dir
+    data_dir;
 )
 
 base_da_system = build_5_bus_matpower_DA(
@@ -76,8 +76,8 @@ results = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
-    services_slack_variables=false,
-    balance_slack_variables=false,
+    services_slack_variables=true,
+    balance_slack_variables=true,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
@@ -89,36 +89,46 @@ results = run_multiday_simulation(
 uc_results = get_problem_results(results, "UC");
 rt_results = get_problem_results(results, "RT");
 
+loads = collect(get_components(RenewableDispatch, sys_rt))
+timestamps = get_time_series_timestamps(SingleTimeSeries, loads[2], "max_active_power") 
+
+get_time_series_values(loads[1])
+variable_results = read_realized_variables(rt_results, names=[:P__RenewableDispatch]) 
+generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch]) 
+a=generator_data[1][!,:"SolarBusC"]
+
 # calculate prices
 prices = evaluate_prices(market_simulator, rt_results)
 
 @test isa(prices, DataFrame)
 
 # Plots
-plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_system, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_da_system, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_rt, rt_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(base_da_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 
-plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
-plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, rt_results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, rt_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_demand_stack(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(base_da_system, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack_prev(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack_prev(base_da_system, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(base_da_system, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 
 
-# RT with ED
+# TODO: RT with ED
 
 # build a market clearing simulator (run `@doc UCED` for more information)
 market_simulator = UCEDRT(;
@@ -148,8 +158,8 @@ result, result2 = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
-    services_slack_variables=false,
-    balance_slack_variables=false,
+    services_slack_variables=true,
+    balance_slack_variables=true,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
