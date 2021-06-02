@@ -37,7 +37,7 @@ base_system = build_5_bus_matpower_DA(
 
 # Add single generator at a defined bus
 node = "bus5" # define bus
-gen = add_gerator!(base_system, node, active_power_limits)
+gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
 
 # create and set variable cost time-series for the generator
 ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
