@@ -35,7 +35,7 @@
         "name": "max_active_power",
         "scaling_factor_multiplier": "get_max_active_power",
         "scaling_factor_multiplier_module": "PowerSystems",
-        "normalization_factor": 1139.57495,
+        "normalization_factor": 1539.57495,
         "data_file": "./rt_load.csv"
     },
     {
@@ -61,7 +61,7 @@
         "name": "max_active_power",
         "scaling_factor_multiplier": "get_max_active_power",
         "scaling_factor_multiplier_module": "PowerSystems",
-        "normalization_factor": 1139.57495,
+        "normalization_factor": 1239.57495,
         "data_file": "./rt_load.csv"
     }
 ]
