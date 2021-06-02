@@ -202,6 +202,22 @@ function evaluate_prices(
 end
 
 """
+    evaluate_prices(market_simulator::UCEDRT, problem_results::PSI.SimulationProblemResults)
+
+Returns energy prices for the simulation's data-range.  
+"""
+function evaluate_prices(
+    market_simulator::UCEDRT, problem_results::PSI.SimulationProblemResults
+)
+    return evaluate_prices(
+        market_simulator.template_ed.transmission,
+        market_simulator.system_ed,
+        problem_results,
+        market_simulator.ext,
+    )
+end
+
+"""
     get_time_series_params(system::System)
 
 Returns the parameters associated with the time-series attached to the system.
