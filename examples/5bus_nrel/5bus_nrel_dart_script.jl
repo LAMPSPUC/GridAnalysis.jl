@@ -38,7 +38,7 @@ base_da_system = build_5_bus_matpower_DA(
     forecasts_pointers_file=joinpath(
         data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
-    add_reserves=false,
+    add_reserves=true,
 )
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
@@ -75,9 +75,9 @@ constraint_duals = duals_constraint_names(market_simulator)
 results = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
-    1; # number of steps in simulation (normally number of days to simulate)
-    services_slack_variables=true,
-    balance_slack_variables=true,
+    2; # number of steps in simulation (normally number of days to simulate)
+    services_slack_variables=false,
+    balance_slack_variables=false,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
@@ -158,8 +158,8 @@ result, result2 = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
-    services_slack_variables=true,
-    balance_slack_variables=true,
+    services_slack_variables=false,
+    balance_slack_variables=false,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),

@@ -22,7 +22,7 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
+solver_uc = optimizer_with_attributes(Cbc.Optimizer)
 solver_ed = optimizer_with_attributes(GLPK.Optimizer)
 
 # call our data preparation to build base system
@@ -33,7 +33,7 @@ base_system = build_5_bus_matpower_DA(
     forecasts_pointers_file=joinpath(
         data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
-    add_reserves=false,
+    add_reserves=true,
 )
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
@@ -69,7 +69,7 @@ constraint_duals = duals_constraint_names(market_simulator)
 results = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
-    1; # number of steps in simulation (normally number of days to simulate)
+    2; # number of steps in simulation (normally number of days to simulate)
     services_slack_variables=false,
     balance_slack_variables=false,
     constraint_duals=constraint_duals,
