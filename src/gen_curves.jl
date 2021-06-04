@@ -1,11 +1,26 @@
+
+
+function set_active_power_limits(
+    market_simulator::UCED, name_generator, active_power_limits
+)
+
+        generator_uc = get_component(name_generator) #em cada sistema 
+        generator_ed = get_component(name_generator)
+
+        set_active_power_limits!(generator_uc, active_power_limits)
+        set_active_power_limits!(generator_da, active_power_limits)
+
+    return generator_uc, generator_ed
+end
+
 """
     pq_curves_da(generator::ThermalStandard; base_system::System,range_quota::Vector{Int64}, initial_time::Date, steps::Int = 1, simulation_folder::String = pwd(), solver_uc::MathOptInterface.OptimizerWithAttributes, solver_ed::MathOptInterface.OptimizerWithAttributes)
 
 Creates a curve of generation and nodes prices for a vector of 'range_quotas' for max generation of a virtual 'generator' in a 'base_system'. 
 """
-function pq_curves_da(
-    generator::ThermalStandard;
-    base_system::System,
+function pq_curves_virtuals(
+    name_generator::AbstractString,
+    market_simulator::,
     range_quota::Vector{Int64},
     initial_time::Date,
     steps::Int = 1,
@@ -17,30 +32,10 @@ function pq_curves_da(
     results_df = Dict()
 
     for max_gen in range_quota
-        set_active_power_limits!(generator, (min = 0.0, max = max_gen))
-       
-        # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
-        sys_uc, sys_ed = prep_systems_UCED(base_system)
 
-        # generic market formulation templates with defined network formulation
-        # CopperPlate-OPF: network=CopperPlatePowerModel
-        # DC-OPF: network=DCPPowerModel
-        # NFA-OPF (only line limit constraints): network=NFAPowerModel
-        # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
-        template_uc = template_unit_commitment(; network=DCPPowerModel)
-        template_ed = template_economic_dispatch(; network=DCPPowerModel)
+        set_active_power_limits!(market_simulator, name_generator, (min = 0.0, max = max_gen))
 
-        # build a market clearing simulator (run `@doc UCED` for more information)
-        market_simulator = UCED(;
-            system_uc=sys_uc,
-            system_ed=sys_ed,
-            template_uc=template_uc,
-            template_ed=template_ed,
-            solver_uc=solver_uc,
-            solver_ed=solver_ed,
-        )
 
-        @test isa(market_simulator, UCED)
         # for each formulation you will need to save different dual variables:
         constraint_duals = duals_constraint_names(market_simulator)
 

@@ -46,6 +46,29 @@ set_variable_cost!(base_system, gen, ts_array)
 #Define range quota
 range_quota=collect(0:1:5)
 
+ # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
+ sys_uc, sys_ed = prep_systems_UCED(base_system)
+
+ # generic market formulation templates with defined network formulation
+ # CopperPlate-OPF: network=CopperPlatePowerModel
+ # DC-OPF: network=DCPPowerModel
+ # NFA-OPF (only line limit constraints): network=NFAPowerModel
+ # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
+ template_uc = template_unit_commitment(; network=DCPPowerModel)
+ template_ed = template_economic_dispatch(; network=DCPPowerModel)
+
+ # build a market clearing simulator (run `@doc UCED` for more information)
+ market_simulator = UCED(;
+     system_uc=sys_uc,
+     system_ed=sys_ed,
+     template_uc=template_uc,
+     template_ed=template_ed,
+     solver_uc=solver_uc,
+     solver_ed=solver_ed,
+ )
+
+ @test isa(market_simulator, UCED)
+
 # Virtual Bids Simulation 
 initial_time = Date("2020-01-01")
 lmps_df, results_df = pq_curves_da(
@@ -66,8 +89,10 @@ variable_results = read_realized_variables(results_df[max_gen], names=[:P__Therm
 generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
 lmps=lmps_df[max_gen]
 virtual_gen=generator_data[1][!,:7]
-p=lmps[!,:"bus5"] # TODO: Put bus here
+p=lmps[!,Symbol(bus)] # TODO: Put bus here
 revenue=p.*virtual_gen
+#plot da receita (total) por bid : generico get_component(cost)
+#primeiro virtual
 
 #=
 # Plots
