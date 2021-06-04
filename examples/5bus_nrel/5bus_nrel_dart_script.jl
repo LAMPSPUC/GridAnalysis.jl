@@ -4,6 +4,7 @@ using Cbc
 using Dates
 using DataFrames
 using GLPK
+using Gurobi
 using GridAnalysis
 using PowerSystems
 using PowerSimulations
@@ -22,9 +23,9 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC), Real Time (RT) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer)
-solver_rt = optimizer_with_attributes(GLPK.Optimizer)
-solver_ed = optimizer_with_attributes(GLPK.Optimizer)
+solver_uc = optimizer_with_attributes(Gurobi.Optimizer)
+solver_rt = optimizer_with_attributes(Gurobi.Optimizer)
+solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
@@ -154,7 +155,7 @@ constraint_duals = duals_constraint_names(market_simulator)
 # Simulate market
 # build and run simulation
 # TODO: Rewiew functions
-result, result2 = run_multiday_simulation(
+result1, result2 = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
@@ -165,12 +166,13 @@ result, result2 = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, SimulationResults)
+@test isa(result1, SimulationResults)
+@test isa(result2, SimulationResults)
 
 # separate results
-uc_results = get_problem_results(results, "UC");
-rt_results = get_problem_results(results, "RT");
-ed_results = get_problem_results(results, "ED");
+uc_results = get_problem_results(result1, "UC");
+rt_results = get_problem_results(result2, "RT");
+ed_results = get_problem_results(result1, "ED");
 
 # calculate prices
 prices = evaluate_prices(market_simulator, ed_results)
@@ -184,6 +186,7 @@ plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDi
 plot_generation_stack(base_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(base_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 
+plot_prices(market_simulator, rt_results; xtickfontsize=8, size=(800, 600))
 plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
 plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
