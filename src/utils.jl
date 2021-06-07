@@ -195,9 +195,23 @@ function evaluate_prices(
         "RT" => evaluate_prices(
             market_simulator.template_rt.transmission,
             market_simulator.system_rt,
-            ed_results,
+            rt_results,
             market_simulator.kwargs,
         )
+    )
+    
+end
+
+function evaluate_prices(
+    market_simulator::UCRT, problem_results::PSI.SimulationResults
+)
+    rt_results = get_problem_results(results, "RT")
+
+    return evaluate_prices(
+        market_simulator.template_rt.transmission,
+        market_simulator.system_rt,
+        rt_results,
+        market_simulator.kwargs,
     )
     
 end

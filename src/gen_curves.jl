@@ -74,7 +74,7 @@ function pq_curves_virtuals!(
 
     for max_gen in range_quota
 
-        set_active_power_limits!(market_simulator, name_generator, (min = 0.0, max = max_gen))
+        set_active_power_limits!(market_simulator; name_generator, (min = 0.0, max = max_gen))
 
         # for each formulation you will need to save different dual variables:
         constraint_duals = duals_constraint_names(market_simulator)

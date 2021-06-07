@@ -74,12 +74,12 @@ market_simulator = UCED(;
 initial_time = Date("2020-01-01")
 name_generator=get_name(gen)
 lmps_df, results_df = pq_curves_virtuals!(
-    market_simulator,
+    market_simulator;
     name_generator,
     range_quota,
     initial_time, #: TODO: The same as ts_array
-    1,
-    joinpath(example_dir, "results"),
+    steps=1,
+    simulation_folder=joinpath(example_dir, "results"),
 ) #:TODO: Plots
 
 max_gen=4
