@@ -71,13 +71,11 @@ market_simulator = UCED(;
 @test isa(market_simulator, UCED)
 
 # Virtual Bids Simulation 
-initial_time = Date("2020-01-01")
-name_generator=get_name(gen)
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator;
-    name_generator,
+    name_generator=get_name(gen),
     range_quota,
-    initial_time, #: TODO: The same as ts_array
+    initial_time=Date("2020-01-01"), #: TODO: The same as ts_array
     steps=1,
     simulation_folder=joinpath(example_dir, "results"),
 ) #:TODO: Plots

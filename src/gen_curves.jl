@@ -62,7 +62,7 @@ end
 Creates a curve of generation and nodes prices for a vector of 'range_quotas' for max generation of a virtual 'generator' in a market clearing 'market_simulator'. 
 """
 function pq_curves_virtuals!(
-    market_simulator::MarketSimulator;
+    market_simulator::MarketSimulator,
     name_generator::AbstractString,
     range_quota::Vector{Int64},
     initial_time::Date,
