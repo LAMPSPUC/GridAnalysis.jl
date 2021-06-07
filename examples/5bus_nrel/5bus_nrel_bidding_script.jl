@@ -35,16 +35,16 @@ base_system = build_5_bus_matpower_DA(
     add_reserves=false,
 )
 
-# Add single generator at a defined bus
-node = "bus5" # define bus
-gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
-
-# create and set variable cost time-series for the generator
-ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
-set_variable_cost!(base_system, gen, ts_array)
-
-#Define range quota
-range_quota=collect(0:1:5)
+ # Add single generator at a defined bus
+ node = "bus5" # define bus
+ gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
+ 
+ # create and set variable cost time-series for the generator
+ ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
+ set_variable_cost!(base_system, gen, ts_array)
+ 
+ #Define range quota
+ range_quota=collect(0:1:5)
 
  # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
  sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -71,25 +71,24 @@ range_quota=collect(0:1:5)
 
 # Virtual Bids Simulation 
 initial_time = Date("2020-01-01")
-lmps_df, results_df = pq_curves_da(
-    gen;
-    base_system,
+name_generator=get_name(gen)
+lmps_df, results_df = pq_curves_virtuals(
+    market_simulator,
+    name_generator,
     range_quota,
     initial_time, #: TODO: The same as ts_array
-    steps=1,
-    simulation_folder = joinpath(example_dir, "results"),
-    solver_uc,
-    solver_ed
+    1,
+    joinpath(example_dir, "results"),
 ) #:TODO: Plots
 
 
-max_gen=4
+max_gen=5
 bus=get_name(get_bus(gen))
 variable_results = read_realized_variables(results_df[max_gen], names=[:P__ThermalStandard])
 generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
 lmps=lmps_df[max_gen]
 virtual_gen=generator_data[1][!,:7]
-p=lmps[!,Symbol(bus)] # TODO: Put bus here
+p=lmps[!,Symbol(bus)] 
 revenue=p.*virtual_gen
 #plot da receita (total) por bid : generico get_component(cost)
 #primeiro virtual
