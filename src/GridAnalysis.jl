@@ -22,7 +22,7 @@ export plot_demand_stack
 export plot_net_demand_stack
 export plot_prices
 export plot_thermal_commit
-export pq_curves_virtuals
+export pq_curves_virtuals!
 export run_multiday_simulation
 export set_active_power_limits
 export UCED
