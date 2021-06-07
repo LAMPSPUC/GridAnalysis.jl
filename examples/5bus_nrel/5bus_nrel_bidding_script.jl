@@ -44,7 +44,7 @@ base_system = build_5_bus_matpower_DA(
  set_variable_cost!(base_system, gen, ts_array)
  
  #Define range quota
- range_quota=collect(0:1:5)
+ range_quota=collect(0:1:4)
 
  # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
  sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -81,8 +81,7 @@ lmps_df, results_df = pq_curves_virtuals(
     joinpath(example_dir, "results"),
 ) #:TODO: Plots
 
-
-max_gen=5
+max_gen=4
 bus=get_name(get_bus(gen))
 variable_results = read_realized_variables(results_df[max_gen], names=[:P__ThermalStandard])
 generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])

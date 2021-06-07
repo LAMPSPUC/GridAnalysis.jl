@@ -1,3 +1,4 @@
+
 """
     set_active_power_limits(market_simulator::UCED, name_generator, active_power_limits)
 
@@ -8,13 +9,31 @@ function set_active_power_limits(
     market_simulator::UCED, name_generator, active_power_limits
 )
 
-        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)#em cada sistema 
+        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
         generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
 
         set_active_power_limits!(generator_uc, active_power_limits)
         set_active_power_limits!(generator_ed, active_power_limits)
 
-    return generator_uc, generator_ed
+end
+
+#= Enable when UCRT and UCEDRT are ready
+"""
+    set_active_power_limits(market_simulator::UCRT, name_generator, active_power_limits)
+
+Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCRT.
+"""
+
+function set_active_power_limits(
+    market_simulator::UCRT, name_generator, active_power_limits
+)
+
+        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
+        generator_rt = get_component(ThermalStandard, sys_rt, name_generator)
+
+        set_active_power_limits!(generator_uc, active_power_limits)
+        set_active_power_limits!(generator_rt, active_power_limits)
+
 end
 
 """
@@ -27,7 +46,7 @@ function set_active_power_limits(
     market_simulator::UCEDRT, name_generator, active_power_limits
 )
 
-        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)#em cada sistema 
+        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
         generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
         generator_rt = get_component(ThermalStandard, sys_rt, name_generator)
 
@@ -35,9 +54,8 @@ function set_active_power_limits(
         set_active_power_limits!(generator_ed, active_power_limits)
         set_active_power_limits!(generator_rt, active_power_limits)
 
-    return generator_uc, generator_ed, generator_rt
 end
-
+=#
 
 """
     pq_curves_virtuals(market_simulator, name_generator::AbstractString, range_quota::Vector{Int64}, initial_time::Date, steps::Int = 1, simulation_folder::String = pwd())
