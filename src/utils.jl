@@ -167,15 +167,41 @@ end
 Returns energy prices for the simulation's data-range.  
 """
 function evaluate_prices(
-    market_simulator::UCED, problem_results::PSI.SimulationProblemResults
+    market_simulator::UCED, problem_results::PSI.SimulationResults
 )
+    ed_results = get_problem_results(results, "ED")
+
     return evaluate_prices(
         market_simulator.template_ed.transmission,
         market_simulator.system_ed,
-        problem_results,
+        ed_results,
         market_simulator.kwargs,
     )
 end
+#=
+function evaluate_prices(
+    market_simulator::UCEDRT, problem_results::PSI.SimulationResults
+)
+    ed_results = get_problem_results(results, "ED")
+    rt_results = get_problem_results(results, "RT")
+
+    return Dict(
+        "ED" => evaluate_prices(
+            market_simulator.template_ed.transmission,
+            market_simulator.system_ed,
+            ed_results,
+            market_simulator.kwargs,
+        ), 
+        "RT" => evaluate_prices(
+            market_simulator.template_rt.transmission,
+            market_simulator.system_rt,
+            ed_results,
+            market_simulator.kwargs,
+        )
+    )
+    
+end
+=#
 
 """
     get_time_series_params(system::System)
