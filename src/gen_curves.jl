@@ -10,7 +10,7 @@ function set_active_power_limits!(
     name_generator::AbstractString, 
     active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}}
 )
-    generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
+    generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
     generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
 
     set_active_power_limits!(generator_uc, active_power_limits)
