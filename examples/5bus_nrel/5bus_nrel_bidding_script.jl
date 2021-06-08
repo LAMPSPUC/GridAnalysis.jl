@@ -84,16 +84,16 @@ lmps_df, results_df = pq_curves_virtuals!(
     simulation_folder,
 ) #:TODO: Plots
 
-max_gen=4
+max_gen=2
 bus=get_name(get_bus(gen))
-variable_results = read_realized_variables(results_df[max_gen], names=[:P__ThermalStandard])
+variable_results = read_realized_variables(get_problem_results(results_df[max_gen], "UC"), names=[:P__ThermalStandard])
 generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
 lmps=lmps_df[max_gen]
 virtual_gen=generator_data[1][!,:7]
-p=lmps[!,Symbol(bus)] 
+price=lmps[!,Symbol(bus)] 
 revenue=p.*virtual_gen
 #plot da receita (total) por bid : generico get_component(cost)
-#primeiro virtual
+#primeiro virtual, passar período e bus (?) - ou fazer só pro bus do virtual msm, passar mercado
 
 #=
 # Plots
