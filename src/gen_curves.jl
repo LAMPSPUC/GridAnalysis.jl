@@ -11,16 +11,16 @@ function set_active_power_limits!(
     active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}}
 )
     generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
-    generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
+    generator_ed = get_component(ThermalStandard, market_simulator.system_ed, name_generator)
 
-    set_active_power_limits!(generator_uc, active_power_limits)
-    set_active_power_limits!(generator_ed, active_power_limits)
+    PowerSystems.set_active_power_limits!(generator_uc, active_power_limits)
+    PowerSystems.set_active_power_limits!(generator_ed, active_power_limits)
 
 end
 
 #= Enable when UCRT and UCEDRT are ready
 """
-    set_active_power_limits(market_simulator::UCRT, name_generator, active_power_limits)
+    set_active_power_limits(market_simulator::UCRT, name_generator::AbstractString, active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}})
 
 Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCRT.
 """
@@ -29,16 +29,16 @@ function set_active_power_limits(
     market_simulator::UCRT, name_generator, active_power_limits
 )
 
-        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
-        generator_rt = get_component(ThermalStandard, sys_rt, name_generator)
+        generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
+        generator_rt = get_component(ThermalStandard, market_simulator.system_rt, name_generator)
 
-        set_active_power_limits!(generator_uc, active_power_limits)
-        set_active_power_limits!(generator_rt, active_power_limits)
+        PowerSystems.set_active_power_limits!(generator_uc, active_power_limits)
+        PowerSystems.set_active_power_limits!(generator_rt, active_power_limits)
 
 end
 
 """
-    set_active_power_limits(market_simulator::UCEDRT, name_generator, active_power_limits)
+    set_active_power_limits(market_simulator::UCEDRT, name_generator::AbstractString, active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}})
 
 Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCEDRT.
 """
@@ -47,13 +47,13 @@ function set_active_power_limits(
     market_simulator::UCEDRT, name_generator, active_power_limits
 )
 
-        generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
-        generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
-        generator_rt = get_component(ThermalStandard, sys_rt, name_generator)
+        generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
+        generator_ed = get_component(ThermalStandard, market_simulator.system_ed, name_generator)
+        generator_rt = get_component(ThermalStandard, market_simulator.system_rt, name_generator)
 
-        set_active_power_limits!(generator_uc, active_power_limits)
-        set_active_power_limits!(generator_ed, active_power_limits)
-        set_active_power_limits!(generator_rt, active_power_limits)
+        PowerSystems.set_active_power_limits!(generator_uc, active_power_limits)
+        PowerSystems.set_active_power_limits!(generator_ed, active_power_limits)
+        PowerSystems.set_active_power_limits!(generator_rt, active_power_limits)
 
 end
 =#
