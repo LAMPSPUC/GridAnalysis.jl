@@ -1,12 +1,14 @@
 
 """
-    set_active_power_limits(market_simulator::UCED, name_generator, active_power_limits)
+    set_active_power_limits(market_simulator::UCED, name_generator::AbstractString, active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}})
 
 Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCED.
 """
 
 function set_active_power_limits!(
-    market_simulator::UCED; name_generator, active_power_limits
+    market_simulator::UCED,
+    name_generator::AbstractString, 
+    active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}}
 )
     generator_uc = get_component(ThermalStandard, sys_uc, name_generator)
     generator_ed = get_component(ThermalStandard, sys_ed, name_generator)
@@ -64,7 +66,7 @@ Creates a curve of generation and nodes prices for a vector of 'range_quotas' fo
 function pq_curves_virtuals!(
     market_simulator::MarketSimulator,
     name_generator::AbstractString,
-    range_quota::Vector{Int64},
+    range_quota::Vector{Float64},
     initial_time::Date,
     steps::Int = 1,
     simulation_folder::String = pwd(),
@@ -74,7 +76,7 @@ function pq_curves_virtuals!(
 
     for max_gen in range_quota
 
-        set_active_power_limits!(market_simulator; name_generator, (min = 0.0, max = max_gen))
+        set_active_power_limits!(market_simulator, name_generator, (min = 0.0, max = max_gen))
 
         # for each formulation you will need to save different dual variables:
         constraint_duals = duals_constraint_names(market_simulator)

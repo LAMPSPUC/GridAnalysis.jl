@@ -45,7 +45,7 @@ ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), 
 set_variable_cost!(base_system, gen, ts_array)
 
 #Define range quota
-range_quota=collect(0:1:4)
+range_quota=Float64.(collect(0:1:4))
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -71,13 +71,17 @@ market_simulator = UCED(;
 @test isa(market_simulator, UCED)
 
 # Virtual Bids Simulation 
+name_generator=get_name(gen);
+initial_time=Date("2020-01-01");
+steps=1;
+simulation_folder=joinpath(example_dir, "results");
 lmps_df, results_df = pq_curves_virtuals!(
-    market_simulator;
-    name_generator=get_name(gen),
+    market_simulator,
+    name_generator,
     range_quota,
-    initial_time=Date("2020-01-01"), #: TODO: The same as ts_array
-    steps=1,
-    simulation_folder=joinpath(example_dir, "results"),
+    initial_time, #: TODO: The same as ts_array
+    steps,
+    simulation_folder,
 ) #:TODO: Plots
 
 max_gen=4
