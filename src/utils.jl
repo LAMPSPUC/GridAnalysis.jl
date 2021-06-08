@@ -175,12 +175,14 @@ end
 Returns energy prices for the simulation's data-range.  
 """
 function evaluate_prices(
-    market_simulator::UCED, problem_results::PSI.SimulationProblemResults
+    market_simulator::UCED, problem_results::PSI.SimulationResults
 )
+    ed_results = get_problem_results(problem_results, "ED")
+
     return evaluate_prices(
         market_simulator.template_ed.transmission,
         market_simulator.system_ed,
-        problem_results,
+        ed_results,
         market_simulator.kwargs,
     )
 end
@@ -191,14 +193,17 @@ end
 Returns energy prices for the simulation's data-range.  
 """
 function evaluate_prices(
-    market_simulator::UCRT, problem_results::PSI.SimulationProblemResults
+    market_simulator::UCRT, problem_results::PSI.SimulationResults
 )
+    rt_results = get_problem_results(problem_results, "RT")
+
     return evaluate_prices(
         market_simulator.template_rt.transmission,
         market_simulator.system_rt,
-        problem_results,
+        rt_results,
         market_simulator.kwargs,
     )
+    
 end
 
 """
@@ -206,15 +211,27 @@ end
 
 Returns energy prices for the simulation's data-range.  
 """
-function evaluate_prices(
-    market_simulator::UCEDRT, problem_results::PSI.SimulationProblemResults
+function evaluate_prices_UCEDRT(
+    market_simulator::UCEDRT, problem_results::Dict{String, SimulationResults}
 )
-    return evaluate_prices(
-        market_simulator.template_ed.transmission,
-        market_simulator.system_ed,
-        problem_results,
-        market_simulator.ext,
+    ed_results = get_problem_results(problem_results["ED"], "ED")
+    rt_results = get_problem_results(problem_results["RT"], "RT")
+
+    return Dict(
+        "ED" => evaluate_prices(
+            market_simulator.template_ed.transmission,
+            market_simulator.system_ed,
+            ed_results,
+            market_simulator.ext,
+        ), 
+        "RT" => evaluate_prices(
+            market_simulator.template_rt.transmission,
+            market_simulator.system_rt,
+            rt_results,
+            market_simulator.ext,
+        )
     )
+    
 end
 
 """

@@ -22,8 +22,8 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer)
-solver_ed = optimizer_with_attributes(GLPK.Optimizer)
+solver_uc = optimizer_with_attributes(Gurobi.Optimizer)
+solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
@@ -69,7 +69,7 @@ constraint_duals = duals_constraint_names(market_simulator)
 results = run_multiday_simulation(
     market_simulator,
     Date("2020-01-01"), # initial time for simulation
-    2; # number of steps in simulation (normally number of days to simulate)
+    1; # number of steps in simulation (normally number of days to simulate)
     services_slack_variables=false,
     balance_slack_variables=false,
     constraint_duals=constraint_duals,
@@ -84,7 +84,7 @@ uc_results = get_problem_results(results, "UC");
 ed_results = get_problem_results(results, "ED");
 
 # calculate prices
-prices = evaluate_prices(market_simulator, ed_results)
+prices = evaluate_prices(market_simulator, results)
 
 @test isa(prices, DataFrame)
 
@@ -95,17 +95,17 @@ plot_generation_stack(base_system, ed_results; generator_fields=[:P__RenewableDi
 plot_generation_stack(base_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(base_system, uc_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 
-plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
-plot_prices(market_simulator, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, x_ticks = 0:1:24, size=(800, 600))
 
-plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))

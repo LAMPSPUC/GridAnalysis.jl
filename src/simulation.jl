@@ -325,5 +325,5 @@ function run_multiday_simulation(
 
     sim_results_2 = SimulationResults(sim2)
 
-    return sim_results_1, sim_results_2
-end
+    return Dict("ED" => sim_results_1, "RT" => sim_results_2)
+end 
