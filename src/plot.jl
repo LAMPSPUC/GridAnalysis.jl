@@ -192,14 +192,14 @@ end
 """
     plot_prices_RT(
         market_simulator::MarketSimulator,
-        results::SimulationProblemResults;
+        results::SimulationResults;
         bus_names::AbstractArray=[])
 
 Plot the simulation prices over the time period covered by the `results`. The `bus_names`
 control which buses we want to include the plot.
 """
 @userplot plot_prices_RT
-@recipe function f(p::plot_prices; bus_names::AbstractArray=[])
+@recipe function f(p::plot_prices_RT; bus_names::AbstractArray=[])
     market_simulator, system_results, = p.args
 
     prices = evaluate_prices(market_simulator, system_results)
