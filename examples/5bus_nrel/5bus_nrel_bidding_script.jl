@@ -41,7 +41,7 @@ gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
 @test gen in get_components(Generator, base_system)
 
 # create and set variable cost time-series for the generator
-ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=ones(24).*0)
+ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=collect(1:24), system=base_system, costs=zeros(24))
 set_variable_cost!(base_system, gen, ts_array)
 
 #Define range quota
@@ -83,6 +83,8 @@ lmps_df, results_df = pq_curves_virtuals!(
     steps,
     simulation_folder,
 ) #:TODO: Plots
+
+
 
 max_gen=2
 bus=get_name(get_bus(gen))
