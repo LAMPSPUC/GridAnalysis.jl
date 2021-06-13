@@ -82,10 +82,16 @@ lmps_df, results_df = pq_curves_virtuals!(
     initial_time, #: TODO: The same as ts_array
     steps,
     simulation_folder,
-) #:TODO: Plots
+) 
 
+generator_name="bus5_virtual_supply"
+period=[1,2]
+bus_name=["bus5"]
 
+plot_price_curves(lmps_df, period, bus_name)
+plot_revenue_curves(lmps_df, results_df, period, generator_name)
 
+#=
 max_gen=2
 bus=get_name(get_bus(gen))
 variable_results = read_realized_variables(get_problem_results(results_df[max_gen], "UC"), names=[:P__ThermalStandard])
@@ -94,8 +100,8 @@ lmps=lmps_df[max_gen]
 virtual_gen=generator_data[1][!,:7]
 price=lmps[!,Symbol(bus)] 
 revenue=p.*virtual_gen
-#plot da receita (total) por bid : generico get_component(cost)
-#primeiro virtual, passar período e bus (?) - ou fazer só pro bus do virtual msm, passar mercado
+=#
+
 
 #=
 # Plots

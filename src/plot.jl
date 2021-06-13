@@ -367,36 +367,173 @@ Renewable Dispatch data is the time series from the `system`.
     end
 end
 
+"""
+    plot_price_curves(
+        lmps_df, period::Vector{Int64}, 
+        bus_name::AbstractArray=["bus5"]
+    )
+
+Function to plot the prices over the virtual offer bids. 
+The 'bus_names' and 'periods' controls which buses and periods we want to include
+in the plot, respectively.
+"""
+
+function plot_price_curves(lmps_df, period::Vector{Int64}, bus_name::AbstractArray=["bus5"])
+
+    lmps_df = sort(lmps_df)
+    indices=[]
+    data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in period #arrumar
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            c=2
+            for j in bus_name
+                data[t,c,i]=lmps_df[v][!,j][t]
+                c=c+1
+            end
+        end
+        indices = vcat(indices, v)
+    end
+   
+    c=1
+    for b=1: length(bus_name) 
+        for t=1:length(period)
+            if c==1
+                plot(data[t,b+1,:],label="hora"*string(period[t])*"- "*string(bus_name[b]))
+            else
+                plot!(data[t,b+1,:],label="hora"*string(period[t])*"- "*string(bus_name[b]))
+            end
+            c=c+1
+        end
+    end
+
+    plot!(title = "Price per Virtual Bid on "*bus_name[1], ylabel = "Prices (\$/MWh)", xlabel = "Bid offers")
+    #TODO: Change x axis, define bus_name of virtual bid 
+end
+
+"""
+    plot_revenue_curves(
+        lmps_df, results_df, period::Vector{Int64}, 
+        bus_name::AbstractArray=["bus5"]
+    )
+
+Function to plot the virtual revenues over the virtual offer bids. 
+The 'generator_name' defines which is the virtual generator that we want to plot it's results
+and 'periods' controls which periods we want to include in the plot.
+"""
+function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::AbstractArray)
+    
+    lmps_df = sort(lmps_df)
+    gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_name=get_bus(gen)
+
+    indices=[]
+    data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in period
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
+            generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            virtual_gen=generator_data[1][!,7][t] #name_generator
+            data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
+        end
+        indices = vcat(indices, v)
+    end
+
+    c=1
+    for t =1:length(period)
+        if c==1
+            plot(data[t,2,:],label="hora"*string(period[t]))
+        else
+            plot!(data[t,2,:],label="hora"*string(period[t]))
+        end
+        c=c+1
+    end
+
+    plot!(title = "Virtual Revenue per Offer on "*bus_name, ylabel = "Revenue (\$/MWh)", xlabel = "Bid offers")
+    #TODO: Change x axis 
+
+end
+
+#= TODO: curves plots with recipe function
 @userplot plot_offert_price()
 @recipe function f(p::plot_offert_price; period::Vector{Int64}, bus_name::AbstractArray=["bus5"])
     lmps_df, = p.args
 
+    lmps_df = sort(lmps_df)
+
     indices=[]
-    data=Array{Any}(nothing, (size(lmps_df[0])[1],length(bus_name)+1,length(lmps_df)))
+    data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
     for (i, v) in enumerate(keys(lmps_df))
-        data[:,1,i]=lmps_df[v][!,"DateTime"]
-        c=2
-        for j in bus_name
-            data[:,c,i]=lmps_df[v][!,j]
-            c=c+1
+        for t in period #arrumar
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            c=2
+            for j in bus_name
+                data[t,c,i]=lmps_df[v][!,j][t]
+                c=c+1
+            end
         end
         indices = vcat(indices, v)
-    end
-    #v não está vindo na ordem! : indice
-    plot_data = data #data[t,bus,max_gen]: a selecionado a linha que quero
+    end #TODO: select period better
+
+    plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
     #label --> reduce(hcat, names(plot_data))
     yguide --> "Prices (\$/MWh)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
 
-    c=2
     for i in bus_name
-        for t in Base.axes(plot_data, 2) # verificar
+        for t in Base.axes(plot_data, 1) # verificar
             @series begin
-                indices, plot_data[t,c,:]
+                indices, plot_data[t,:,i] #pegar a coluna do bus_name
             end
         end
-        c=c+1
     end
 end
+
+@userplot plot_revenue()
+@recipe function f(p::plot_revenue; g::, period::Vector{Int64}, generator_name::AbstractArray)
+    lmps_df,=p.args
+    lmps_df = sort(lmps_df)
+    results_df=g
+    gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_name=get_bus(gen)
+
+    #ED price (bus_name)
+    #RT price (bus_name)
+    #UC generation (bus_name)
+
+    #Revenue = (price["ED"] - price["RT"])*generation("UC")
+    #Revenue = (price["RT"] - price["ED"])*generation("UC")
+
+    #Revenue = price*generation("UC")
+
+    indices=[]
+    data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in period
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
+            generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            virtual_gen=generator_data[1][!,7][t] #name_generator
+            data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
+        end
+        indices = vcat(indices, v)
+    end#TODO: select only period
+
+    plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
+    #label --> reduce(hcat, names(plot_data))
+    yguide --> "Revenues (\$/MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    for t in Base.axes(plot_data, 2) # verificar
+        @series begin
+            indices, plot_data[t,2,:]
+        end
+    end
+
+end
+=#
