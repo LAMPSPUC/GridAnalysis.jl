@@ -133,8 +133,8 @@ end
 """
     Simulation(simulator::UCEDRT, initial_time::Date, steps::Int) -> PSI.Simulation
 
-Builds a multiday UC-RT PSI.Simulation from a UCRT market simulator, an initial date and 
-number of simulation steps.
+Builds a multiday UC-ED and a UC-RT PSI.Simulation from a UCEDRT market simulator, an initial date and 
+number of simulation steps. It returns a tuple with both simulations.
 """
 function PSI.Simulation(
     simulator::UCEDRT,
@@ -286,7 +286,9 @@ end
 """
     run_multiday_simulation(simulator::MarketSimulator, initial_time::Date, steps::Int) -> SimulationResults
 
-Runs a multiday PSI.Simulation from a MarketSimulator, an initial date and number of simulation steps.
+Runs two multiday PSI.Simulation from a MarketSimulator, an initial date and number of simulation steps,
+one for the UC-ED simulation and other for the UC-RT simulation. It returns a dictionary with both 
+simulation results.
 """
 function run_multiday_simulation(
     simulator::UCEDRT,

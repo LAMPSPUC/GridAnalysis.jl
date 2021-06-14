@@ -15,11 +15,11 @@ export duals_constraint_names
 export evaluate_prices
 export evaluate_prices_UCEDRT
 export fuel_type_mapping
+export get_time_series_params
 export plot_generation_stack
 export plot_demand_stack
 export plot_net_demand_stack
 export plot_prices
-export plot_prices_RT
 export plot_thermal_commit
 export run_multiday_simulation
 export UCED

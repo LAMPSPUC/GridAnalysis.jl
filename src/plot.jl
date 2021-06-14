@@ -74,11 +74,12 @@ end
 """
     plot_prices(
         market_simulator::MarketSimulator,
-        results::SimulationProblemResults;
+        results::SimulationResults;
         bus_names::AbstractArray=[])
 
 Plot the simulation prices over the time period covered by the `results`. The `bus_names`
-control which buses we want to include the plot.
+control which buses we want to include the plot. If the `market_simulator` is the one
+that evaluate the prices on Real Time (RT), it is on \$/MW-5min.
 """
 @userplot plot_prices
 @recipe function f(p::plot_prices; bus_names::AbstractArray=[])
@@ -86,7 +87,9 @@ control which buses we want to include the plot.
 
     prices = evaluate_prices(market_simulator, system_results)
 
-    plot_data = select(prices, Not(:DateTime))
+    prices_keys = collect(keys(prices))
+    
+    plot_data = select(prices[prices_keys[1]], Not(:DateTime))
 
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
@@ -95,7 +98,7 @@ control which buses we want to include the plot.
         select!(plot_data, bus_names)
     end
 
-    times = prices[!, 1]
+    times = prices[prices_keys[1]][!, 1]
 
     if isa(market_simulator, UCRT) || isa(market_simulator, UCEDRT)
         yguide --> "Prices (\$/MW-5min)"
@@ -116,156 +119,11 @@ control which buses we want to include the plot.
 end
 
 """
-    plot_prices(
-        market_simulator::MarketSimulator,
-        results::Tuple{SimulationResults, SimulationResults};
-        bus_names::AbstractArray=[])
-
-Plot the simulation prices over the time period covered by the `results`. The `bus_names`
-control which buses we want to include the plot.
-"""
-@userplot plot_prices
-@recipe function f(p::plot_prices; bus_names::AbstractArray=[])
-    market_simulator, system_results, = p.args
-
-    prices = evaluate_prices_UCEDRT(market_simulator, system_results)
-
-    plot_data_ed = select(prices["ED"], Not(:DateTime))
-    prices_rt = prices["RT"]
-    values = select(prices_rt, Not(:DateTime))
-    n_prev, n_bus = size(values)
-
-    intervals = get_time_series_params(market_simulator.system_rt).interval
-    
-    n_prev_hour = Int(60/intervals.value)
-    n_days = Int(n_prev/n_prev_hour)
-    
-    names_bus = names(values)
-    prices_rt_sum = zeros(n_days,n_bus)
-
-    i = 1
-    while i < n_days
-        for j in 1:(n_prev_hour):n_prev
-            prices_hour = prices_rt[prices_rt[j,:DateTime] .<= prices_rt.DateTime .< prices_rt[j,:DateTime]+Hour(1), :]
-            prices_hour = select(prices_hour, Not(:DateTime))
-            prices_rt_sum[i,:] = sum(Matrix(prices_hour), dims = 1)
-            i = i + 1
-        end
-    end
-    
-    dictionary = Dict()
-    n_row, n_col = size(values)
-
-    for price in 1:n_col
-        if !haskey(dictionary, names_bus[price])
-            dictionary[names_bus[price]] = prices_rt_sum[:,price]
-        else
-            dictionary[names_bus[price]] = dictionary[names_bus[price]] + prices_rt_sum[:,price]
-        end
-    end
-
-    plot_data = DataFrame(dictionary)
-
-    # select rows for the given bus names, default to all buses.
-    if !isempty(bus_names)
-        bus_names = String.(bus_names)
-        @assert issubset(bus_names, names(plot_data))
-        select!(plot_data, bus_names)
-    end
-
-    times = prices["ED"][!, 1]
-
-    label --> reduce(hcat, names(plot_data))
-    yguide --> "Prices (\$/MWh)"
-    legend --> :outertopright
-    seriestype --> :line
-    xrotation --> 45
-
-    for i in Base.axes(plot_data, 2)
-        @series begin
-            times, plot_data[:, i]
-        end
-    end
-end
-
-
-"""
-    plot_prices_RT(
-        market_simulator::MarketSimulator,
-        results::SimulationResults;
-        bus_names::AbstractArray=[])
-
-Plot the simulation prices over the time period covered by the `results`. The `bus_names`
-control which buses we want to include the plot.
-"""
-@userplot plot_prices_RT
-@recipe function f(p::plot_prices_RT; bus_names::AbstractArray=[])
-    market_simulator, system_results, = p.args
-
-    prices = evaluate_prices(market_simulator, system_results)
-
-    values = select(prices, Not(:DateTime))
-    n_prev, n_bus = size(values)
-
-    intervals = get_time_series_params(market_simulator.system_rt).interval
-    
-    n_prev_hour = Int(60/intervals.value)
-    n_days = Int(n_prev/n_prev_hour)
-    
-    names_bus = names(values)
-    prices_rt = zeros(n_days,n_bus)
-
-    i = 1
-    while i < n_days
-        #for j in 1:(n_prev_hour):n_prev
-        for j = i+(12*(i-1))
-            prices_hour = prices[prices[j,:DateTime] .<= prices.DateTime .< prices[j,:DateTime]+Hour(1), :]
-            prices_hour = select(prices_hour, Not(:DateTime))
-            prices_rt[i,:] = sum(Matrix(prices_hour), dims = 1)
-            i = i + 1
-        end
-    end
-
-    times = prices[1:n_prev_hour:n_prev, 1]
-    
-    dictionary = Dict()
-    n_row, n_col = size(prices_rt)
-
-    for price in 1:n_col
-        if !haskey(dictionary, names_bus[price])
-            dictionary[names_bus[price]] = prices_rt[:,price]
-        else
-            dictionary[names_bus[price]] = dictionary[names_bus[price]] + prices_rt[:,price]
-        end
-    end
-
-    plot_data = DataFrame(dictionary)
-
-    # select rows for the given bus names, default to all buses.
-    if !isempty(bus_names)
-        bus_names = String.(bus_names)
-        @assert issubset(bus_names, names(plot_data))
-        select!(plot_data, bus_names)
-    end
-
-    label --> reduce(hcat, names(plot_data))
-    yguide --> "Prices (\$/MWh)"
-    legend --> :outertopright
-    seriestype --> :line
-    xrotation --> 45
-
-    for i in Base.axes(plot_data, 2)
-        @series begin
-            times, plot_data[:, i]
-        end
-    end
-end
-
-
-"""
     plot_thermal_commit(
         system::System,
-        results::SimulationProblemResults)
+        results::SimulationProblemResults;
+        bus_names::AbstractArray=[],
+    )
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
@@ -312,7 +170,9 @@ end
 
 """
     plot_demand_stack(
-        system::System)
+        system::System;
+        bus_names::AbstractArray=[]
+    )
 
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
@@ -324,6 +184,7 @@ The `bus_names` controls which buses we want to include in the plot.
 )
     system, = p.args
 
+    # Getting the time series of the Demand
     loads = collect(get_components(PowerLoad, system))
 
     ts_array = Dict()
@@ -342,6 +203,7 @@ The `bus_names` controls which buses we want to include in the plot.
     
     plot_data = ts_array .* get_base_power(system)
 
+    # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
         bus_names = String.(bus_names)
         @assert issubset(bus_names, names(plot_data))
@@ -369,10 +231,16 @@ end
 """
     plot_net_demand_stack_prev(
         system::System,
-        results::SimulationProblemResults)
+        results::SimulationProblemResults;
+        x_ticks::StepRange{Int64, Int64}=nothing,
+        bus_names::AbstractArray=[],
+    )
+
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
 It uses the Renewable Dispatch from the `results`.
+The default is to plot with the total number of hours simulated. If is wanted to have a bigger interval
+between the x_ticks, it should be given the interval desired. For example: x_ticks = 1:2:24)
 """
 @userplot plot_net_demand_stack_prev
 @recipe function f(p::plot_net_demand_stack_prev;
@@ -382,6 +250,7 @@ It uses the Renewable Dispatch from the `results`.
     
     system, system_results, = p.args
     
+    # Getting the time series of the Demand
     loads = collect(get_components(PowerLoad, system))
     
     ts_array = Dict()
@@ -397,7 +266,7 @@ It uses the Renewable Dispatch from the `results`.
     
     ts_array = DataFrame(ts_array)
     
-    # Renewable Data
+    # Getting the Renewable Data from the `results`
     variable_results = read_realized_variables(system_results)
     renewable_results = variable_results[:P__RenewableDispatch]
     values = select(renewable_results, Not(:DateTime))
@@ -413,6 +282,7 @@ It uses the Renewable Dispatch from the `results`.
         select!(ts_array, intersect(bus_names, names(ts_array)))
     end
     
+    # Evaluating the Net Demand (Demand-Renewable)
     all_data = sum.(eachrow(ts_array)) - sum.(eachrow(values))
     times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
     hours = zeros(length(times))
@@ -443,7 +313,10 @@ end
 
 """
     plot_net_demand_stack(
-        system::System)
+        system::System;
+        bus_names::AbstractArray=[],
+    )
+
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
 Renewable Dispatch data is the time series from the `system`.
@@ -455,6 +328,7 @@ Renewable Dispatch data is the time series from the `system`.
     
     system, = p.args
     
+    # Getting the time series of the Demand
     loads = collect(get_components(PowerLoad, system))
     
     ts_array = Dict()
@@ -470,7 +344,7 @@ Renewable Dispatch data is the time series from the `system`.
     
     ts_array = DataFrame(ts_array)
     
-    # Renewable Data
+    # Getting the Renewable Data from the time series
     renewables = collect(get_components(RenewableDispatch, system))
     
     ts_renewable = Dict()
@@ -496,6 +370,7 @@ Renewable Dispatch data is the time series from the `system`.
         select!(ts_array, intersect(bus_names, names(ts_array)))
     end
     
+    # Evaluating the Net Demand (Demand-Renewable)
     all_data = sum.(eachrow(ts_array)) - sum.(eachrow(ts_renewable))
     times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
     plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)

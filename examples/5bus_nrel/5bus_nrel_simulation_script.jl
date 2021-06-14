@@ -5,6 +5,7 @@ using Dates
 using DataFrames
 using GLPK
 using GridAnalysis
+using Gurobi
 using PowerSystems
 using PowerSimulations
 using Test
@@ -86,7 +87,7 @@ ed_results = get_problem_results(results, "ED");
 # calculate prices
 prices = evaluate_prices(market_simulator, results)
 
-@test isa(prices, DataFrame)
+@test isa(prices, Dict{String, DataFrame})
 
 # Plots
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
