@@ -82,14 +82,36 @@ control which buses we want to include the plot. If the `market_simulator` is th
 that evaluate the prices on Real Time (RT), it is on \$/MW-5min.
 """
 @userplot plot_prices
-@recipe function f(p::plot_prices; bus_names::AbstractArray=[])
+@recipe function f(p::plot_prices; bus_names::AbstractArray=[], type::String="ED")
     market_simulator, system_results, = p.args
 
-    prices = evaluate_prices(market_simulator, system_results)
+    if isa(market_simulator, UCEDRT)
+        prices = evaluate_prices_UCEDRT(market_simulator, system_results)
+        
+        if type == "ED"
+            # Selects the plot data if is desired to plot the ED prices
+            plot_data = select(prices["ED"], Not(:DateTime))
 
-    prices_keys = collect(keys(prices))
+            yguide --> "Prices (\$/MWh)"
+
+            times = prices["ED"][!, 1]
+        else
+            # Selects the plot data if is desired to plot the ED prices
+            plot_data = select(prices["RT"], Not(:DateTime))
+
+            yguide --> "Prices (\$/MW-5min)"
+
+            times = prices["RT"][!, 1]
+        end
+    else
+        prices = evaluate_prices(market_simulator, system_results)
+
+        prices_keys = collect(keys(prices))
     
-    plot_data = select(prices[prices_keys[1]], Not(:DateTime))
+        plot_data = select(prices[prices_keys[1]], Not(:DateTime))
+    
+        times = prices[prices_keys[1]][!, 1]
+    end
 
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
@@ -98,11 +120,9 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-5min.
         select!(plot_data, bus_names)
     end
 
-    times = prices[prices_keys[1]][!, 1]
-
-    if isa(market_simulator, UCRT) || isa(market_simulator, UCEDRT)
+    if isa(market_simulator, UCRT)
         yguide --> "Prices (\$/MW-5min)"
-    else
+    elseif isa(market_simulator, UCED)
         yguide --> "Prices (\$/MWh)"
     end
 

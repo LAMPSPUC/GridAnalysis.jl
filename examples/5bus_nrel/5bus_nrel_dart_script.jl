@@ -115,9 +115,6 @@ plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 plot_prices(market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 
-plot_prices_RT(market_simulator, results)
-plot_prices_RT(market_simulator, results; xtickfontsize=8, size=(800, 600))
-
 plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
@@ -229,6 +226,9 @@ plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__RenewableDispatc
 plot_generation_stack(base_da_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
 
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type = "ED")
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type = "RT")
+
 plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
@@ -273,11 +273,7 @@ times = prices_rt_df[1:n_prev_hour:n_prev, 1]
 
 labels = permutedims(names_bus)
 
-plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, linestyle = :dash)
-
-values_rt = Matrix(values_rt)
-
-plot(values_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MW-5min)", label = labels)
+plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels)
 
 
 prices_ed_df = prices[prices_keys[2]]
@@ -290,7 +286,9 @@ plot(values_ed, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)
 
 # Both ED and RT in the same plot
 
-plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, linestyle = :dash);
-plot!(values_ed, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels)
+palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
+
+plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, linestyle = :dash, palette = palette);
+plot!(values_ed, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, palette = palette)
 
 
