@@ -378,17 +378,17 @@ The 'bus_names' and 'periods' controls which buses and periods we want to includ
 in the plot, respectively.
 """
 
-function plot_price_curves(lmps_df, period::Vector{Int64}, bus_name::AbstractArray=["bus5"])
+function plot_price_curves(lmps_df, period::Vector{Int64}, bus_name::AbstractArray=["bus5"], node:: String="bus5")
 
     lmps_df = sort(lmps_df)
     indices=[]
     data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
     for (i, v) in enumerate(keys(lmps_df))
-        for t in period #arrumar
-            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+        for t =1:length(period) 
+            data[t,1,i]=lmps_df[v][!,"DateTime"][period[t]]
             c=2
             for j in bus_name
-                data[t,c,i]=lmps_df[v][!,j][t]
+                data[t,c,i]=lmps_df[v][!,j][period[t]]
                 c=c+1
             end
         end
@@ -399,15 +399,15 @@ function plot_price_curves(lmps_df, period::Vector{Int64}, bus_name::AbstractArr
     for b=1: length(bus_name) 
         for t=1:length(period)
             if c==1
-                plot(data[t,b+1,:],label="hora"*string(period[t])*"- "*string(bus_name[b]))
+                plot(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]))
             else
-                plot!(data[t,b+1,:],label="hora"*string(period[t])*"- "*string(bus_name[b]))
+                plot!(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]))
             end
             c=c+1
         end
     end
 
-    plot!(title = "Price per Virtual Bid on "*bus_name[1], ylabel = "Prices (\$/MWh)", xlabel = "Bid offers")
+    plot!(title = "Price per Virtual Bid on "*node, ylabel = "Prices (\$/MWh)", xlabel = "Bid offers (p.u.)")
     #TODO: Change x axis, define bus_name of virtual bid 
 end
 
@@ -421,21 +421,21 @@ Function to plot the virtual revenues over the virtual offer bids.
 The 'generator_name' defines which is the virtual generator that we want to plot it's results
 and 'periods' controls which periods we want to include in the plot.
 """
-function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::AbstractArray)
+function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::String)
     
     lmps_df = sort(lmps_df)
     gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
-    bus_name=get_bus(gen)
+    bus_name=get_name(get_bus(gen))
 
     indices=[]
     data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
-        for t in period
-            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+        for t =1:length(period)
+            data[t,1,i]=lmps_df[v][!,"DateTime"][period[t]]
             variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
             generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
-            virtual_gen=generator_data[1][!,7][t] #name_generator
-            data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
+            virtual_gen=generator_data[1][!,7][[period[t]]][1] #name_generator
+            data[t,2,i]=(lmps_df[v][[period[t]],bus_name][1])*virtual_gen #arrumar 
         end
         indices = vcat(indices, v)
     end
@@ -443,14 +443,47 @@ function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generat
     c=1
     for t =1:length(period)
         if c==1
-            plot(data[t,2,:],label="hora"*string(period[t]))
+            plot(indices, data[t,2,:],label="hora"*string(period[t]-1))
         else
-            plot!(data[t,2,:],label="hora"*string(period[t]))
+            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1))
         end
         c=c+1
     end
 
-    plot!(title = "Virtual Revenue per Offer on "*bus_name, ylabel = "Revenue (\$/MWh)", xlabel = "Bid offers")
+    plot!(title = "Virtual Revenue per Offer on "*bus_name, ylabel = "Revenue (\$/MWh)", xlabel = "Bid offers (p.u)")
+    #TODO: Change x axis 
+
+end
+
+function plot_generation_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::String)
+    lmps_df=sort(lmps_df)
+    gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_name=get_name(get_bus(gen))
+
+    indices=[]
+    data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
+    for (i, v) in enumerate(keys(lmps_df))
+        for t =1:length(period)
+            data[t,1,i]=lmps_df[v][!,"DateTime"][period[t]]
+            variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
+            generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            virtual_gen=generator_data[1][!,name_generator][[period[t]]][1] 
+            data[t,2,i]=virtual_gen #arrumar 
+        end
+        indices = vcat(indices, v)
+    end
+
+    c=1
+    for t =1:length(period)
+        if c==1
+            plot(indices, data[t,2,:],label="hora"*string(period[t]-1))
+        else
+            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1))
+        end
+        c=c+1
+    end
+
+    plot!(title = name_generator*" generation per Offer on "*bus_name, ylabel = "Generation(MWh)", xlabel = "Bid offers (p.u)")
     #TODO: Change x axis 
 
 end
