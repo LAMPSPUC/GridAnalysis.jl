@@ -368,6 +368,96 @@ Renewable Dispatch data is the time series from the `system`.
 end
 
 """
+    plot_generation_stack_virtual(
+        system::System,
+        results::SimulationProblemResults;
+        generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+        period::Int=1)
+
+Plot the generation mix during the time 'period' for the range of virtual bids in 'results'. 
+"""
+@userplot plot_generation_stack_virtual
+@recipe function f(
+    p::plot_generation_stack_virtual;
+    generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+    period::Int=1,
+)
+    system, results_df, = p.args
+    results_df=sort(results_df)
+    #system = base_system
+
+    for q in keys(results_df)
+        
+        system_results = get_problem_results(results_df[q], "ED");
+
+        # get mapping from busname to fuel type
+        fuel_type_dict = fuel_type_mapping(system)
+
+        # get the output data for given fuel types
+        variable_results = read_realized_variables(system_results; names=generator_fields)
+        generator_data = getindex.(Ref(variable_results), generator_fields)
+        for i=1:length(generator_data)
+            generator_data[i] = generator_data[i][generator_data[i][period,:DateTime] .<= generator_data[i].DateTime .< generator_data[i][period,:DateTime]+Hour(1), :]
+        end
+        if length(generator_data) > 1
+            generator_data = innerjoin(generator_data...; on=:DateTime)
+        else
+            generator_data = first(generator_data)
+        end
+
+        # stack the data and aggregate by fuel type
+        stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
+        bus_map = bus_mapping(system)
+        stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
+
+        #= select rows for the given bus names, default to all buses.
+        if !isempty(bus_names)
+            bus_names = String.(bus_names)
+            @assert all(bus_names .∈ [stacked_data.bus_name])
+            filter!(:bus_name => in(bus_names), stacked_data)
+        end
+        =#
+
+        stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
+
+        aggregated_data = combine(
+            groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
+        )
+
+        # convert the output units into MWh.
+        aggregated_data.output = aggregated_data.output .* get_base_power(system)
+
+        # unstack aggregated data and make area plot 
+        global unstacked_data = unstack(aggregated_data, :fuel_type, :output)
+        if q==minimum(keys(results_df))
+            global data_frame =  unstacked_data
+        else
+            global data_frame = append!(data_frame, unstacked_data)
+        end
+        
+    end
+
+    times = collect(keys(results_df))
+
+    plot_data = select(data_frame, Not(:DateTime))
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Output (MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
+end
+
+"""
     plot_price_curves(
         lmps_df, period::Vector{Int64}, 
         bus_name::AbstractArray=["bus5"]
@@ -414,7 +504,7 @@ end
 """
     plot_revenue_curves(
         lmps_df, results_df, period::Vector{Int64}, 
-        bus_name::AbstractArray=["bus5"]
+        bus_name::AbstractArray=["bus5"],
     )
 
 Function to plot the virtual revenues over the virtual offer bids. 
@@ -454,6 +544,16 @@ function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generat
     #TODO: Change x axis 
 
 end
+
+"""
+    plot_revenue_curves(
+        lmps_df, results_df, period::Vector{Int64},
+    )
+
+Function to plot the virtual generation over the virtual offer bids. 
+The 'generator_name' defines which is the virtual generator that we want to plot it's results
+and 'periods' controls which periods we want to include in the plot.
+"""
 
 function plot_generation_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::String)
     lmps_df=sort(lmps_df)
@@ -570,84 +670,3 @@ end
 
 end
 =#
-
-@userplot plot_generation_stack_virtual
-@recipe function f(
-    p::plot_generation_stack_virtual;
-    generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-    period::Int=1,
-)
-    system, results_df, = p.args
-    results_df=sort(results_df)
-    system = base_system
-
-    for q in keys(results_df)
-        
-        system_results = get_problem_results(results_df[q], "ED");
-
-        # get mapping from busname to fuel type
-        fuel_type_dict = fuel_type_mapping(system)
-
-        # get the output data for given fuel types
-        variable_results = read_realized_variables(system_results; names=generator_fields)
-        generator_data = getindex.(Ref(variable_results), generator_fields)
-        for i=1:length(generator_data)
-            generator_data[i] = generator_data[i][generator_data[i][period,:DateTime] .<= generator_data[i].DateTime .< generator_data[i][period,:DateTime]+Hour(1), :]
-        end
-        if length(generator_data) > 1
-            generator_data = innerjoin(generator_data...; on=:DateTime)
-        else
-            generator_data = first(generator_data)
-        end
-
-        # stack the data and aggregate by fuel type
-        stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
-        bus_map = bus_mapping(system)
-        stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
-
-        #= select rows for the given bus names, default to all buses.
-        if !isempty(bus_names)
-            bus_names = String.(bus_names)
-            @assert all(bus_names .∈ [stacked_data.bus_name])
-            filter!(:bus_name => in(bus_names), stacked_data)
-        end
-        =#
-
-        stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
-
-        aggregated_data = combine(
-            groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
-        )
-
-        # convert the output units into MWh.
-        aggregated_data.output = aggregated_data.output .* get_base_power(system)
-
-        # unstack aggregated data and make area plot 
-        unstacked_data = unstack(aggregated_data, :fuel_type, :output)
-        if q==minimum(keys(results_df))
-            global data_frame =  unstacked_data
-        else
-            global data_frame = append!(data_frame, unstacked_data)
-        end
-        
-    end
-
-    times = collect(keys(results_df))
-
-    plot_data = select(unstacked_data, Not(:DateTime))
-
-    label --> reduce(hcat, names(plot_data))
-    yguide --> "Output (MWh)"
-    legend --> :outertopright
-    seriestype --> :line
-    xrotation --> 45
-
-    # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data); dims=2)
-    for i in Base.axes(data, 2)
-        @series begin
-            fillrange := i > 1 ? data[:, i - 1] : 0
-            times, data[:, i]
-        end
-    end
-end

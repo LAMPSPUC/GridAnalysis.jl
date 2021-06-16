@@ -36,7 +36,7 @@ base_system = build_5_bus_matpower_DA(
 )
 
 # Add single generator at a defined bus
-node = "bus5" # define bus
+node = "bus4" # define bus
 gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
 @test gen in get_components(Generator, base_system)
 
@@ -86,25 +86,14 @@ lmps_df, results_df = pq_curves_virtuals!(
 ) 
 
 generator_name="bus5_virtual_supply"
-period= [4] #bidding_period
+period= [19] #bidding_period #[5,19]
 bus_name=["bus1","bus2","bus3","bus4","bus5"]
 
+
+# Plots
 plot_price_curves(lmps_df, period, bus_name, node)
 plot_revenue_curves(lmps_df, results_df, period, generator_name)
 plot_generation_curves(lmps_df, results_df, period, generator_name)
-
-#=
-max_gen=2
-bus=get_name(get_bus(gen))
-variable_results = read_realized_variables(get_problem_results(results_df[max_gen], "UC"), names=[:P__ThermalStandard])
-generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
-lmps=lmps_df[max_gen]
-virtual_gen=generator_data[1][!,:7]
-price=lmps[!,Symbol(bus)] 
-revenue=p.*virtual_gen
-=#
-
-# Plots
 plot_generation_stack_virtual(base_system, results_df; period=period, xtickfontsize=8, margin=8mm, size=(800, 600))
 
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
