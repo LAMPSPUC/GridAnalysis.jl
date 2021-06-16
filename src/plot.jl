@@ -511,7 +511,7 @@ Function to plot the virtual revenues over the virtual offer bids.
 The 'generator_name' defines which is the virtual generator that we want to plot it's results
 and 'periods' controls which periods we want to include in the plot.
 """
-function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::String)
+function plot_revenue_curves(lmps_df, results_df, market_simulator, period::Vector{Int64}, generator_name::String)
     
     lmps_df = sort(lmps_df)
     gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
@@ -555,7 +555,7 @@ The 'generator_name' defines which is the virtual generator that we want to plot
 and 'periods' controls which periods we want to include in the plot.
 """
 
-function plot_generation_curves(lmps_df, results_df, period::Vector{Int64}, generator_name::String)
+function plot_generation_curves(lmps_df, results_df, market_simulator, period::Vector{Int64}, generator_name::String)
     lmps_df=sort(lmps_df)
     gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name=get_name(get_bus(gen))
