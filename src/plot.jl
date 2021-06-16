@@ -399,9 +399,9 @@ function plot_price_curves(lmps_df, period::Vector{Int64}, bus_name::AbstractArr
     for b=1: length(bus_name) 
         for t=1:length(period)
             if c==1
-                plot(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]))
+                plot(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]), legend=:outertopright)
             else
-                plot!(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]))
+                plot!(indices, data[t,b+1,:],label="hora"*string(period[t]-1)*"- "*string(bus_name[b]), legend=:outertopright)
             end
             c=c+1
         end
@@ -443,9 +443,9 @@ function plot_revenue_curves(lmps_df, results_df, period::Vector{Int64}, generat
     c=1
     for t =1:length(period)
         if c==1
-            plot(indices, data[t,2,:],label="hora"*string(period[t]-1))
+            plot(indices, data[t,2,:],label="hora"*string(period[t]-1), legend=:outertopright)
         else
-            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1))
+            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1), legend=:outertopright)
         end
         c=c+1
     end
@@ -476,9 +476,9 @@ function plot_generation_curves(lmps_df, results_df, period::Vector{Int64}, gene
     c=1
     for t =1:length(period)
         if c==1
-            plot(indices, data[t,2,:],label="hora"*string(period[t]-1))
+            plot(indices, data[t,2,:],label="hora"*string(period[t]-1), legend=:outertopright)
         else
-            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1))
+            plot!(indices, data[t,2,:],label="hora"*string(period[t]-1), legend=:outertopright)
         end
         c=c+1
     end
