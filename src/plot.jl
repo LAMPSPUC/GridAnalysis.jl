@@ -570,3 +570,84 @@ end
 
 end
 =#
+
+@userplot plot_generation_stack_virtual
+@recipe function f(
+    p::plot_generation_stack_virtual;
+    generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+    period::Int=1,
+)
+    system, results_df, = p.args
+    results_df=sort(results_df)
+    system = base_system
+
+    for q in keys(results_df)
+        
+        system_results = get_problem_results(results_df[q], "ED");
+
+        # get mapping from busname to fuel type
+        fuel_type_dict = fuel_type_mapping(system)
+
+        # get the output data for given fuel types
+        variable_results = read_realized_variables(system_results; names=generator_fields)
+        generator_data = getindex.(Ref(variable_results), generator_fields)
+        for i=1:length(generator_data)
+            generator_data[i] = generator_data[i][generator_data[i][period,:DateTime] .<= generator_data[i].DateTime .< generator_data[i][period,:DateTime]+Hour(1), :]
+        end
+        if length(generator_data) > 1
+            generator_data = innerjoin(generator_data...; on=:DateTime)
+        else
+            generator_data = first(generator_data)
+        end
+
+        # stack the data and aggregate by fuel type
+        stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
+        bus_map = bus_mapping(system)
+        stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
+
+        #= select rows for the given bus names, default to all buses.
+        if !isempty(bus_names)
+            bus_names = String.(bus_names)
+            @assert all(bus_names .∈ [stacked_data.bus_name])
+            filter!(:bus_name => in(bus_names), stacked_data)
+        end
+        =#
+
+        stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
+
+        aggregated_data = combine(
+            groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
+        )
+
+        # convert the output units into MWh.
+        aggregated_data.output = aggregated_data.output .* get_base_power(system)
+
+        # unstack aggregated data and make area plot 
+        unstacked_data = unstack(aggregated_data, :fuel_type, :output)
+        if q==minimum(keys(results_df))
+            global data_frame =  unstacked_data
+        else
+            global data_frame = append!(data_frame, unstacked_data)
+        end
+        
+    end
+
+    times = collect(keys(results_df))
+
+    plot_data = select(unstacked_data, Not(:DateTime))
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Output (MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
+end

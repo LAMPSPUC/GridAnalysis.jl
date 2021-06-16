@@ -25,6 +25,7 @@ export plot_thermal_commit
 export pq_curves_virtuals!
 export run_multiday_simulation
 export set_active_power_limits
+export plot_generation_stack_virtual
 export UCED
 
 const PSY = PowerSystems

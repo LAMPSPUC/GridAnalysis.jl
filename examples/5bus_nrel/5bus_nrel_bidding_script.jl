@@ -41,7 +41,7 @@ gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
 @test gen in get_components(Generator, base_system)
 
 # create and set variable cost time-series for the generator
-bidding_period=[5,19]#collect(1:24) #[5,19]
+bidding_period=collect(1:24)#collect(1:24)#collect(1:24) #[5,19]
 ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=bidding_period, system=base_system, costs=zeros(length(bidding_period)))
 set_variable_cost!(base_system, gen, ts_array)
 
@@ -86,12 +86,12 @@ lmps_df, results_df = pq_curves_virtuals!(
 ) 
 
 generator_name="bus5_virtual_supply"
-period= [5,19] #bidding_period
-bus_name=["bus4"]
+period= [4] #bidding_period
+bus_name=["bus1","bus2","bus3","bus4","bus5"]
 
 plot_price_curves(lmps_df, period, bus_name, node)
 plot_revenue_curves(lmps_df, results_df, period, generator_name)
-plot_generation_curves(results_df, period, generator_name)
+plot_generation_curves(lmps_df, results_df, period, generator_name)
 
 #=
 max_gen=2
@@ -105,6 +105,8 @@ revenue=p.*virtual_gen
 =#
 
 # Plots
+plot_generation_stack_virtual(base_system, results_df; period=period, xtickfontsize=8, margin=8mm, size=(800, 600))
+
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(
     base_system,
