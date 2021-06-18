@@ -187,7 +187,8 @@ The `results` should be from the unit commitment problem.
     end
 end
 
-
+# TO-DO: select the right number of days simulated.
+# Currently is selecting all the time series and not the number of days simulated.
 """
     plot_demand_stack(
         system::System;
@@ -247,7 +248,9 @@ The `bus_names` controls which buses we want to include in the plot.
     end
 end
 
-
+# TO-DO: select the right number of days simulated.
+# Currently is selecting only the first day of the time series and not the number of days simulated, for the load.
+# For Renewable is selecting the right number of simulated days.
 """
     plot_net_demand_stack_prev(
         system::System,
@@ -330,7 +333,8 @@ between the x_ticks, it should be given the interval desired. For example: x_tic
     end
 end
 
-
+# TO-DO: select the right number of days simulated.
+# Currently is selecting all the time series and not the number of days simulated.
 """
     plot_net_demand_stack(
         system::System;
@@ -352,13 +356,13 @@ Renewable Dispatch data is the time series from the `system`.
     loads = collect(get_components(PowerLoad, system))
     
     ts_array = Dict()
-    ts_names = get_time_series_names(Deterministic, loads[1])
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
     
     for load in loads
         if !haskey(ts_array, get_bus_name(load))
-            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = get_time_series_values(SingleTimeSeries, load, ts_names[1])
         else
-            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(SingleTimeSeries, load, ts_names[1])
         end
     end
     
@@ -368,13 +372,13 @@ Renewable Dispatch data is the time series from the `system`.
     renewables = collect(get_components(RenewableDispatch, system))
     
     ts_renewable = Dict()
-    ts_renewable_names = get_time_series_names(Deterministic, renewables[1])
+    ts_renewable_names = get_time_series_names(SingleTimeSeries, renewables[1])
     
     for renewable in renewables
         if !haskey(ts_renewable, get_bus_name(renewable))
-            ts_renewable[get_bus_name(renewable)] = get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+            ts_renewable[get_bus_name(renewable)] = get_time_series_values(SingleTimeSeries, renewable, ts_renewable_names[1])
         else
-            ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+            ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(SingleTimeSeries, renewable, ts_renewable_names[1])
         end
     end
     
@@ -392,7 +396,7 @@ Renewable Dispatch data is the time series from the `system`.
     
     # Evaluating the Net Demand (Demand-Renewable)
     all_data = sum.(eachrow(ts_array)) - sum.(eachrow(ts_renewable))
-    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+    times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
     
     label --> reduce(hcat, names(plot_data))
