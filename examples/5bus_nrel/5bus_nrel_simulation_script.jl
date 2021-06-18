@@ -105,8 +105,5 @@ plot_thermal_commit(base_system, uc_results; bus_names=["bus1", "bus3"], xtickfo
 plot_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack_prev(sys_uc, uc_results; bus_names = ["bus2", "bus3"], xtickfontsize=8, x_ticks = 0:1:24, size=(800, 600))
-
 plot_net_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
