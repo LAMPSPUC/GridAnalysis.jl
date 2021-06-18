@@ -524,7 +524,7 @@ function plot_revenue_curves(lmps_df, results_df, market_simulator, period::Vect
             data[t,1,i]=lmps_df[v][!,"DateTime"][period[t]]
             variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
             generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
-            virtual_gen=generator_data[1][!,7][[period[t]]][1] #name_generator
+            virtual_gen=generator_data[1][!,generator_name][[period[t]]][1] #name_generator
             data[t,2,i]=(lmps_df[v][[period[t]],bus_name][1])*virtual_gen #arrumar 
         end
         indices = vcat(indices, v)
@@ -567,7 +567,7 @@ function plot_generation_curves(lmps_df, results_df, market_simulator, period::V
             data[t,1,i]=lmps_df[v][!,"DateTime"][period[t]]
             variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
             generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
-            virtual_gen=generator_data[1][!,name_generator][[period[t]]][1] 
+            virtual_gen=generator_data[1][!,generator_name][[period[t]]][1] 
             data[t,2,i]=virtual_gen #arrumar 
         end
         indices = vcat(indices, v)
@@ -583,7 +583,7 @@ function plot_generation_curves(lmps_df, results_df, market_simulator, period::V
         c=c+1
     end
 
-    plot!(title = name_generator*" generation per Offer on "*bus_name, ylabel = "Generation(MWh)", xlabel = "Bid offers (p.u)")
+    plot!(title = generator_name*" generation per Offer on "*bus_name, ylabel = "Generation(MWh)", xlabel = "Bid offers (p.u)")
     #TODO: Change x axis 
 
 end

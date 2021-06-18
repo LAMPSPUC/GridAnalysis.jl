@@ -36,7 +36,7 @@ base_system = build_5_bus_matpower_DA(
 )
 
 # Add single generator at a defined bus
-node = "bus4" # define bus
+node = "bus5" # define bus
 gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
 @test gen in get_components(Generator, base_system)
 
