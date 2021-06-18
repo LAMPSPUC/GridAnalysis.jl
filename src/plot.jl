@@ -74,19 +74,44 @@ end
 """
     plot_prices(
         market_simulator::MarketSimulator,
-        results::SimulationProblemResults;
+        results::SimulationResults;
         bus_names::AbstractArray=[])
 
 Plot the simulation prices over the time period covered by the `results`. The `bus_names`
-control which buses we want to include the plot.
+control which buses we want to include the plot. If the `market_simulator` is the one
+that evaluate the prices on Real Time (RT), it is on \$/MW-5min.
 """
 @userplot plot_prices
-@recipe function f(p::plot_prices; bus_names::AbstractArray=[])
+@recipe function f(p::plot_prices; bus_names::AbstractArray=[], type::String="ED")
     market_simulator, system_results, = p.args
 
-    prices = evaluate_prices(market_simulator, system_results)
+    if isa(market_simulator, UCEDRT)
+        prices = evaluate_prices_UCEDRT(market_simulator, system_results)
+        
+        if type == "ED"
+            # Selects the plot data if is desired to plot the ED prices
+            plot_data = select(prices["ED"], Not(:DateTime))
 
-    plot_data = select(prices, Not(:DateTime))
+            yguide --> "Prices (\$/MWh)"
+
+            times = prices["ED"][!, 1]
+        else
+            # Selects the plot data if is desired to plot the ED prices
+            plot_data = select(prices["RT"], Not(:DateTime))
+
+            yguide --> "Prices (\$/MW-5min)"
+
+            times = prices["RT"][!, 1]
+        end
+    else
+        prices = evaluate_prices(market_simulator, system_results)
+
+        prices_keys = collect(keys(prices))
+    
+        plot_data = select(prices[prices_keys[1]], Not(:DateTime))
+    
+        times = prices[prices_keys[1]][!, 1]
+    end
 
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
@@ -95,10 +120,13 @@ control which buses we want to include the plot.
         select!(plot_data, bus_names)
     end
 
-    times = prices[!, 1]
+    if isa(market_simulator, UCRT)
+        yguide --> "Prices (\$/MW-5min)"
+    elseif isa(market_simulator, UCED)
+        yguide --> "Prices (\$/MWh)"
+    end
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Prices (\$/MWh)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
@@ -110,11 +138,12 @@ control which buses we want to include the plot.
     end
 end
 
-
 """
     plot_thermal_commit(
         system::System,
-        results::SimulationProblemResults)
+        results::SimulationProblemResults;
+        bus_names::AbstractArray=[],
+    )
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
@@ -158,11 +187,13 @@ The `results` should be from the unit commitment problem.
     end
 end
 
-
+# TO-DO: select the right number of days simulated.
+# Currently is selecting all the time series and not the number of days simulated.
 """
     plot_demand_stack(
-        system::System,
-        results::SimulationProblemResults)
+        system::System;
+        bus_names::AbstractArray=[]
+    )
 
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
@@ -172,26 +203,28 @@ The `bus_names` controls which buses we want to include in the plot.
     p::plot_demand_stack;
     bus_names::AbstractArray=[],
 )
-    system, system_results, = p.args
+    system, = p.args
 
+    # Getting the time series of the Demand
     loads = collect(get_components(PowerLoad, system))
 
     ts_array = Dict()
-    ts_names = get_time_series_names(Deterministic, loads[1])
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
     for load in loads
         if !haskey(ts_array, get_bus_name(load))
-            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = get_time_series_values(SingleTimeSeries, load, ts_names[1])
         else
-            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(SingleTimeSeries, load, ts_names[1])
         end
     end
 
     ts_array = DataFrame(ts_array)
 
-    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+    times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     
     plot_data = ts_array .* get_base_power(system)
 
+    # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
         bus_names = String.(bus_names)
         @assert issubset(bus_names, names(plot_data))
@@ -215,84 +248,14 @@ The `bus_names` controls which buses we want to include in the plot.
     end
 end
 
-
-"""
-    plot_net_demand_stack_prev(
-        system::System,
-        results::SimulationProblemResults)
-Function to plot the Demand over the time period covered by the `results`.
-The `bus_names` controls which buses we want to include in the plot.
-It uses the Renewable Dispatch from the `results`.
-"""
-@userplot plot_net_demand_stack_prev
-@recipe function f(p::plot_net_demand_stack_prev;
-    bus_names::AbstractArray=[],
-)
-    
-    system, system_results, = p.args
-    
-    loads = collect(get_components(PowerLoad, system))
-    
-    ts_array = Dict()
-    ts_names = get_time_series_names(Deterministic, loads[1])
-    
-    for load in loads
-        if !haskey(ts_array, get_bus_name(load))
-            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
-        else
-            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
-        end
-    end
-    
-    ts_array = DataFrame(ts_array)
-    
-    # Renewable Data
-    variable_results = read_realized_variables(system_results)
-    renewable_results = variable_results[:P__RenewableDispatch]
-    values = select(renewable_results, Not(:DateTime))
-    
-    bus_map = bus_mapping(system)
-    rename!(values, [bus_map[gen] for gen in names(values)])
-    
-    # select rows for the given bus names, default to all buses.
-    if !isempty(bus_names)
-        bus_names = String.(bus_names)
-        @assert issubset(bus_names, [names(values); names(ts_array)])
-        select!(values, intersect(bus_names, names(values)))
-        select!(ts_array, intersect(bus_names, names(ts_array)))
-    end
-    
-    all_data = sum.(eachrow(ts_array)) - sum.(eachrow(values))
-    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
-    hours = zeros(length(times))
-    for h in 1:length(times)
-        hours[h] = Dates.hour(times[h])+1
-    end
-    plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
-    
-    label --> reduce(hcat, names(plot_data))
-    yguide --> "Net Demand (MWh)"
-    legend --> :outertopright
-    seriestype --> :line
-    xrotation --> 0
-    title --> "Net Demand over the hours"
-    xticks --> 0:1:24
-    
-    # now stack the matrix to get the cumulative values over all fuel types
-    data = cumsum(Matrix(plot_data); dims=2)
-    for i in Base.axes(data, 2)
-        @series begin
-            fillrange := i > 1 ? data[:, i - 1] : 0
-            hours, data[:, i]
-        end
-    end
-end
-
-
+# TO-DO: select the right number of days simulated.
+# Currently is selecting all the time series and not the number of days simulated.
 """
     plot_net_demand_stack(
-        system::System,
-        results::SimulationProblemResults)
+        system::System;
+        bus_names::AbstractArray=[],
+    )
+
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
 Renewable Dispatch data is the time series from the `system`.
@@ -302,34 +265,35 @@ Renewable Dispatch data is the time series from the `system`.
     bus_names::AbstractArray=[],
 )
     
-    system, system_results, = p.args
+    system, = p.args
     
+    # Getting the time series of the Demand
     loads = collect(get_components(PowerLoad, system))
     
     ts_array = Dict()
-    ts_names = get_time_series_names(Deterministic, loads[1])
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
     
     for load in loads
         if !haskey(ts_array, get_bus_name(load))
-            ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = get_time_series_values(SingleTimeSeries, load, ts_names[1])
         else
-            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+            ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(SingleTimeSeries, load, ts_names[1])
         end
     end
     
     ts_array = DataFrame(ts_array)
     
-    # Renewable Data
+    # Getting the Renewable Data from the time series
     renewables = collect(get_components(RenewableDispatch, system))
     
     ts_renewable = Dict()
-    ts_renewable_names = get_time_series_names(Deterministic, renewables[1])
+    ts_renewable_names = get_time_series_names(SingleTimeSeries, renewables[1])
     
     for renewable in renewables
         if !haskey(ts_renewable, get_bus_name(renewable))
-            ts_renewable[get_bus_name(renewable)] = get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+            ts_renewable[get_bus_name(renewable)] = get_time_series_values(SingleTimeSeries, renewable, ts_renewable_names[1])
         else
-            ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+            ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(SingleTimeSeries, renewable, ts_renewable_names[1])
         end
     end
     
@@ -345,8 +309,9 @@ Renewable Dispatch data is the time series from the `system`.
         select!(ts_array, intersect(bus_names, names(ts_array)))
     end
     
+    # Evaluating the Net Demand (Demand-Renewable)
     all_data = sum.(eachrow(ts_array)) - sum.(eachrow(ts_renewable))
-    times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+    times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
     
     label --> reduce(hcat, names(plot_data))

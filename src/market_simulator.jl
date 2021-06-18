@@ -30,6 +30,23 @@ struct UCED <: DayAhead
     kwargs::Dict
 end
 
+"""
+    UCED(;
+        system_uc::System,
+        system_ed::System,
+        template_uc::OperationsProblemTemplate,
+        template_ed::OperationsProblemTemplate,
+        solver_uc::Any,
+        solver_ed::Any,
+        kwargs=if template_uc.transmission == StandardPTDFModel
+            Dict(:PTDF => PSY.PTDF(system_ed))
+        else
+            Dict()
+        end,
+)
+
+Function that returns Unit Commitment (UC) and Economic Dispatch (ED) problems.
+"""
 function UCED(;
     system_uc::System,
     system_ed::System,
@@ -45,6 +62,131 @@ function UCED(;
 )
     return UCED(
         system_uc, system_ed, template_uc, template_ed, solver_uc, solver_ed, kwargs
+    )
+end
+
+"""
+    DART <: MarketSimulator
+
+A type that represents DayAhead (DA) and Real Time (RT) market clearings. 
+"""
+abstract type DART <: MarketSimulator end
+
+"""
+    UCRT <: DART
+
+Structure with one DA system stored (`system_uc`) and one RT system stored (`system_ed`). 
+One represents an Unit Commitment (UC) used to fix binary variables, the other the Real Time (RT)
+defined by template `template_rt`. Each model needs its own solver (`solver_uc` and `solver_rt`).
+This one is used to make possible to evaluate the primal dispatch for RT prices. 
+"""
+struct UCRT <: DART
+    system_uc::System
+    system_rt::System
+    template_uc::OperationsProblemTemplate
+    template_rt::OperationsProblemTemplate
+    solver_uc::Any
+    solver_rt::Any
+    kwargs::Dict
+end
+
+"""
+    UCRT(;
+        system_uc::System,
+        system_rt::System,
+        template_uc::OperationsProblemTemplate,
+        template_rt::OperationsProblemTemplate,
+        solver_uc::Any,
+        solver_rt::Any,
+        kwargs=if template_uc.transmission == StandardPTDFModel
+            Dict(:PTDF => PSY.PTDF(system_ed))
+        else
+            Dict()
+        end,
+)
+
+Function that returns Unit Commitment (UC) and Real Time (RT) problems.
+"""
+
+function UCRT(;
+    system_uc::System,
+    system_rt::System,
+    template_uc::OperationsProblemTemplate,
+    template_rt::OperationsProblemTemplate,
+    solver_uc::Any,
+    solver_rt::Any,
+    kwargs=if template_uc.transmission == StandardPTDFModel
+        Dict(:PTDF => PSY.PTDF(system_ed))
+    else
+        Dict()
+    end,
+)
+    return UCRT(
+        system_uc, system_rt, template_uc, template_rt, solver_uc, solver_rt, kwargs
+    )
+end
+
+"""
+    UCEDRT <: DART
+
+Structure with two DA systems stored (`system_uc` and `system_ed`) and one RT system stored (`system_ed`). 
+One represents an Unit Commitment (UC) used to fix binary variables, other an Economic Dispatch (ED)
+defined by template `template_ed` and the other the Real Time (RT) defined by template `template_rt`. 
+Each model needs its own solver (`solver_uc`, `solver_ed` and `solver_rt`).
+This one is used to make possible to evaluate DA and RT prices. 
+"""
+struct UCEDRT <: DART
+    system_uc::System
+    system_ed::System
+    system_rt::System
+    template_uc::OperationsProblemTemplate
+    template_ed::OperationsProblemTemplate
+    template_rt::OperationsProblemTemplate
+    solver_uc::Any
+    solver_ed::Any
+    solver_rt::Any
+    ext::Dict
+end
+
+"""
+    UCEDRT(;
+        system_uc::System,
+        system_ed::System,
+        system_rt::System,
+        template_uc::OperationsProblemTemplate,
+        template_ed::OperationsProblemTemplate,
+        template_rt::OperationsProblemTemplate,
+        solver_uc::Any,
+        solver_ed::Any,
+        solver_rt::Any,
+        kwargs=if template_uc.transmission == StandardPTDFModel
+            Dict(:PTDF => PSY.PTDF(system_ed))
+        else
+            Dict()
+        end,
+
+)
+
+Function that returns Unit Commitment (UC), Economic Dispatch (ED) and Real Time (RT) problems.
+"""
+function UCEDRT(;
+    system_uc::System,
+    system_ed::System,
+    system_rt::System,
+    template_uc::OperationsProblemTemplate,
+    template_ed::OperationsProblemTemplate,
+    template_rt::OperationsProblemTemplate,
+    solver_uc::Any,
+    solver_ed::Any,
+    solver_rt::Any,
+    kwargs=if template_uc.transmission == StandardPTDFModel
+        Dict(:PTDF => PSY.PTDF(system_ed))
+    else
+        Dict()
+    end,
+)
+    return UCEDRT(
+        system_uc, system_ed, system_rt, template_uc, template_rt, template_ed, solver_uc, solver_rt, solver_ed, kwargs
     )
 end
 
