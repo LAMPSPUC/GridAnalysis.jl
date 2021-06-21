@@ -60,6 +60,14 @@ end
 function duals_constraint_names(market_simulator::UCED)
     return duals_constraint_names(market_simulator.template_ed.transmission)
 end
+function duals_constraint_names(market_simulator::UCRT)
+    return duals_constraint_names(market_simulator.template_rt.transmission)
+end
+function duals_constraint_names(market_simulator::UCEDRT)
+    d1 = duals_constraint_names(market_simulator.template_ed.transmission)
+    d2 = duals_constraint_names(market_simulator.template_rt.transmission)
+    return [d1, d2]
+end
 
 """
     MEC(system::System, problem_results::PSI.SimulationProblemResults)
@@ -162,7 +170,7 @@ function evaluate_prices(
 end
 
 """
-    evaluate_prices(market_simulator::UCED, problem_results::PSI.SimulationProblemResults)
+    evaluate_prices(market_simulator::UCED, problem_results::PSI.SimulationResults)
 
 Returns energy prices for the simulation's data-range.  
 """
@@ -171,27 +179,27 @@ function evaluate_prices(
 )
     ed_results = get_problem_results(problem_results, "ED")
 
-    return evaluate_prices(
-        market_simulator.template_ed.transmission,
-        market_simulator.system_ed,
-        ed_results,
-        market_simulator.kwargs,
-    )
-end
-#=
-function evaluate_prices(
-    market_simulator::UCEDRT, problem_results::PSI.SimulationResults
-)
-    ed_results = get_problem_results(problem_results, "ED")
-    rt_results = get_problem_results(problem_results, "RT")
-
     return Dict(
         "ED" => evaluate_prices(
             market_simulator.template_ed.transmission,
             market_simulator.system_ed,
             ed_results,
             market_simulator.kwargs,
-        ), 
+        )
+    )
+end
+
+"""
+    evaluate_prices(market_simulator::UCRT, problem_results::PSI.SimulationResults)
+
+Returns energy prices for the simulation's data-range.  
+"""
+function evaluate_prices(
+    market_simulator::UCRT, problem_results::PSI.SimulationResults
+)
+    rt_results = get_problem_results(problem_results, "RT")
+
+    return Dict(
         "RT" => evaluate_prices(
             market_simulator.template_rt.transmission,
             market_simulator.system_rt,
@@ -202,20 +210,33 @@ function evaluate_prices(
     
 end
 
-function evaluate_prices(
-    market_simulator::UCRT, problem_results::PSI.SimulationResults
-)
-    rt_results = get_problem_results(problem_results, "RT")
+"""
+    evaluate_prices(market_simulator::UCEDRT, problem_results::Dict{String, SimulationResults})
 
-    return evaluate_prices(
-        market_simulator.template_rt.transmission,
-        market_simulator.system_rt,
-        rt_results,
-        market_simulator.kwargs,
+Returns energy prices for the simulation's data-range.  
+"""
+function evaluate_prices_UCEDRT(
+    market_simulator::UCEDRT, problem_results::Dict{String, SimulationResults}
+)
+    ed_results = get_problem_results(problem_results["ED"], "ED")
+    rt_results = get_problem_results(problem_results["RT"], "RT")
+
+    return Dict(
+        "ED" => evaluate_prices(
+            market_simulator.template_ed.transmission,
+            market_simulator.system_ed,
+            ed_results,
+            market_simulator.ext,
+        ), 
+        "RT" => evaluate_prices(
+            market_simulator.template_rt.transmission,
+            market_simulator.system_rt,
+            rt_results,
+            market_simulator.ext,
+        )
     )
     
 end
-=#
 
 """
     get_time_series_params(system::System)

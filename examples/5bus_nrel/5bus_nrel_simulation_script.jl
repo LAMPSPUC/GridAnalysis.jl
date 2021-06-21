@@ -5,6 +5,7 @@ using Dates
 using DataFrames
 using GLPK
 using GridAnalysis
+using Gurobi
 using PowerSystems
 using PowerSimulations
 using Test
@@ -22,8 +23,8 @@ include(joinpath(example_dir, "utils.jl")) # case utilities
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC) and Economic Dispatch (ED)
-solver_uc = optimizer_with_attributes(Cbc.Optimizer, "logLevel" => 1, "ratioGap" => 0.5)
-solver_ed = optimizer_with_attributes(GLPK.Optimizer)
+solver_uc = optimizer_with_attributes(Gurobi.Optimizer)
+solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
@@ -33,7 +34,7 @@ base_system = build_5_bus_matpower_DA(
     forecasts_pointers_file=joinpath(
         data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
-    add_reserves=false,
+    add_reserves=true,
 )
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
@@ -84,9 +85,9 @@ uc_results = get_problem_results(results, "UC");
 ed_results = get_problem_results(results, "ED");
 
 # calculate prices
-prices = evaluate_prices(market_simulator, ed_results)
+prices = evaluate_prices(market_simulator, results)
 
-@test isa(prices, DataFrame)
+@test isa(prices, Dict{String, DataFrame})
 
 # Plots
 plot_generation_stack(base_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
@@ -125,31 +126,16 @@ plot_generation_stack(
     size=(800, 600),
 )
 
-plot_prices(market_simulator, ed_results; xtickfontsize=8, size=(800, 600))
-plot_prices(
-    market_simulator,
-    ed_results;
-    bus_names=["bus1", "bus3"],
-    xtickfontsize=8,
-    size=(800, 600),
-)
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit(
     base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
 )
 
-plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(
-    sys_uc, uc_results; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
-)
+plot_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_net_demand_stack_prev(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack_prev(
-    sys_uc, uc_results; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
-)
-
-plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack(
-    sys_uc, uc_results; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
-)
+plot_net_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))

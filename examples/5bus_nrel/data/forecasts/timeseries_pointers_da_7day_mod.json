@@ -115,5 +115,57 @@
         "scaling_factor_multiplier_module": "PowerSystems",
         "normalization_factor": 44.72757416666634,
         "data_file": "./da_reserve.csv"
+    },
+    {
+        "simulation": "DAY_AHEAD",
+        "resolution": 3600,
+        "category": "Reserve",
+        "component_name": "REG1d",
+        "module": "PowerSystems",
+        "type": "SingleTimeSeries",
+        "name": "requirement",
+        "scaling_factor_multiplier": "get_requirement",
+        "scaling_factor_multiplier_module": "PowerSystems",
+        "normalization_factor": 11.181893541666584,
+        "data_file": "./da_reserve.csv"
+    },
+    {
+        "simulation": "DAY_AHEAD",
+        "resolution": 3600,
+        "category": "Reserve",
+        "component_name": "REG2d",
+        "module": "PowerSystems",
+        "type": "SingleTimeSeries",
+        "name": "requirement",
+        "scaling_factor_multiplier": "get_requirement",
+        "scaling_factor_multiplier_module": "PowerSystems",
+        "normalization_factor": 22.36378708333317,
+        "data_file": "./da_reserve.csv"
+    },
+    {
+        "simulation": "DAY_AHEAD",
+        "resolution": 3600,
+        "category": "Reserve",
+        "component_name": "REG3d",
+        "module": "PowerSystems",
+        "type": "SingleTimeSeries",
+        "name": "requirement",
+        "scaling_factor_multiplier": "get_requirement",
+        "scaling_factor_multiplier_module": "PowerSystems",
+        "normalization_factor": 33.545680624999754,
+        "data_file": "./da_reserve.csv"
+    },
+        {
+        "simulation": "DAY_AHEAD",
+        "resolution": 3600,
+        "category": "Reserve",
+        "component_name": "REG4d",
+        "module": "PowerSystems",
+        "type": "SingleTimeSeries",
+        "name": "requirement",
+        "scaling_factor_multiplier": "get_requirement",
+        "scaling_factor_multiplier_module": "PowerSystems",
+        "normalization_factor": 44.72757416666634,
+        "data_file": "./da_reserve.csv"
     }
 ]
