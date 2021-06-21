@@ -388,7 +388,7 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
 
     for q in keys(results_df)
         
-        system_results = get_problem_results(results_df[q], "ED");
+        system_results = get_problem_results(results_df[q], "UC");
 
         # get mapping from busname to fuel type
         fuel_type_dict = fuel_type_mapping(system)

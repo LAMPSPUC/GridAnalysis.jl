@@ -61,7 +61,7 @@ end
 """
     pq_curves_virtuals(market_simulator::MarketSimulator, name_generator::AbstractString, range_quota::Vector{Int64}, initial_time::Date, steps::Int = 1, simulation_folder::String = pwd())
 
-Creates a curve of generation and nodes prices for a vector of 'range_quotas' for max generation of a virtual 'generator' in a market clearing 'market_simulator'. 
+Creates a curve of generation and nodes prices for a vector 'range_quotas' that represents the max generation of a virtual 'generator' in a market clearing 'market_simulator'. 
 """
 function pq_curves_virtuals!(
     market_simulator::MarketSimulator,
@@ -95,7 +95,7 @@ function pq_curves_virtuals!(
         )
 
         # results
-        results_df[max_gen] = results #get_problem_results(results, "UC")
+        results_df[max_gen] = results 
         lmps_df[max_gen] = evaluate_prices(market_simulator, results)
 
     end
