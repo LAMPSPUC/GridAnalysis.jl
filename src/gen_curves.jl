@@ -24,8 +24,10 @@ end
 Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCRT.
 """
 
-function set_active_power_limits(
-    market_simulator::UCRT, name_generator, active_power_limits
+function set_active_power_limits!(
+    market_simulator::UCRT,
+    name_generator::AbstractString, 
+    active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}}
 )
 
         generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
@@ -42,17 +44,17 @@ end
 Set 'active_power_limits' to a generator whose name is 'name_generator' if the clearing market is UCEDRT.
 """
 
-function set_active_power_limits(
-    market_simulator::UCEDRT, name_generator, active_power_limits
+function set_active_power_limits!(
+    market_simulator::UCEDRT,
+     name_generator::AbstractString,
+      active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}}
 )
 
         generator_uc = get_component(ThermalStandard, market_simulator.system_uc, name_generator)
         generator_ed = get_component(ThermalStandard, market_simulator.system_ed, name_generator)
-        generator_rt = get_component(ThermalStandard, market_simulator.system_rt, name_generator)
 
         PowerSystems.set_active_power_limits!(generator_uc, active_power_limits)
         PowerSystems.set_active_power_limits!(generator_ed, active_power_limits)
-        PowerSystems.set_active_power_limits!(generator_rt, active_power_limits)
 
 end
 
@@ -94,8 +96,12 @@ function pq_curves_virtuals!(
         )
 
         # results
-        results_df[max_gen] = results 
-        lmps_df[max_gen] = evaluate_prices(market_simulator, results)
+        results_df[max_gen] = results
+        if isa(market_simulator,UCEDRT) #TODO: evaluate_prices unified
+            lmps_df[max_gen] = evaluate_prices_UCEDRT(market_simulator, results)
+        else 
+            lmps_df[max_gen] = evaluate_prices(market_simulator, results)
+        end
 
     end
     return lmps_df, results_df
