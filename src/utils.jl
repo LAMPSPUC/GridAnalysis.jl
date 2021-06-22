@@ -174,9 +174,7 @@ end
 
 Returns energy prices for the simulation's data-range.  
 """
-function evaluate_prices(
-    market_simulator::UCED, problem_results::PSI.SimulationResults
-)
+function evaluate_prices(market_simulator::UCED, problem_results::PSI.SimulationResults)
     ed_results = get_problem_results(problem_results, "ED")
 
     return Dict(
@@ -185,7 +183,7 @@ function evaluate_prices(
             market_simulator.system_ed,
             ed_results,
             market_simulator.kwargs,
-        )
+        ),
     )
 end
 
@@ -194,9 +192,7 @@ end
 
 Returns energy prices for the simulation's data-range.  
 """
-function evaluate_prices(
-    market_simulator::UCRT, problem_results::PSI.SimulationResults
-)
+function evaluate_prices(market_simulator::UCRT, problem_results::PSI.SimulationResults)
     rt_results = get_problem_results(problem_results, "RT")
 
     return Dict(
@@ -205,9 +201,8 @@ function evaluate_prices(
             market_simulator.system_rt,
             rt_results,
             market_simulator.kwargs,
-        )
+        ),
     )
-    
 end
 
 """
@@ -216,7 +211,7 @@ end
 Returns energy prices for the simulation's data-range.  
 """
 function evaluate_prices_UCEDRT(
-    market_simulator::UCEDRT, problem_results::Dict{String, SimulationResults}
+    market_simulator::UCEDRT, problem_results::Dict{String,SimulationResults}
 )
     ed_results = get_problem_results(problem_results["ED"], "ED")
     rt_results = get_problem_results(problem_results["RT"], "RT")
@@ -227,15 +222,14 @@ function evaluate_prices_UCEDRT(
             market_simulator.system_ed,
             ed_results,
             market_simulator.ext,
-        ), 
+        ),
         "RT" => evaluate_prices(
             market_simulator.template_rt.transmission,
             market_simulator.system_rt,
             rt_results,
             market_simulator.ext,
-        )
+        ),
     )
-    
 end
 
 """

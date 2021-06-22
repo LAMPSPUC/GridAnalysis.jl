@@ -37,16 +37,21 @@ base_system = build_5_bus_matpower_DA(
 
 # Add single generator at a defined bus
 node = "bus5" # define bus
-gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
+gen = add_gerator!(base_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_system)
 
 # create and set variable cost time-series for the generator
-bidding_period=collect(1:24)#collect(1:24)#collect(1:24) #
-ts_array = create_generator_bids(; initial_bidding_time=DateTime("2020-01-01"), bidding_periods=bidding_period, system=base_system, costs=zeros(length(bidding_period)))
+bidding_period = collect(1:24)#collect(1:24)#collect(1:24) #
+ts_array = create_generator_bids(;
+    initial_bidding_time=DateTime("2020-01-01"),
+    bidding_periods=bidding_period,
+    system=base_system,
+    costs=zeros(length(bidding_period)),
+)
 set_variable_cost!(base_system, gen, ts_array)
 
 #Define range quota
-range_quota=Float64.(collect(0:0.1:4));
+range_quota = Float64.(collect(0:0.1:4));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -72,26 +77,23 @@ market_simulator = UCED(;
 @test isa(market_simulator, UCED)
 
 #Calculates the dispatch result for a bid curve
-name_generator=get_name(gen);
-initial_time=Date("2020-01-01");
-steps=1;
-simulation_folder=mktempdir();#joinpath(example_dir, "results");
+name_generator = get_name(gen);
+initial_time = Date("2020-01-01");
+steps = 1;
+simulation_folder = mktempdir();#joinpath(example_dir, "results");
 lmps_df, results_df = pq_curves_virtuals!(
-    market_simulator,
-    name_generator,
-    range_quota,
-    initial_time,
-    steps,
-    simulation_folder,
-) 
+    market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
+)
 
 #Select data to plot
-generator_name="bus5_virtual_supply"
-period= [5] #bidding_period #[5,19]
-bus_name=["bus1","bus2","bus3","bus4","bus5"]
+generator_name = "bus5_virtual_supply"
+period = [5] #bidding_period #[5,19]
+bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
 plot_price_curves(lmps_df, period, bus_name, node)
 plot_revenue_curves(lmps_df, results_df, market_simulator, period, generator_name)
 plot_generation_curves(lmps_df, results_df, market_simulator, period, generator_name)
-plot_generation_stack_virtual(sys_uc, results_df; period=period, xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack_virtual(
+    sys_uc, results_df; period=period, xtickfontsize=8, margin=8mm, size=(800, 600)
+)

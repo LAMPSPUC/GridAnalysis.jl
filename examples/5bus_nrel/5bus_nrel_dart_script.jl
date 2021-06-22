@@ -29,9 +29,7 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # call our data preparation to build base system
 # the case was modified to not have hydros nor transformers
-sys_rt = build_5_bus_matpower_RT(
-    data_dir;
-)
+sys_rt = build_5_bus_matpower_RT(data_dir;)
 
 base_da_system = build_5_bus_matpower_DA(
     data_dir;
@@ -61,7 +59,7 @@ market_simulator = UCRT(;
     template_uc=template_uc,
     template_rt=template_rt,
     solver_uc=solver_uc,
-    solver_rt=solver_rt
+    solver_rt=solver_rt,
 )
 
 @test isa(market_simulator, UCRT)
@@ -94,37 +92,76 @@ loads = collect(get_components(RenewableDispatch, sys_rt))
 timestamps = get_time_series_timestamps(SingleTimeSeries, loads[2], "max_active_power")
 
 get_time_series_values(loads[1])
-variable_results = read_realized_variables(rt_results, names=[:P__RenewableDispatch]) 
-generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch]) 
-a=generator_data[1][!,:"SolarBusC"]
+variable_results = read_realized_variables(rt_results; names=[:P__RenewableDispatch])
+generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+a = generator_data[1][!, :"SolarBusC"]
 
 # calculate prices
 prices = evaluate_prices(market_simulator, results)
 
-@test isa(prices, Dict{String, DataFrame})
+@test isa(prices, Dict{String,DataFrame})
 
 # Plots
 plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, rt_results; generator_fields=[:P__RenewableDispatch], bus_names = ["bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(
+    base_da_system, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600)
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    generator_fields=[:P__RenewableDispatch],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    generator_fields=[:P__ThermalStandard],
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    base_da_system,
+    rt_results;
+    generator_fields=[:P__RenewableDispatch],
+    bus_names=["bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
 
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
-plot_prices(market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_prices(
+    market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
+)
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 
 plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(
+    base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
+)
 
 plot_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(base_da_system; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_demand_stack(
+    base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
+)
 
 plot_net_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack(base_da_system; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
-
+plot_net_demand_stack(
+    base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
+)
 
 # Plot the RT prices with all simulator forecast
 
@@ -135,19 +172,24 @@ values = select(prices_rt_df, Not(:DateTime))
 n_prev, n_bus = size(values)
 
 intervals = get_time_series_params(market_simulator.system_rt).interval
-    
-n_prev_hour = Int(60/intervals.value)
-n_days = Int(n_prev/n_prev_hour)
-    
+
+n_prev_hour = Int(60 / intervals.value)
+n_days = Int(n_prev / n_prev_hour)
+
 names_bus = names(values)
-prices_rt = zeros(n_days,n_bus)
+prices_rt = zeros(n_days, n_bus)
 
 i = 1
 while i < n_days
     for j in 1:(n_prev_hour):n_prev
-        prices_hour = prices_rt_df[prices_rt_df[j,:DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j,:DateTime]+Hour(1), :]
+        prices_hour = prices_rt_df[
+            prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
+                1
+            ),
+            :,
+        ]
         prices_hour = select(prices_hour, Not(:DateTime))
-        prices_rt[i,:] = sum(Matrix(prices_hour), dims = 1)
+        prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
         i = i + 1
     end
 end
@@ -156,10 +198,7 @@ times = prices_rt_df[1:n_prev_hour:n_prev, 1]
 
 labels = permutedims(names_bus)
 
-plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels)
-
-
-
+plot(prices_rt; legend=:outertopright, xlab="Hours", ylab="Prices (\$/MWh)", label=labels)
 
 # RT with ED
 
@@ -197,7 +236,7 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, Dict{String, SimulationResults})
+@test isa(results, Dict{String,SimulationResults})
 
 # separate results
 uc_results = get_problem_results(results["ED"], "UC");
@@ -209,36 +248,84 @@ ed_results = get_problem_results(results["ED"], "ED");
 # calculate prices
 prices = evaluate_prices_UCEDRT(market_simulator, results)
 
-@test isa(prices, Dict{String, DataFrame})
+@test isa(prices, Dict{String,DataFrame})
 
 # Plots
-plot_generation_stack(base_da_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(
+    base_da_system, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600)
+)
+plot_generation_stack(
+    base_da_system, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600)
+)
 plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, ed_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; bus_names=["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(base_da_system, ed_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_rt, rt_results; generator_fields=[:P__ThermalStandard], bus_names = ["bus1", "bus3"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(
+    base_da_system,
+    ed_results;
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    base_da_system,
+    ed_results;
+    generator_fields=[:P__RenewableDispatch],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    generator_fields=[:P__RenewableDispatch],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    base_da_system,
+    ed_results;
+    generator_fields=[:P__ThermalStandard],
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
+plot_generation_stack(
+    sys_rt,
+    rt_results;
+    generator_fields=[:P__ThermalStandard],
+    bus_names=["bus1", "bus3"],
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
+)
 
-plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type = "ED")
-plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type = "RT")
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="ED")
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="RT")
 
 plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_thermal_commit(
+    base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
+)
 
 plot_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
-plot_net_demand_stack(sys_uc; bus_names = ["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
-
+plot_net_demand_stack(sys_uc; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
 # Prices plots for UCEDR
-
 
 prices_keys = collect(keys(prices))
 prices_rt_df = prices[prices_keys[1]]
@@ -247,19 +334,24 @@ values_rt = select(prices_rt_df, Not(:DateTime))
 n_prev, n_bus = size(values_rt)
 
 intervals = get_time_series_params(market_simulator.system_rt).interval
-    
-n_prev_hour = Int(60/intervals.value)
-n_days = Int(n_prev/n_prev_hour)
-    
+
+n_prev_hour = Int(60 / intervals.value)
+n_days = Int(n_prev / n_prev_hour)
+
 names_bus = names(values_rt)
-prices_rt = zeros(n_days,n_bus)
+prices_rt = zeros(n_days, n_bus)
 
 i = 1
 while i < n_days
     for j in 1:(n_prev_hour):n_prev
-        prices_hour = prices_rt_df[prices_rt_df[j,:DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j,:DateTime]+Hour(1), :]
+        prices_hour = prices_rt_df[
+            prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
+                1
+            ),
+            :,
+        ]
         prices_hour = select(prices_hour, Not(:DateTime))
-        prices_rt[i,:] = sum(Matrix(prices_hour), dims = 1)
+        prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
         i = i + 1
     end
 end
@@ -268,22 +360,32 @@ times = prices_rt_df[1:n_prev_hour:n_prev, 1]
 
 labels = permutedims(names_bus)
 
-plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels)
-
+plot(prices_rt; legend=:outertopright, xlab="Hours", ylab="Prices (\$/MWh)", label=labels)
 
 prices_ed_df = prices[prices_keys[2]]
 values_ed = select(prices_ed_df, Not(:DateTime))
 values_ed = Matrix(values_ed)
 
-plot(values_ed, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels)
-
-
+plot(values_ed; legend=:outertopright, xlab="Hours", ylab="Prices (\$/MWh)", label=labels)
 
 # Both ED and RT in the same plot
 
 palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
 
-plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, linestyle = :dash, palette = palette);
-plot!(values_ed, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, palette = palette)
-
-
+plot(
+    prices_rt;
+    legend=:outertopright,
+    xlab="Hours",
+    ylab="Prices (\$/MWh)",
+    label=labels,
+    linestyle=:dash,
+    palette=palette,
+);
+plot!(
+    values_ed;
+    legend=:outertopright,
+    xlab="Hours",
+    ylab="Prices (\$/MWh)",
+    label=labels,
+    palette=palette,
+)
