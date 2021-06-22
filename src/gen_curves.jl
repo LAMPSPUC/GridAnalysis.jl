@@ -18,7 +18,6 @@ function set_active_power_limits!(
 
 end
 
-#= Enable when UCRT and UCEDRT are ready
 """
     set_active_power_limits(market_simulator::UCRT, name_generator::AbstractString, active_power_limits::NamedTuple{(:min, :max), Tuple{Float64, Float64}})
 
@@ -56,7 +55,7 @@ function set_active_power_limits(
         PowerSystems.set_active_power_limits!(generator_rt, active_power_limits)
 
 end
-=#
+
 
 """
     pq_curves_virtuals(market_simulator::MarketSimulator, name_generator::AbstractString, range_quota::Vector{Int64}, initial_time::Date, steps::Int = 1, simulation_folder::String = pwd())
