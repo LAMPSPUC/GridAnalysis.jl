@@ -85,6 +85,9 @@ lmps_df, results_df = pq_curves_virtuals!(
     market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
 )
 
+@test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
+
 #Select data to plot
 generator_name = "bus5_virtual_supply"
 period = [5] #bidding_period #[5,19]

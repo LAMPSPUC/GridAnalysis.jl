@@ -178,7 +178,7 @@ function evaluate_prices(market_simulator::UCED, problem_results::PSI.Simulation
     ed_results = get_problem_results(problem_results, "ED")
 
     return Dict(
-        "ED" => evaluate_prices(
+        "DA" => evaluate_prices(
             market_simulator.template_ed.transmission,
             market_simulator.system_ed,
             ed_results,
@@ -217,7 +217,7 @@ function evaluate_prices_UCEDRT(
     rt_results = get_problem_results(problem_results["RT"], "RT")
 
     return Dict(
-        "ED" => evaluate_prices(
+        "DA" => evaluate_prices(
             market_simulator.template_ed.transmission,
             market_simulator.system_ed,
             ed_results,

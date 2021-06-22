@@ -40,18 +40,18 @@ base_da_system = build_5_bus_matpower_DA(
 
 # Add single generator at a defined bus
 node = "bus5" # define bus
-gen = add_gerator!(base_system, node, (min=0.0, max=0.0))
-@test gen in get_components(Generator, base_system)
+gen = add_gerator!(base_da_system, node, (min=0.0, max=0.0))
+@test gen in get_components(Generator, base_da_system)
 
 # create and set variable cost time-series for the generator
 bidding_period = collect(1:24)#collect(1:24)#collect(1:24) #
 ts_array = create_generator_bids(;
     initial_bidding_time=DateTime("2020-01-01"),
     bidding_periods=bidding_period,
-    system=base_system,
+    system=base_da_system,
     costs=zeros(length(bidding_period)),
 )
-set_variable_cost!(base_system, gen, ts_array)
+set_variable_cost!(base_da_system, gen, ts_array)
 
 #Define range quota
 range_quota = Float64.(collect(0:0.1:4));
@@ -93,11 +93,11 @@ lmps_df, results_df = pq_curves_virtuals!(
 )
 
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
-@test isa(lmps_df[range_quota[1]], Dict{String,SimulationResults})
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
 #Select data to plot
 generator_name = "bus5_virtual_supply"
-period = [5] #bidding_period #[5,19]
+period = [19] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots

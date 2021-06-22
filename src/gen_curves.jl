@@ -93,8 +93,8 @@ function pq_curves_virtuals!(
             market_simulator,
             initial_time, # initial time for simulation
             steps; # number of steps in simulation (normally number of days to simulate)
-            services_slack_variables=false,
-            balance_slack_variables=false,
+            services_slack_variables=true,
+            balance_slack_variables=true,
             constraint_duals=constraint_duals,
             name="quota_$max_gen",
             simulation_folder=simulation_folder,

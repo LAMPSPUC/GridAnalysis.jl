@@ -97,45 +97,85 @@ in the plot, respectively.
 """
 
 function plot_price_curves(
-    lmps_df::Dict{Any,Any},
+    lmps_df,
     period::Vector{Int64},
     bus_name::AbstractArray=["bus5"],
     node::String="bus5",
 )
     lmps_df = sort(lmps_df)
+    aux_period=[]
+    for t in period
+        aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
+    end
     indices = []
-    data = Array{Any}(nothing, (length(period), length(bus_name) + 1, length(lmps_df))) #length(period)-size(lmps_df[0])[1]
+    data = Array{Any}(nothing, (length(period), length(bus_name) + 1, length(lmps_df), length(lmps_df[collect(keys(lmps_df))[1]]))) 
     for (i, v) in enumerate(keys(lmps_df))
-        for t in 1:length(period)
-            data[t, 1, i] = lmps_df[v][!, "DateTime"][period[t]]
-            c = 2
-            for j in bus_name
-                data[t, c, i] = lmps_df[v][!, j][period[t]]
-                c = c + 1
+        for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]]))
+            for t in 1:length(period)
+                data[t, 1, i, l] = aux_period[t]
+                c = 2
+                for j in bus_name
+                    prices_hour = lmps_df[v][k][
+                        aux_period[t] .<= lmps_df[v][k].DateTime .< 
+                        aux_period[t]+ Hour(1),
+                        j,     
+                    ]
+
+                    data[t, c, i, l] = sum(prices_hour; dims=1)[1]
+
+                    c = c + 1
+                end
             end
         end
         indices = vcat(indices, v)
     end
-
+    palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
     c = 1
-    for b in 1:length(bus_name)
-        for t in 1:length(period)
-            if c == 1
-                plot(
-                    indices,
-                    data[t, b + 1, :];
-                    label="hora" * string(period[t] - 1) * "- " * string(bus_name[b]),
-                    legend=:outertopright,
-                )
-            else
-                plot!(
-                    indices,
-                    data[t, b + 1, :];
-                    label="hora" * string(period[t] - 1) * "- " * string(bus_name[b]),
-                    legend=:outertopright,
-                )
+    for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems
+        for b in 1:length(bus_name)
+            for t in 1:length(period)
+                if k=="ED"
+                    if c == 1
+                        plot(
+                            indices,
+                            data[t, b + 1, :, l];
+                            label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
+                            legend=:outertopright,
+                            palette=palette,
+                        )
+                    else
+                        plot!(
+                            indices,
+                            data[t, b + 1, :, l];
+                            label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
+                            legend=:outertopright,
+                            palette=palette,
+                        )
+                    end
+                elseif k=="RT"
+                    if c == 1
+                        plot(
+                            indices,
+                            data[t, b + 1, :, l];
+                            label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
+                            legend=:outertopright,
+                            linestyle=:dash,
+                            palette=palette,
+                        )
+                    else
+                        plot!(
+                            indices,
+                            data[t, b + 1, :, l];
+                            label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
+                            legend=:outertopright,
+                            linestyle=:dash,
+                            palette=palette,
+                        )
+                    end
+
+                end
+                c = c + 1
             end
-            c = c + 1
         end
     end
 
@@ -169,20 +209,38 @@ function plot_revenue_curves(
     bus_name = get_name(get_bus(gen))
 
     indices = []
+    aux_period=[]
+    for t in period
+        aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
+    end
     data = Array{Any}(nothing, (length(period), 2, length(lmps_df)))
+    price=zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
+    price=Dict()
+    for k in keys(lmps_df[collect(keys(lmps_df))[1]])
+        price[k]=0
+    end
+    
     for (i, v) in enumerate(keys(lmps_df))
         for t in 1:length(period)
-            data[t, 1, i] = lmps_df[v][!, "DateTime"][period[t]]
+            data[t, 1, i] = lmps_df[v]["ED"][!, "DateTime"][period[t]]
             variable_results = read_realized_variables(
-                get_problem_results(results_df[v], "UC"); names=[:P__ThermalStandard]
-            )
+                    get_problem_results(results_df[v]["ED"], "UC"); names=[:P__ThermalStandard]
+                )
             generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
-            virtual_gen = generator_data[1][!, generator_name][[period[t]]][1] #name_generator
-            data[t, 2, i] = (lmps_df[v][[period[t]], bus_name][1]) * virtual_gen #arrumar 
+            virtual_gen = generator_data[1][!, generator_name][[period[t]]][1] 
+
+            for k in (keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems    
+                prices_hour = lmps_df[v][k][
+                    aux_period[t] .<= lmps_df[v][k].DateTime .< 
+                    aux_period[t]+ Hour(1),
+                    node,     
+                ]
+                price[k] = sum(prices_hour; dims=1)[1]
+            end
+            data[t, 2, i] = (price["ED"]-price["RT"])*virtual_gen #arrumar 
         end
         indices = vcat(indices, v)
     end
-
     c = 1
     for t in 1:length(period)
         if c == 1
