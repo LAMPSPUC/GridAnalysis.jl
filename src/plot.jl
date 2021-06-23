@@ -348,7 +348,7 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
 @recipe function f(
     p::plot_generation_stack_virtual;
     generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-    type::AbstractString, period::Int=1,
+    type::AbstractString, period::Int=1, initial_time,
 )
     system, results_df, = p.args
     results_df = sort(results_df)
