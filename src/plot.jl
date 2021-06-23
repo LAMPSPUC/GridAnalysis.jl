@@ -348,17 +348,18 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
 @recipe function f(
     p::plot_generation_stack_virtual;
     generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-    type::AbstractString, period::Int=1, initial_time,
+    type::AbstractString, period::Int=1, initial_time::Date,
 )
     system, results_df, = p.args
     results_df = sort(results_df)
-    aux_period=[]
-    for t in period
-        aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
-    end
+    aux_period=DateTime(initial_time)+Hour(period[1]-1)
 
     for q in keys(results_df)
-        system_results = get_problem_results(results_df[q][type], "UC")
+        if type=="RT"
+            system_results = get_problem_results(results_df[q][type], "RT")
+        else 
+            system_results = get_problem_results(results_df[q][type], "UC")
+        end
 
         # get mapping from busname to fuel type
         fuel_type_dict = fuel_type_mapping(system)
@@ -368,12 +369,13 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         generator_data = getindex.(Ref(variable_results), generator_fields)
         for i in 1:length(generator_data)
             generation = generator_data[i][
-                aux_period[t] .<= generator_data[i].DateTime .< aux_period[t] + Hour(
+                aux_period .<= generator_data[i].DateTime .< aux_period + Hour(
                     1
                 ),
                 :,
             ]
-            generator_data[i] = sum(generation; dims=1)[1]
+            generation[!,"DateTime"].=aux_period
+            generator_data[i] = combine(groupby(generation, :DateTime), names(generation, Not(:DateTime)) .=> sum, renamecols=false)
         end
         if length(generator_data) > 1
             generator_data = innerjoin(generator_data...; on=:DateTime)

@@ -85,7 +85,7 @@ lmps_df, results_df = pq_curves_virtuals!(
     market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
 )
 
-@test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
+@test isa(results_df[range_quota[1]], Dict{String,SimulationResults}) #TODO: Make results_df always a dict
 @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
 #Select data to plot
