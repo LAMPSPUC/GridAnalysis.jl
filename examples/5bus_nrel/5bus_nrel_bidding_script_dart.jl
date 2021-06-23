@@ -105,5 +105,5 @@ plot_price_curves(lmps_df, period, bus_name, node)
 plot_revenue_curves(lmps_df, results_df, market_simulator, period, generator_name)
 plot_generation_curves(lmps_df, results_df, market_simulator, period, generator_name)
 plot_generation_stack_virtual(
-    sys_uc, results_df; period=period, xtickfontsize=8, margin=8mm, size=(800, 600)
+    sys_uc, results_df; type, period=period, xtickfontsize=8, margin=8mm, size=(800, 600)
 )

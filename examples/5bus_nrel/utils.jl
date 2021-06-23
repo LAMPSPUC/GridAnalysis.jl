@@ -134,13 +134,14 @@ function plot_price_curves(
     for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems
         for b in 1:length(bus_name)
             for t in 1:length(period)
-                if k=="ED"
+                if length(lmps_df[collect(keys(lmps_df))[1]])>1 && k=="RT" 
                     if c == 1
                         plot(
                             indices,
                             data[t, b + 1, :, l];
                             label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
                             legend=:outertopright,
+                            linestyle=:dash,
                             palette=palette,
                         )
                     else
@@ -149,17 +150,17 @@ function plot_price_curves(
                             data[t, b + 1, :, l];
                             label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
                             legend=:outertopright,
+                            linestyle=:dash,
                             palette=palette,
                         )
                     end
-                elseif k=="RT"
+                else
                     if c == 1
                         plot(
                             indices,
                             data[t, b + 1, :, l];
                             label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
                             legend=:outertopright,
-                            linestyle=:dash,
                             palette=palette,
                         )
                     else
@@ -168,7 +169,6 @@ function plot_price_curves(
                             data[t, b + 1, :, l];
                             label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
                             legend=:outertopright,
-                            linestyle=:dash,
                             palette=palette,
                         )
                     end
@@ -198,8 +198,8 @@ The 'generator_name' defines which is the virtual generator that we want to plot
 and 'periods' controls which periods we want to include in the plot.
 """
 function plot_revenue_curves(
-    lmps_df::Dict{Any,Any},
-    results_df,
+    lmps_df,
+    results_df::Dict{Any,Any},
     market_simulator,
     period::Vector{Int64},
     generator_name::String,
@@ -222,7 +222,7 @@ function plot_revenue_curves(
     
     for (i, v) in enumerate(keys(lmps_df))
         for t in 1:length(period)
-            data[t, 1, i] = lmps_df[v]["ED"][!, "DateTime"][period[t]]
+            data[t, 1, i] = aux_period[t]
             variable_results = read_realized_variables(
                     get_problem_results(results_df[v]["ED"], "UC"); names=[:P__ThermalStandard]
                 )
@@ -237,7 +237,7 @@ function plot_revenue_curves(
                 ]
                 price[k] = sum(prices_hour; dims=1)[1]
             end
-            data[t, 2, i] = (price["ED"]-price["RT"])*virtual_gen #arrumar 
+            data[t, 2, i] = (price["DA"]-price["RT"])*virtual_gen 
         end
         indices = vcat(indices, v)
     end
@@ -281,7 +281,7 @@ and 'periods' controls which periods we want to include in the plot.
 """
 
 function plot_generation_curves(
-    lmps_df::Dict{Any,Any},
+    lmps_df,
     results_df::Dict{Any,Any},
     market_simulator,
     period::Vector{Int64},
@@ -290,14 +290,18 @@ function plot_generation_curves(
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
+    aux_period=[]
+    for t in period
+        aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
+    end
 
     indices = []
     data = Array{Any}(nothing, (length(period), 2, length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
         for t in 1:length(period)
-            data[t, 1, i] = lmps_df[v][!, "DateTime"][period[t]]
+            data[t, 1, i] = aux_period[t]
             variable_results = read_realized_variables(
-                get_problem_results(results_df[v], "UC"); names=[:P__ThermalStandard]
+                get_problem_results(results_df[v]["ED"], "UC"); names=[:P__ThermalStandard]
             )
             generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
             virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
