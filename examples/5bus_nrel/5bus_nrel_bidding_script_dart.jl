@@ -54,7 +54,7 @@ ts_array = create_generator_bids(;
 set_variable_cost!(base_da_system, gen, ts_array)
 
 #Define range quota
-range_quota = Float64.(collect(0:0.1:2.4));
+range_quota = Float64.(collect(0:0.1:4));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_da_system)
@@ -97,7 +97,7 @@ lmps_df, results_df = pq_curves_virtuals!(
 
 #Select data to plot
 generator_name = "bus5_virtual_supply"
-period = [19] #bidding_period #[5,19]
+period = [5] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots

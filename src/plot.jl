@@ -357,8 +357,10 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
     for q in keys(results_df)
         if type=="RT"
             system_results = get_problem_results(results_df[q][type], "RT")
-        else 
+        elseif type=="ED" ||type=="DA"
             system_results = get_problem_results(results_df[q][type], "UC")
+        else
+            system_results = get_problem_results(results_df[q], "UC")
         end
 
         # get mapping from busname to fuel type
