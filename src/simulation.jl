@@ -52,7 +52,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="ed_"*name,
         steps=steps,
         problems=problems,
         sequence=uc_ed_sequence,
@@ -118,7 +118,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="rt_"*name,
         steps=steps,
         problems=problems,
         sequence=uc_rt_sequence,
@@ -184,7 +184,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="uc_"*name,
         steps=steps,
         problems=problem1,
         sequence=uc_ed_sequence,
@@ -230,7 +230,7 @@ function PSI.Simulation(
     )
 
     sim2 = PSI.Simulation(;
-        name=name,
+        name="rt_"*name,
         steps=steps,
         problems=problem2,
         sequence=uc_rt_sequence,
