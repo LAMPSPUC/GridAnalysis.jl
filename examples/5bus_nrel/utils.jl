@@ -58,7 +58,7 @@ function build_5_bus_matpower_RT(data_dir::AbstractString;
     sys = System(case_file_path)
 
     add_time_series!(sys, forecasts_pointers_file)
-    transform_single_time_series!(sys, 1, Minute(5))
+    transform_single_time_series!(sys, 12, Minute(15))
 
     return sys
 end

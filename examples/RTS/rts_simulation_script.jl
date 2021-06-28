@@ -1,4 +1,4 @@
-# Make sure to run this file while in the examples 5bus_nrel enviroment.
+# Make sure to run this file while in the examples RTS enviroment.
 # '] activate ./examples/RTS'
 using Cbc
 using Dates
@@ -11,9 +11,11 @@ using PowerSimulations
 using Test
 using Measures
 using Plots
+const PSY = PowerSystems
 
 # set directory
-rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC" # download("https://github.com/GridMod/RTS-GMLC", "master", pwd())
+#rts_dir = download("https://github.com/GridMod/RTS-GMLC", "master", mktempdir())
+rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC"
 rts_src_dir = joinpath(rts_dir, "RTS_Data", "SourceData")
 rts_siip_dir = joinpath(rts_dir, "RTS_Data", "FormattedData", "SIIP");
 
@@ -26,6 +28,7 @@ data_dir = joinpath(example_dir, "data")
 
 include(joinpath(example_dir, "utils.jl")) # case utilities
 
+# get the raw system
 rawsys = PowerSystemTableData(
     rts_src_dir,
     100.0,
@@ -33,7 +36,6 @@ rawsys = PowerSystemTableData(
     timeseries_metadata_file = joinpath(rts_siip_dir, "timeseries_pointers.json"),
     generator_mapping_file = joinpath(rts_siip_dir, "generator_mapping.yaml"),
 )
-
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC), Real Time (RT) and Economic Dispatch (ED)
@@ -44,8 +46,8 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 # define systems with resolutions
 sys_DA = System(rawsys; time_series_resolution = Dates.Hour(1))
 sys_rt = System(rawsys; time_series_resolution = Dates.Minute(5))
+transform_single_time_series!(sys_rt, 12, Minute(15))
 sys_uc, sys_ed = prep_systems_UCED(sys_DA)
-
 
 # generic market formulation templates with defined network formulation
 # CopperPlate-OPF: network=CopperPlatePowerModel
@@ -55,6 +57,9 @@ sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_rt = template_economic_dispatch(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
+
+
+
 
 
 # UC-ED
@@ -102,6 +107,117 @@ prices = evaluate_prices(market_simulator, results)
 
 names(prices["ED"][!,:])
 
+# get the generator data
+# generator_metadata = [gen for gen in get_components(Generator, sys_ed)]
+# get the fuel type for all buses
+fuel_type_dict = fuel_type_mapping(sys_ed)
+# get all names of the fuel types and make sure its unique
+fuel_names = unique(keys(fuel_type_dict))
+# create the vectors, one for each type of fuel
+hydro = Vector{String}()
+wind = Vector{String}()
+solar = Vector{String}()
+# put the name of the bus in its respective vector
+# these vectors are useful for selecting which bus is desired to plot
+# for example: if is wanted to plot only the wind or only the solar generators
+for i in 1:length(fuel_names)
+    if occursin("HYDRO", fuel_names[i]) == true
+        push!(hydro, get_bus_name(generator_metadata[i]))
+    elseif occursin("WIND", fuel_names[i]) == true
+        push!(wind, get_bus_name(generator_metadata[i]))
+    elseif occursin("PV", fuel_names[i]) == true
+        push!(solar, get_bus_name(generator_metadata[i]))
+    end
+end
+
+# change the name of the fuel type so that it follows a pattern
+for (i, key) in enumerate(fuel_names)
+    if occursin("HYDRO", fuel_names[i]) == true
+        fuel_type_dict[key] = "HYDRO"
+    elseif occursin("WIND", fuel_names[i]) == true
+        fuel_type_dict[key] = "WIND"
+    elseif occursin("PV", fuel_names[i]) == true || occursin("CSP", fuel_names[i]) == true
+        fuel_type_dict[key] = "SOLAR"
+    end
+end
+
+
+# Plots
+plot_generation_stack(sys_DA, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+#plot_generation_stack(sys_DA, ed_results; bus_names=["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, margin=8mm, size=(800, 600))
+#plot_generation_stack(sys_DA, ed_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, ed_results; generator_fields=[:P__ThermalStandard], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, uc_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=unique(solar), xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=unique(wind), xtickfontsize=8, size=(800, 600))
+plot_prices(market_simulator, results; bus_names=unique(hydro), xtickfontsize=8, size=(800, 600))
+
+plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+#plot_thermal_commit(sys_DA, uc_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
+
+plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
+#plot_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
+#plot_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
+
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
+#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
+
+
+
+
+
+
+# UCRT
+
+# build a market clearing simulator (run `@doc UCED` for more information)
+market_simulator = UCRT(;
+    system_uc=sys_uc,
+    system_rt=sys_rt,
+    template_uc=template_uc,
+    template_rt=template_rt,
+    solver_uc=solver_uc,
+    solver_rt=solver_rt
+)
+
+@test isa(market_simulator, UCRT)
+
+# for each formulation you will need to save different dual variables:
+constraint_duals = duals_constraint_names(market_simulator)
+
+@test isa(constraint_duals, AbstractVector{Symbol})
+
+# Simulate market
+# build and run simulation
+results = run_multiday_simulation(
+    market_simulator,
+    Date("2020-09-01"), # initial time for simulation
+    1; # number of steps in simulation (normally number of days to simulate)
+    services_slack_variables=false,
+    balance_slack_variables=false,
+    constraint_duals=constraint_duals,
+    name="test_case_5bus",
+    simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
+);
+
+@test isa(results, SimulationResults)
+
+# separate results
+uc_results = get_problem_results(results, "UC");
+rt_results = get_problem_results(results, "RT");
+
+# calculate prices
+prices = evaluate_prices(market_simulator, results)
+
+@test isa(prices, Dict{String, DataFrame})
+
+names(prices["RT"][!,:])
+
 # Plots
 plot_generation_stack(sys_DA, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
 #plot_generation_stack(sys_DA, ed_results; bus_names=["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, margin=8mm, size=(800, 600))
@@ -116,8 +232,8 @@ plot_prices(market_simulator, results; bus_names=["Calvin", "Beethoven", "Anna",
 plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 #plot_thermal_commit(sys_DA, uc_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
-savefig(p, "generation_thermal_RTS_UCED.png")
-savefig(p, "net_demand_RTS_UCED.png")
+savefig(p, "generation_thermal_RTS_UCRT.png")
+savefig(p, "net_demand_RTS_UCRT.png")
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
@@ -127,6 +243,3 @@ plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
 p = plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
-
-
-

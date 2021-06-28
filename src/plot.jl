@@ -33,6 +33,17 @@ and `generator_fields` control which buses, and generator types we want to inclu
     bus_map = bus_mapping(system)
     stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
 
+    fuel_names = unique(keys(fuel_type_dict))
+    for (i, key) in enumerate(fuel_names)
+        if occursin("HYDRO", fuel_names[i]) == true
+            fuel_type_dict[key] = "HYDRO"
+        elseif occursin("WIND", fuel_names[i]) == true
+            fuel_type_dict[key] = "WIND"
+        elseif occursin("PV", fuel_names[i]) == true || occursin("CSP", fuel_names[i]) == true
+            fuel_type_dict[key] = "SOLAR"
+        end
+    end
+
     # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
         bus_names = String.(bus_names)
