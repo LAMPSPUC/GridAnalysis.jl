@@ -11,11 +11,12 @@ using PowerSimulations
 using Test
 using Measures
 using Plots
+
 const PSY = PowerSystems
 
 # set directory
-#rts_dir = download("https://github.com/GridMod/RTS-GMLC", "master", mktempdir())
-rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC"
+rts_dir = download("https://github.com/GridMod/RTS-GMLC", "master", mktempdir())
+#rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC"
 rts_src_dir = joinpath(rts_dir, "RTS_Data", "SourceData")
 rts_siip_dir = joinpath(rts_dir, "RTS_Data", "FormattedData", "SIIP");
 
@@ -24,18 +25,8 @@ rts_siip_dir = joinpath(rts_dir, "RTS_Data", "FormattedData", "SIIP");
 # for example: 'example_dir = "./examples/RTS/"')
 example_dir = dirname(@__FILE__)
 
-data_dir = joinpath(example_dir, "data")
-
 include(joinpath(example_dir, "utils.jl")) # case utilities
-
-# get the raw system
-rawsys = PowerSystemTableData(
-    rts_src_dir,
-    100.0,
-    joinpath(rts_siip_dir, "user_descriptors.yaml"),
-    timeseries_metadata_file = joinpath(rts_siip_dir, "timeseries_pointers.json"),
-    generator_mapping_file = joinpath(rts_siip_dir, "generator_mapping.yaml"),
-)
+include(joinpath(example_dir, "modify_RTS.jl")) # functions that modify the RTS problem
 
 #' Data Prep and Build Market Simulator
 # define solvers for Unit Commitment (UC), Real Time (RT) and Economic Dispatch (ED)
@@ -44,8 +35,7 @@ solver_rt = optimizer_with_attributes(Gurobi.Optimizer)
 solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # define systems with resolutions
-sys_DA = System(rawsys; time_series_resolution = Dates.Hour(1))
-sys_rt = System(rawsys; time_series_resolution = Dates.Minute(5))
+sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
 transform_single_time_series!(sys_rt, 12, Minute(15))
 sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 
@@ -161,10 +151,13 @@ plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
+plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 #plot_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
@@ -199,7 +192,7 @@ results = run_multiday_simulation(
     Date("2020-09-01"), # initial time for simulation
     1; # number of steps in simulation (normally number of days to simulate)
     services_slack_variables=false,
-    balance_slack_variables=false,
+    balance_slack_variables=true,
     constraint_duals=constraint_duals,
     name="test_case_5bus",
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
@@ -219,27 +212,62 @@ prices = evaluate_prices(market_simulator, results)
 names(prices["RT"][!,:])
 
 # Plots
-plot_generation_stack(sys_DA, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_DA, ed_results; bus_names=["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_DA, ed_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_DA, ed_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
-plot_generation_stack(sys_DA, ed_results; generator_fields=[:P__ThermalStandard], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+#plot_generation_stack(sys_DA, rt_results; bus_names=["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, margin=8mm, size=(800, 600))
+#plot_generation_stack(sys_DA, rt_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, rt_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
+plot_generation_stack(sys_DA, rt_results; generator_fields=[:P__ThermalStandard], xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(sys_DA, uc_results; generator_fields=[:P__RenewableDispatch], xtickfontsize=8, margin=8mm, size=(800, 600))
 
-plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
+p = plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 plot_prices(market_simulator, results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, size=(800, 600))
 
 plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 #plot_thermal_commit(sys_DA, uc_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
-savefig(p, "generation_thermal_RTS_UCRT.png")
-savefig(p, "net_demand_RTS_UCRT.png")
-
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
-plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
+# plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600)) # too much computer demmanding
+plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
+plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 #plot_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
-p = plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600))
+plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
+plot_net_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
+
+
+# Plot the RT prices with all simulator forecast
+
+prices_keys = collect(keys(prices))
+prices_rt_df = prices[prices_keys[1]]
+
+values = select(prices_rt_df, Not(:DateTime))
+n_prev, n_bus = size(values)
+
+intervals = get_time_series_params(market_simulator.system_rt).interval
+    
+n_prev_hour = Int(60/intervals.value)
+n_days = Int(n_prev/n_prev_hour)
+    
+names_bus = names(values)
+prices_rt = zeros(n_days,n_bus)
+
+i = 1
+while i < n_days
+    for j in 1:(n_prev_hour):n_prev
+        prices_hour = prices_rt_df[prices_rt_df[j,:DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j,:DateTime]+Hour(1), :]
+        prices_hour = select(prices_hour, Not(:DateTime))
+        prices_rt[i,:] = sum(Matrix(prices_hour), dims = 1)
+        i = i + 1
+    end
+end
+
+times = prices_rt_df[1:n_prev_hour:n_prev, 1]
+
+labels = permutedims(names_bus)
+
+plot(prices_rt, legend = :outertopright, xlab = "Hours", ylab = "Prices (\$/MWh)", label = labels, ylim = (-5,20))

@@ -1,7 +1,5 @@
 # Get the raw RTS system 
-function get_rts_sys(rts_dir;
-    rts_src_dir = joinpath(rts_dir, "RTS_Data", "SourceData"),
-    rts_siip_dir = joinpath(rts_dir, "RTS_Data", "FormattedData", "SIIP")
+function get_rts_raw_sys(rts_src_dir, rts_siip_dir;
 )
     rawsys = PSY.PowerSystemTableData(
         rts_src_dir,
@@ -13,44 +11,48 @@ function get_rts_sys(rts_dir;
 end
 
 # Prepare the RTS system for the Day Ahead (DA) and Real Time (RT) problems
-function get_rts_sys(rts_dir; 
+function get_rts_sys(rts_src_dir, rts_siip_dir; 
     time_series_resolution = [Dates.Hour(1), Dates.Minute(5)],
     modifier_function::Function = rts_modifier_function!,
     kwargs...
 )
-    rawsys = get_rts_sys(rts_dir)
+    rawsys = get_rts_raw_sys(rts_src_dir, rts_siip_dir)
     sys_DA =  System(rawsys; time_series_resolution = time_series_resolution[1], kwargs...)
     sys_rt =  System(rawsys; time_series_resolution = time_series_resolution[2], kwargs...) 
-    modifier_function(sys_DA)
-    return sys_DA
+    modifier_function(sys_DA, sys_rt;)
+    return sys_DA, sys_rt
 end
 
 # Modify the RTS
-function rts_modifier_function!(systems=[sys_DA, sys_rt];
+function rts_modifier_function!(sys_DA=sys_DA, sys_rt=sys_rt;
     mult=1.5,
     DISPATCH_INCREASE = 2.0,
-    FIX_DECREASE = 0.3
+    FIX_DECREASE = 0.3,
 )
     # Add area renewable energy forecasts for RT model
-    # area_mapping = get_aggregation_topology_mapping(Area, sys_ed)
+    area_mapping = get_aggregation_topology_mapping(Area, sys_rt)
     for (k, buses_in_area) in area_mapping
         k == "1" && continue
-        remove_component!(sys_ed, get_component(Area, sys_ed, k))
+        remove_component!(sys_rt, get_component(Area, sys_rt, k))
         for b in buses_in_area
-            PSY.set_area!(b, get_component(Area, sys_ed, "1"))
+            PSY.set_area!(b, get_component(Area, sys_rt, "1"))
         end
     end
-    for sys in systems
-    # Adjust Reserve Provisions
-    # Remove Flex Reserves
+
+    # Make data more realistic
+    for sys in [sys_DA, sys_rt]
+        # Adjust Reserve Provisions
+        # Remove Flex Reserves
         set_units_base_system!(sys, "SYSTEM_BASE")
         res_up = get_component(VariableReserve{ReserveUp}, sys, "Flex_Up")
         remove_component!(sys, res_up)
         res_dn = get_component(VariableReserve{ReserveDown}, sys, "Flex_Down")
         remove_component!(sys, res_dn)
         reg_reserve_up = get_component(VariableReserve, sys, "Reg_Up")
+        mult = (sys == sys_DA) ? 1.5 : 1.0
         set_requirement!(reg_reserve_up, mult*get_requirement(reg_reserve_up))
         reg_reserve_dn = get_component(VariableReserve, sys, "Reg_Down")
+        mult = (sys == sys_DA) ? 1.5 : 1.0
         set_requirement!(reg_reserve_dn, mult*get_requirement(reg_reserve_dn))
         spin_reserve_R1 = get_component(VariableReserve, sys, "Spin_Up_R1")
         spin_reserve_R2 = get_component(VariableReserve, sys, "Spin_Up_R2")
