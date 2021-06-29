@@ -221,7 +221,7 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals2 = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(5), Consecutive()))
+    intervals2 = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(15), Consecutive()))
 
     uc_rt_sequence = SimulationSequence(;
         problems=problem2,
