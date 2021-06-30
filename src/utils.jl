@@ -239,20 +239,25 @@ Returns the parameters associated with the time-series attached to the system.
 """
 get_time_series_params(system::System) = system.data.time_series_params.forecast_params
 
-"""
-"""
-function color_mapping(system::System)
-    generator_metadata = [gen for gen in get_components(Generator, system)]
-    colors = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green", "Red","yellow","orange"]
+function load_pq_curves(
+    market_simulator,
+    range_quota,
+    simulation_folder,
+)
+    lmps_df = Dict()
+    results_df = Dict()
+    for max_gen in range_quota
+        results_df[max_gen] = load_simulation_results(joinpath(simulation_folder, "quota_$max_gen", "1"))#, "UC")
+        #ed_results = load_simulation_results(joinpath(simulation_folder, "quota_$max_gen", "1"), "ED")
+        #ptdf = PTDF(sys)
+        #lmps_df[max_gen] = psi_ptdf_lmps(ed_results, sys, ptdf)
+        if isa(market_simulator, UCEDRT) #TODO: evaluate_prices unified
+            lmps_df[max_gen] = evaluate_prices_UCEDRT(market_simulator, results)
+        else
+            lmps_df[max_gen] = evaluate_prices(market_simulator, results)
+        end
 
-    color_map = Dict()
-    for (i,generator) in enumerate(generator_metadata)
-        name = generator.name
-        #Transforming the first and last letter to number: parse(Int64,string(Int(first(name)))*string(Int(last(name))))
-        color_map[name] = colors[i]
     end
-
-    return color_map
+    return lmps_df, results_df
 end
-
 

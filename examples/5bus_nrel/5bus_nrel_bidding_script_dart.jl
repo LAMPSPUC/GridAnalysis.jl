@@ -39,7 +39,7 @@ base_da_system = build_5_bus_matpower_DA(
 )
 
 # Add single generator at a defined bus
-node = "bus5" # define bus
+node = "bus4" # define bus
 gen = add_gerator!(base_da_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_da_system)
 
@@ -87,7 +87,7 @@ market_simulator = UCEDRT(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-simulation_folder = mktempdir();#joinpath(example_dir, "results");
+simulation_folder = joinpath(example_dir, "results"); #if you don't want to save the results, change to: mktempdir();
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
 )
@@ -95,9 +95,16 @@ lmps_df, results_df = pq_curves_virtuals!(
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
 @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
+#Load the simulation done previously #ERROR: UndefVarError: load_simulation_results not defined
+lmps, results = load_pq_curves(
+    market_simulator;
+    range_quota,
+    simulation_folder,
+)
+
 #Select data to plot
-generator_name = "bus5_virtual_supply"
-period = [19] #bidding_period #[5,19]
+generator_name = "bus4_virtual_supply"
+period = [5,19] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
@@ -115,4 +122,13 @@ plot_generation_stack_virtual(
 )
 
 plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0], "SolarBusC")
-plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0,0.5, 1.0, 2.0], "WindBusA")
+plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0, 2.0], "WindBusA")
+
+plot_revenue_curves_renewable_plus_virtual(
+    lmps_df,
+    results_df,
+    market_simulator,
+    [0.0,1.0,2.0],
+    "WindBusA",
+    generator_name,
+)

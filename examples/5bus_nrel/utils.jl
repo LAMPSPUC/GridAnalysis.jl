@@ -191,7 +191,7 @@ function plot_price_curves(
         title="Price per Virtual Bid on " * node,
         ylabel="Prices (\$/MWh)",
         xlabel="Bid offers (p.u.)",
-        ylims = (min_element*0.9,max_element*1.1)
+        ylims = (min_element-1,max_element*1.1+1)
     )
     #TODO: Change x axis, define bus_name of virtual bid 
 end
@@ -284,9 +284,9 @@ function plot_revenue_curves(
 
     return plot!(;
         title="Virtual Revenue per Offer on " * bus_name,
-        ylabel="Revenue (\$/MWh)",
+        ylabel="Revenue (\$)",
         xlabel="Bid offers (p.u)",
-        ylims = (min_element*0.9,max_element*1.1)
+        ylims = (min_element-1,max_element*1.1+1)
     )
     #TODO: Change x axis 
 
@@ -382,9 +382,9 @@ function plot_revenue_curves_renewable(
 
     return plot!(;
         title= generator_name *" Revenue per Virtual Offer on " * node,
-        ylabel="Revenue (\$/MWh)",
+        ylabel="Revenue (\$)",
         xlabel="Period",
-        ylims = (min_element*0.9,max_element*1.1)
+        ylims = (min_element-1,max_element*1.1+1)
     )
     #TODO: Change x axis 
 
@@ -462,43 +462,54 @@ function plot_revenue_curves_renewable_plus_virtual(
           
         data[:,j+1,1] = gen_da_r.*price["DA"][!,bus_r] + (gen_rt_r - gen_da_r).*price["RT"][!,bus_r]
         data[:,j+1,2] = gen_da_v.*(price["DA"][!,bus_v] - price["RT"][!,bus_v])
-
-        if maximum(data[:,j+1,1]+data[:,j+1,2])>max_element && minimum(data[:,j+1,1]+data[:,j+1,2])<1e3
-            max_element=maximum(data[:,j+1,1]+data[:,j+1,2])
-        elseif minimum(data[:,j+1,1]+data[:,j+1,2])<min_element && minimum(data[:,j+1,1]+data[:,j+1,2])>-1e3
-            min_element=minimum(data[:,j+1,1]+data[:,j+1,2])
+        for c=1:size(data)[1]
+            for i=1:2
+                if data[c,j+1,i]>max_element && data[c,j+1,i] <1e3
+                    max_element=data[c,j+1,i]
+                end
+                if data[c,j+1,i]<min_element && data[c,j+1,i]>-1e3
+                    min_element=data[c,j+1,i]
+                end
+            end
         end
     end
     data[:,2:length(bids)+1,3]=data[:,2:length(bids)+1,1]+data[:,2:length(bids)+1,2]
     palette = :Dark2_8
-
-    c = 1
-    for (j,q) in enumerate(bids)
-        if c == 1
-            plot(
-                0:length(data[:,1,1])-1,
-                data[:, j+1,1];
-                label="bid: " * string(q),
-                legend=:outertopright,
-                palette=palette,
-            )
-        else
-            plot!(
-                0:length(data[:,1,1])-1,
-                data[:, j+1,1];
-                label="bid: " * string(q),
-                legend=:outertopright,
-                palette=palette,
-            )
+    title=[renewable_gen *" Revenue - Virtual Offer on " * node,
+    virtual_gen *" Revenue - Virtual Offer on " * node,
+    "Joint Revenue - Virtual Offer on " * node]
+    plt=Array{Any}(nothing, (3)) #TODO: Change to typeof(plot): Plots.Plot{Plots.PlotlyBackend}
+    for i=1:3
+        c = 1
+        for (j,q) in enumerate(bids)
+            if c == 1
+                plt[i] = plot(
+                    0:length(data[:,1,i])-1,
+                    data[:, j+1,i];
+                    label="bid: " * string(q),
+                    legend=:outertopright,
+                    palette=palette,
+                    title=title[i],
+                    titlefont=font(10,"Arial")
+                )
+            else
+                plot!(plt[i],
+                    0:length(data[:,1,i])-1,
+                    data[:, j+1,i];
+                    label="bid: " * string(q),
+                    legend=:outertopright,
+                    palette=palette,
+                )
+            end
+            c = c + 1
         end
-        c = c + 1
     end
 
-    return plot!(;
-        title= generator_name *" Revenue per Virtual Offer on " * node,
-        ylabel="Revenue (\$/MWh)",
-        xlabel="Period",
-        ylims = (min_element*0.9,max_element*1.1)
+    return plot(plt...;
+        layout = (3,1),
+        ylabel="Revenue (\$)",
+        #xlabel="Period",
+        ylims = (min_element-1,max_element*1.1+1)
     )
     #TODO: Change x axis 
 
