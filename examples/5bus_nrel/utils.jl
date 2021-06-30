@@ -108,6 +108,8 @@ function plot_price_curves(
         aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
     end
     indices = []
+    max_element=0
+    min_element=0
     data = Array{Any}(nothing, (length(period), length(bus_name) + 1, length(lmps_df), length(lmps_df[collect(keys(lmps_df))[1]]))) 
     for (i, v) in enumerate(keys(lmps_df))
         for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]]))
@@ -123,15 +125,21 @@ function plot_price_curves(
 
                     data[t, c, i, l] = sum(prices_hour; dims=1)[1]
 
+                    if data[t,c,i,l]>max_element && data[t,c,i,l]<1e3
+                        max_element=data[t,c,i,l]
+                    elseif data[t,c,i,l]<min_element && data[t,c,i,l]>-1e3
+                        min_element=data[t,c,i,l]
+                    end
+
                     c = c + 1
                 end
             end
         end
         indices = vcat(indices, v)
     end
-    palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
+    palette = :Dark2_8
     c = 1
-    for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems
+    for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]])) #different Problems
         for b in 1:length(bus_name)
             for t in 1:length(period)
                 if length(lmps_df[collect(keys(lmps_df))[1]])>1 && k=="RT" 
@@ -139,7 +147,7 @@ function plot_price_curves(
                         plot(
                             indices,
                             data[t, b + 1, :, l];
-                            label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
+                            label="hour:" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k ,
                             legend=:outertopright,
                             linestyle=:dash,
                             palette=palette,
@@ -148,7 +156,7 @@ function plot_price_curves(
                         plot!(
                             indices,
                             data[t, b + 1, :, l];
-                            label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
+                            label="hour:" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
                             legend=:outertopright,
                             linestyle=:dash,
                             palette=palette,
@@ -159,7 +167,7 @@ function plot_price_curves(
                         plot(
                             indices,
                             data[t, b + 1, :, l];
-                            label="hora" * string(period[t] - 1) * " - " * string(bus_name[b])* " - " * k ,
+                            label="hour:" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k ,
                             legend=:outertopright,
                             palette=palette,
                         )
@@ -167,7 +175,7 @@ function plot_price_curves(
                         plot!(
                             indices,
                             data[t, b + 1, :, l];
-                            label="hora" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
+                            label="hour:" * string(period[t] - 1) * "- " * string(bus_name[b])* "- " * k,
                             legend=:outertopright,
                             palette=palette,
                         )
@@ -183,6 +191,7 @@ function plot_price_curves(
         title="Price per Virtual Bid on " * node,
         ylabel="Prices (\$/MWh)",
         xlabel="Bid offers (p.u.)",
+        ylims = (min_element*0.9,max_element*1.1)
     )
     #TODO: Change x axis, define bus_name of virtual bid 
 end
@@ -210,6 +219,8 @@ function plot_revenue_curves(
 
     indices = []
     aux_period=[]
+    min_element=0
+    max_element=0
     for t in period
         aux_period=vcat(aux_period, DateTime(initial_time)+Hour(t-1))
     end
@@ -238,24 +249,34 @@ function plot_revenue_curves(
                 price[k] = sum(prices_hour; dims=1)[1]
             end
             data[t, 2, i] = (price["DA"]-price["RT"])*virtual_gen 
+
+            if data[t,2,i]>max_element && data[t,2,i]<1e3
+                max_element=data[t,2,i]
+            elseif data[t,2,i]<min_element && data[t,2,i]>-1e3
+                min_element=data[t,2,i]
+            end
+
         end
         indices = vcat(indices, v)
     end
+    palette= :Dark2_8
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
                 indices,
                 data[t, 2, :];
-                label="hora" * string(period[t] - 1),
+                label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
+                palette=palette,
             )
         else
             plot!(
                 indices,
                 data[t, 2, :];
-                label="hora" * string(period[t] - 1),
+                label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
+                palette=palette,
             )
         end
         c = c + 1
@@ -265,6 +286,219 @@ function plot_revenue_curves(
         title="Virtual Revenue per Offer on " * bus_name,
         ylabel="Revenue (\$/MWh)",
         xlabel="Bid offers (p.u)",
+        ylims = (min_element*0.9,max_element*1.1)
+    )
+    #TODO: Change x axis 
+
+end
+
+"""
+    plot_revenue_curves_renewable(
+        lmps_df::Dict{Any, Any}, results_df::Dict{Any, Any}, market_simulator::MarketSimulator, period::bids{Float}, 
+        bus_name::AbstractArray=["bus5"],
+    )
+
+Function to plot the revenue curve for the the renewable generators. 
+The 'generator_name' defines which is the generator that we want to plot it's results
+and 'bids' controls which bids we want to include in the plot.
+"""
+function plot_revenue_curves_renewable(
+    lmps_df,
+    results_df::Dict{Any,Any},
+    market_simulator,
+    bids::Vector{Float64},
+    generator_name::String,
+)
+    gen = get_component(RenewableDispatch, market_simulator.system_uc, generator_name)
+    bus_name = get_name(get_bus(gen))
+    min_element=0
+    max_element=0
+    data = Array{Any}(nothing, (24, length(bids)+1))
+    data[:,1] = lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"]
+    for (j,q) in enumerate(bids) 
+        variable_results = read_realized_variables(
+                    get_problem_results(results_df[q]["ED"], "UC"); names=[:P__RenewableDispatch]
+                )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_da = generator_data[1][!, generator_name] 
+
+        variable_results = read_realized_variables(
+            get_problem_results(results_df[q]["RT"], "RT"); names=[:P__RenewableDispatch]
+        )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_rt_aux = generator_data[1][!, generator_name] 
+        gen_rt=[]
+        
+        for i=1:(round(Int,length(gen_rt_aux)/12)) #TODO: Change to horizon
+            gen_rt = vcat(gen_rt,[sum(gen_rt_aux[(1+12*(i-1)):(12+12*(i-1))])/12])
+        end
+        price=Dict()
+        for k in (keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems 
+            for t =1:24 
+                prices_hour = lmps_df[q][k][
+                    lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t] .<= lmps_df[q][k].DateTime .< 
+                    lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t]+ Hour(1),
+                    bus_name,     
+                ]
+                if t == 1
+                    price[k] = sum(prices_hour)
+                else
+                    price[k] = vcat(price[k],sum(prices_hour))
+                end
+            end
+        end
+          
+        data[:,j+1] = gen_da.*price["DA"] + (gen_rt - gen_da).*price["RT"]
+
+        if maximum(data[:,j+1])>max_element && minimum(data[:,j+1])<1e3
+            max_element=maximum(data[:,j+1])
+        elseif minimum(data[:,j+1])<min_element && minimum(data[:,j+1])>-1e3
+            min_element=minimum(data[:,j+1])
+        end
+    end
+    palette = :Dark2_8
+
+    c = 1
+    for (j,q) in enumerate(bids)
+        if c == 1
+            plot(
+                0:length(data[:,1])-1,
+                data[:, j+1];
+                label="bid: " * string(q),
+                legend=:outertopright,
+                palette=palette,
+            )
+        else
+            plot!(
+                0:length(data[:,1])-1,
+                data[:, j+1];
+                label="bid: " * string(q),
+                legend=:outertopright,
+                palette=palette,
+            )
+        end
+        c = c + 1
+    end
+
+    return plot!(;
+        title= generator_name *" Revenue per Virtual Offer on " * node,
+        ylabel="Revenue (\$/MWh)",
+        xlabel="Period",
+        ylims = (min_element*0.9,max_element*1.1)
+    )
+    #TODO: Change x axis 
+
+end
+
+"""
+    plot_revenue_curves_renewable(
+        lmps_df::Dict{Any, Any}, results_df::Dict{Any, Any}, market_simulator::MarketSimulator, period::bids{Float}, 
+        bus_name::AbstractArray=["bus5"],
+    )
+
+Function to plot the revenue curve for the the renewable generators. 
+The 'generator_name' defines which is the generator that we want to plot it's results
+and 'bids' controls which bids we want to include in the plot.
+"""
+function plot_revenue_curves_renewable_plus_virtual(
+    lmps_df,
+    results_df::Dict{Any,Any},
+    market_simulator,
+    bids::Vector{Float64},
+    renewable_gen::String,
+    virtual_gen::String,
+)
+    gen_r = get_component(RenewableDispatch, market_simulator.system_uc, renewable_gen)
+    bus_r = get_name(get_bus(gen_r))
+    gen_v = get_component(ThermalStandard, market_simulator.system_uc, virtual_gen)
+    bus_v = get_name(get_bus(gen_v))
+    min_element=0
+    max_element=0
+    data = Array{Any}(nothing, (24, length(bids)+1,3))
+    data[:,1,1] = lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"]
+    data[:,1,2] = data[:,1,1]
+    data[:,1,3] = data[:,1,1]
+    for (j,q) in enumerate(bids) 
+        variable_results = read_realized_variables(
+                    get_problem_results(results_df[q]["ED"], "UC"); names=[:P__RenewableDispatch]
+                )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_da_r = generator_data[1][!, renewable_gen] 
+
+        variable_results = read_realized_variables(
+            get_problem_results(results_df[q]["RT"], "RT"); names=[:P__RenewableDispatch]
+        )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_rt_aux = generator_data[1][!, renewable_gen] 
+        gen_rt_r=[]
+        
+        for i=1:(round(Int,length(gen_rt_aux)/12)) #TODO: Change to horizon
+            gen_rt_r = vcat(gen_rt_r,[sum(gen_rt_aux[(1+12*(i-1)):(12+12*(i-1))])/12])
+        end
+
+        variable_results = read_realized_variables(
+            get_problem_results(results_df[q]["ED"], "UC"); names=[:P__ThermalStandard]
+        )
+        generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+        gen_da_v = generator_data[1][!, generator_name]
+
+        price=Dict()
+        for k in (keys(lmps_df[collect(keys(lmps_df))[1]])) #Problems 
+            for t =1:24 
+                prices_hour = lmps_df[q][k][
+                    lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t] .<= lmps_df[q][k].DateTime .< 
+                    lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t]+ Hour(1),
+                    :,     
+                ]
+                if t == 1
+                    prices_hour[!,"DateTime"].=lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t]
+                    price[k] = combine(groupby(prices_hour, :DateTime), names(prices_hour, Not(:DateTime)) .=> sum, renamecols=false)
+                else
+                    prices_hour[!,"DateTime"].=lmps_df[first(keys(lmps_df))]["DA"][!,"DateTime"][t]
+                    price[k] = vcat(price[k],combine(groupby(prices_hour, :DateTime), names(prices_hour, Not(:DateTime)) .=> sum, renamecols=false))
+                end
+            end
+        end
+          
+        data[:,j+1,1] = gen_da_r.*price["DA"][!,bus_r] + (gen_rt_r - gen_da_r).*price["RT"][!,bus_r]
+        data[:,j+1,2] = gen_da_v.*(price["DA"][!,bus_v] - price["RT"][!,bus_v])
+
+        if maximum(data[:,j+1,1]+data[:,j+1,2])>max_element && minimum(data[:,j+1,1]+data[:,j+1,2])<1e3
+            max_element=maximum(data[:,j+1,1]+data[:,j+1,2])
+        elseif minimum(data[:,j+1,1]+data[:,j+1,2])<min_element && minimum(data[:,j+1,1]+data[:,j+1,2])>-1e3
+            min_element=minimum(data[:,j+1,1]+data[:,j+1,2])
+        end
+    end
+    data[:,2:length(bids)+1,3]=data[:,2:length(bids)+1,1]+data[:,2:length(bids)+1,2]
+    palette = :Dark2_8
+
+    c = 1
+    for (j,q) in enumerate(bids)
+        if c == 1
+            plot(
+                0:length(data[:,1,1])-1,
+                data[:, j+1,1];
+                label="bid: " * string(q),
+                legend=:outertopright,
+                palette=palette,
+            )
+        else
+            plot!(
+                0:length(data[:,1,1])-1,
+                data[:, j+1,1];
+                label="bid: " * string(q),
+                legend=:outertopright,
+                palette=palette,
+            )
+        end
+        c = c + 1
+    end
+
+    return plot!(;
+        title= generator_name *" Revenue per Virtual Offer on " * node,
+        ylabel="Revenue (\$/MWh)",
+        xlabel="Period",
+        ylims = (min_element*0.9,max_element*1.1)
     )
     #TODO: Change x axis 
 
@@ -309,6 +543,7 @@ function plot_generation_curves(
         end
         indices = vcat(indices, v)
     end
+    palette= :Dark2_8
 
     c = 1
     for t in 1:length(period)
@@ -316,15 +551,17 @@ function plot_generation_curves(
             plot(
                 indices,
                 data[t, 2, :];
-                label="hora" * string(period[t] - 1),
+                label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
+                palette = palette,
             )
         else
             plot!(
                 indices,
                 data[t, 2, :];
-                label="hora" * string(period[t] - 1),
+                label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
+                palette = palette,
             )
         end
         c = c + 1

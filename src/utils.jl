@@ -238,3 +238,21 @@ end
 Returns the parameters associated with the time-series attached to the system.
 """
 get_time_series_params(system::System) = system.data.time_series_params.forecast_params
+
+"""
+"""
+function color_mapping(system::System)
+    generator_metadata = [gen for gen in get_components(Generator, system)]
+    colors = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green", "Red","yellow","orange"]
+
+    color_map = Dict()
+    for (i,generator) in enumerate(generator_metadata)
+        name = generator.name
+        #Transforming the first and last letter to number: parse(Int64,string(Int(first(name)))*string(Int(last(name))))
+        color_map[name] = colors[i]
+    end
+
+    return color_map
+end
+
+

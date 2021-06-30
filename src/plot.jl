@@ -378,6 +378,11 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
             ]
             generation[!,"DateTime"].=aux_period
             generator_data[i] = combine(groupby(generation, :DateTime), names(generation, Not(:DateTime)) .=> sum, renamecols=false)
+            lin, col=size(generator_data[i])
+            for j=2:col
+                generator_data[i][1,j]=generator_data[i][1,j]/length(generation[!,"DateTime"])
+            end
+            
         end
         if length(generator_data) > 1
             generator_data = innerjoin(generator_data...; on=:DateTime)
@@ -416,7 +421,14 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         end
     end
 
+    if type=="ED" || type=="DA"
+        aux=data_frame[!,"OTHER"]
+        global data_frame = select(data_frame, Not(:OTHER))
+        global data_frame[!,"OTHER"] = aux
+    end
+
     times = collect(keys(results_df))
+    palette = :Dark2_8
 
     plot_data = select(data_frame, Not(:DateTime))
 
@@ -425,6 +437,7 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    color_palette --> palette
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
