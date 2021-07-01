@@ -1,5 +1,11 @@
 """
-    prep_systems_UCED(system::System)
+    prep_systems_UCED(
+        system::System;
+        horizon_uc::Int=24,
+        horizon_ed::Int=1,
+        interval_uc::TimePeriod=Hour(24),
+        interval_ed::TimePeriod=Hour(1),
+    )
 
 Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.

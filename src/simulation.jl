@@ -129,7 +129,6 @@ function PSI.Simulation(
     return sim
 end
 
-
 """
     Simulation(simulator::UCEDRT, initial_time::Date, steps::Int) -> PSI.Simulation
 
@@ -147,8 +146,7 @@ function PSI.Simulation(
     name::String="test_case",
     simulation_folder=pwd(),
 )
-
-    problem1 = SimulationProblems(; 
+    problem1 = SimulationProblems(;
         UC=OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
@@ -221,7 +219,9 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals2 = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(15), Consecutive()))
+    intervals2 = Dict(
+        "UC" => (Hour(24), Consecutive()), "RT" => (Minute(15), Consecutive())
+    )
 
     uc_rt_sequence = SimulationSequence(;
         problems=problem2,
@@ -282,7 +282,6 @@ function run_multiday_simulation(
     return sim_results
 end
 
-
 """
     run_multiday_simulation(simulator::MarketSimulator, initial_time::Date, steps::Int) -> SimulationResults
 
@@ -328,4 +327,4 @@ function run_multiday_simulation(
     sim_results_2 = SimulationResults(sim2)
 
     return Dict("ED" => sim_results_1, "RT" => sim_results_2)
-end 
+end

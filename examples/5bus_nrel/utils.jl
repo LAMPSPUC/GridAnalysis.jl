@@ -1,5 +1,13 @@
 """
-    build_5_bus_matpower_DA(data_dir::AbstractString, case_file::AbstractString)
+    build_5_bus_matpower_DA(
+        data_dir::AbstractString;
+        case_file::AbstractString="case5_re_uc.m",
+        FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
+        forecasts_pointers_file::AbstractString=joinpath(
+            FORECASTS_DIR, "timeseries_pointers_da_7day.json"
+        ),
+        add_reserves::Bool=true,
+    )
 
 Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
  - A matpower file containing grid information (case_file);
@@ -39,20 +47,27 @@ function build_5_bus_matpower_DA(
     return sys
 end
 
-
 """
-    build_5_bus_matpower_RT(; kwargs...)
+    build_5_bus_matpower_RT(
+        data_dir::AbstractString;
+        case_file::AbstractString="case5_re_uc.m",
+        FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
+        forecasts_pointers_file::AbstractString=joinpath(
+            FORECASTS_DIR, "timeseries_pointers_rt_7day.json"
+        ),
+    )
 
 Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
  - A matpower file containing grid information (case_file);
  - A file describing forecasts locations and details (forecasts_pointers_file);
 """
-function build_5_bus_matpower_RT(data_dir::AbstractString;
+function build_5_bus_matpower_RT(
+    data_dir::AbstractString;
     case_file::AbstractString="case5_re_uc.m",
     FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
     forecasts_pointers_file::AbstractString=joinpath(
         FORECASTS_DIR, "timeseries_pointers_rt_7day.json"
-    )
+    ),
 )
     case_file_path = joinpath(data_dir, case_file)
     sys = System(case_file_path)
@@ -63,9 +78,14 @@ function build_5_bus_matpower_RT(data_dir::AbstractString;
     return sys
 end
 
-
 """
-    prep_systems_UCED(system::System)
+    prep_systems_UCED(
+        system::System;
+        horizon_uc::Int=24,
+        horizon_ed::Int=1,
+        interval_uc::TimePeriod=Hour(24),
+        interval_ed::TimePeriod=Hour(1),
+    )
 
 Duplicates the system to represent UC and ED for DA, transforming the time series
 to the appropriate interval and horizon.
