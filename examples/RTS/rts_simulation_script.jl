@@ -117,9 +117,8 @@ for i in 1:length(fuel_names)
     if occursin("HYDRO", fuel_names[i]) == true
         push!(hydro, get_bus_name(generator_metadata[i]))
     elseif occursin("WIND", fuel_names[i]) == true
-        push!(wind, get_bus_name(generator_metadata[i])) ||
-            occursin("CSP", fuel_names[i]) == true
-    elseif occursin("PV", fuel_names[i]) == true
+        push!(wind, get_bus_name(generator_metadata[i]))
+    elseif occursin("PV", fuel_names[i]) == true || occursin("CSP", fuel_names[i]) == true
         push!(solar, get_bus_name(generator_metadata[i]))
     elseif occursin("STEAM", fuel_names[i]) == true
         push!(coal, get_bus_name(generator_metadata[i]))
@@ -341,49 +340,7 @@ plot_net_demand_stack(
     start_time=DateTime("2020-09-01"),
 )
 
-# Plot the RT prices with all simulator forecast
-
-prices_keys = collect(keys(prices))
-prices_rt_df = prices[prices_keys[1]]
-
-values = select(prices_rt_df, Not(:DateTime))
-n_prev, n_bus = size(values)
-
-intervals = get_time_series_params(market_simulator.system_rt).interval
-
-n_prev_hour = Int(60 / intervals.value)
-n_days = Int(n_prev / n_prev_hour)
-
-names_bus = names(values)
-prices_rt = zeros(n_days, n_bus)
-
-i = 1
-while i < n_days
-    for j in 1:(n_prev_hour):n_prev
-        prices_hour = prices_rt_df[
-            prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
-                1
-            ),
-            :,
-        ]
-        prices_hour = select(prices_hour, Not(:DateTime))
-        prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
-        i = i + 1
-    end
-end
-
-times = prices_rt_df[1:n_prev_hour:n_prev, 1]
-
-labels = permutedims(names_bus)
-
-plot(
-    prices_rt;
-    legend=:outertopright,
-    xlab="Hours",
-    ylab="Prices (\$/MWh)",
-    label=labels,
-    ylim=(-5, 20),
-)
+plot_prices_RT_hour(prices, (-5, 20))
 
 # UCEDRT
 
@@ -507,76 +464,5 @@ plot_net_demand_stack(
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
-# Prices plots for UCEDR
-
-prices_keys = collect(keys(prices))
-prices_rt_df = prices[prices_keys[1]]
-
-values_rt = select(prices_rt_df, Not(:DateTime))
-n_prev, n_bus = size(values_rt)
-
-intervals = get_time_series_params(market_simulator.system_rt).interval
-
-n_prev_hour = Int(60 / intervals.value)
-n_days = Int(n_prev / n_prev_hour)
-
-names_bus = names(values_rt)
-prices_rt = zeros(n_days, n_bus)
-
-i = 1
-while i < n_days
-    for j in 1:(n_prev_hour):n_prev
-        prices_hour = prices_rt_df[
-            prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
-                1
-            ),
-            :,
-        ]
-        prices_hour = select(prices_hour, Not(:DateTime))
-        prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
-        i = i + 1
-    end
-end
-
-times = prices_rt_df[1:n_prev_hour:n_prev, 1]
-
-labels = permutedims(names_bus)
-
-plot(
-    prices_rt;
-    legend=:outertopright,
-    xlab="Hours",
-    ylab="Prices (\$/MWh)",
-    label=labels,
-    ylim=(-5, 20),
-)
-
-prices_ed_df = prices[prices_keys[2]]
-values_ed = select(prices_ed_df, Not(:DateTime))
-values_ed = Matrix(values_ed)
-
-plot(values_ed; legend=:outertopright, xlab="Hours", ylab="Prices (\$/MWh)", label=labels)
-
-# Both ED and RT in the same plot
-
-palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
-
-plot(
-    prices_rt;
-    legend=:outertopright,
-    xlab="Hours",
-    ylab="Prices (\$/MWh)",
-    label=labels,
-    linestyle=:dash,
-    palette=palette,
-    ylim=(-5, 50),
-);
-plot!(
-    values_ed;
-    legend=:outertopright,
-    xlab="Hours",
-    ylab="Prices (\$/MWh)",
-    label=labels,
-    palette=palette,
-    ylim=(-5, 50),
-)
+plot_prices_RT_hour(prices, (-5, 20))
+plot_DA_RT(prices, (-10, 50))
