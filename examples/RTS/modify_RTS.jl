@@ -1,4 +1,10 @@
-# Get the raw RTS system 
+"""
+    get_rts_raw_sys(rts_src_dir, 
+    rts_siip_dir;
+)
+
+Get the raw RTS system.
+"""
 function get_rts_raw_sys(rts_src_dir, rts_siip_dir;
 )
     rawsys = PSY.PowerSystemTableData(
@@ -10,7 +16,16 @@ function get_rts_raw_sys(rts_src_dir, rts_siip_dir;
     )
 end
 
-# Prepare the RTS system for the Day Ahead (DA) and Real Time (RT) problems
+"""
+    get_rts_sys(rts_src_dir, 
+        rts_siip_dir; 
+        time_series_resolution = [Dates.Hour(1), Dates.Minute(5)],
+        modifier_function::Function = rts_modifier_function!,
+        kwargs...
+)
+
+Prepare the RTS system for the Day Ahead (DA) and Real Time (RT) problems
+"""
 function get_rts_sys(rts_src_dir, rts_siip_dir; 
     time_series_resolution = [Dates.Hour(1), Dates.Minute(5)],
     modifier_function::Function = rts_modifier_function!,
@@ -23,7 +38,16 @@ function get_rts_sys(rts_src_dir, rts_siip_dir;
     return sys_DA, sys_rt
 end
 
-# Modify the RTS
+"""
+    rts_modifier_function!(sys_DA=sys_DA, 
+        sys_rt=sys_rt;
+        mult=1.5,
+        DISPATCH_INCREASE = 2.0,
+        FIX_DECREASE = 0.3,
+)
+
+Modify the RTS
+"""
 function rts_modifier_function!(sys_DA=sys_DA, sys_rt=sys_rt;
     mult=1.5,
     DISPATCH_INCREASE = 2.0,

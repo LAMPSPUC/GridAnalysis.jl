@@ -209,12 +209,14 @@ end
 Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
 The `type` controls if is wanted to plot the whole time series or just the first 24 observations.
+The `start_time` controls in which day is going to be ploted for the Deterministic case.
 """
 @userplot plot_demand_stack
 @recipe function f(
     p::plot_demand_stack;
     bus_names::AbstractArray=[],
     type::String="SingleTimeSeries",
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
 )
     system, = p.args
 
@@ -237,9 +239,9 @@ The `type` controls if is wanted to plot the whole time series or just the first
         
         for load in loads
             if !haskey(ts_array, get_bus_name(load))
-                ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+                ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1]; start_time)
             else
-                ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+                ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1]; start_time)
             end
         end
     end
@@ -249,7 +251,7 @@ The `type` controls if is wanted to plot the whole time series or just the first
     if type == "SingleTimeSeries"
         times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     elseif type == "Deterministic"
-        times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+        times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1]; start_time)
     end
     
     plot_data = ts_array .* get_base_power(system)
@@ -290,11 +292,13 @@ Function to plot the Demand over the time period covered by the `results`.
 The `bus_names` controls which buses we want to include in the plot.
 Renewable Dispatch data is the time series from the `system`.
 The `type` controls if is wanted to plot the whole time series or just the first 24 observations.
+The `start_time` controls in which day is going to be ploted for the Deterministic case.
 """
 @userplot plot_net_demand_stack
 @recipe function f(p::plot_net_demand_stack;
     bus_names::AbstractArray=[],
     type::String="SingleTimeSeries",
+    start_time::Union{Nothing, Dates.DateTime} = nothing,
 )
     
     system, = p.args
@@ -318,9 +322,9 @@ The `type` controls if is wanted to plot the whole time series or just the first
         
         for load in loads
             if !haskey(ts_array, get_bus_name(load))
-                ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1])
+                ts_array[get_bus_name(load)] = get_time_series_values(Deterministic, load, ts_names[1]; start_time)
             else
-                ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1])
+                ts_array[get_bus_name(load)] = ts_array[get_bus_name(load)] .+ get_time_series_values(Deterministic, load, ts_names[1]; start_time)
             end
         end
     end
@@ -346,9 +350,9 @@ The `type` controls if is wanted to plot the whole time series or just the first
         
         for renewable in renewables
             if !haskey(ts_renewable, get_bus_name(renewable))
-                ts_renewable[get_bus_name(renewable)] = get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+                ts_renewable[get_bus_name(renewable)] = get_time_series_values(Deterministic, renewable, ts_renewable_names[1]; start_time)
             else
-                ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(Deterministic, renewable, ts_renewable_names[1])
+                ts_renewable[get_bus_name(renewable)] = ts_renewable[get_bus_name(renewable)] .+ get_time_series_values(Deterministic, renewable, ts_renewable_names[1]; start_time)
             end
         end
     end
@@ -371,7 +375,7 @@ The `type` controls if is wanted to plot the whole time series or just the first
     if type == "SingleTimeSeries"
         times = get_time_series_timestamps(SingleTimeSeries, loads[1], ts_names[1])
     elseif type == "Deterministic"
-        times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1])
+        times = get_time_series_timestamps(Deterministic, loads[1], ts_names[1]; start_time)
     end
     
     plot_data = DataFrame(net_demand = all_data) .* get_base_power(system)
