@@ -35,11 +35,11 @@ base_da_system = build_5_bus_matpower_DA(
     forecasts_pointers_file=joinpath(
         data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
-    add_reserves=true,
+    add_reserves=false,
 )
 
 # Add single generator at a defined bus
-node = "bus4" # define bus
+node = "bus5" # define bus
 gen = add_gerator!(base_da_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_da_system)
 
@@ -87,7 +87,7 @@ market_simulator = UCEDRT(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-simulation_folder = joinpath(example_dir, "results"); #if you don't want to save the results, change to: mktempdir();
+simulation_folder = joinpath(example_dir, "results","virtual_5bus","reserve_false"); #if you don't want to save the results, change to: mktempdir();
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
 )
@@ -95,24 +95,24 @@ lmps_df, results_df = pq_curves_virtuals!(
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
 @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
-#Load the simulation done previously #ERROR: UndefVarError: load_simulation_results not defined
-lmps, results = load_pq_curves(
-    market_simulator;
+#Load the simulation done previously 
+lmps_df, results_df = load_pq_curves(
+    market_simulator,
     range_quota,
     simulation_folder,
 )
 
 #Select data to plot
-generator_name = "bus4_virtual_supply"
-period = [5,19] #bidding_period #[5,19]
+generator_name = "bus5_virtual_supply"
+period = [19] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node)
-plot_revenue_curves(lmps_df, results_df, market_simulator, period, generator_name)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time)
+plot_revenue_curves(lmps_df, results_df, market_simulator, period, generator_name, initial_time)
 plot_generation_curves(lmps_df, results_df, market_simulator, period, generator_name)
 
-type="ED";
+type="DA";
 plot_generation_stack_virtual(
     sys_uc, results_df; type, period=period, initial_time, xtickfontsize=8, margin=8mm, size=(800, 600)
 )
@@ -121,8 +121,8 @@ plot_generation_stack_virtual(
     sys_rt, results_df; type, period=period, initial_time, xtickfontsize=8, margin=8mm, size=(800, 600)
 )
 
-plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0], "SolarBusC")
-plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0, 2.0], "WindBusA")
+plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0], "SolarBusC", node)
+plot_revenue_curves_renewable(lmps_df, results_df, market_simulator, [0.0, 1.0, 2.0], "WindBusA", node)
 
 plot_revenue_curves_renewable_plus_virtual(
     lmps_df,
@@ -130,5 +130,15 @@ plot_revenue_curves_renewable_plus_virtual(
     market_simulator,
     [0.0,1.0,2.0],
     "WindBusA",
-    generator_name,
+    "bus5_virtual_supply",
 )
+
+plot_generation_curves_renewable(
+    market_simulator,
+    lmps_df,
+    results_df,
+    [0.0,1.0,2.0],
+    "WindBusA",
+    node,
+)
+

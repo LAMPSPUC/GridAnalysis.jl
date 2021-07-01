@@ -52,7 +52,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name="ed_"*name,
+        name="da_"*name,
         steps=steps,
         problems=problems,
         sequence=uc_ed_sequence,
@@ -184,7 +184,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name="uc_"*name,
+        name="da_"*name,
         steps=steps,
         problems=problem1,
         sequence=uc_ed_sequence,
@@ -324,5 +324,5 @@ function run_multiday_simulation(
 
     sim_results_2 = SimulationResults(sim2)
 
-    return Dict("ED" => sim_results_1, "RT" => sim_results_2)
+    return Dict("DA" => sim_results_1, "RT" => sim_results_2)
 end

@@ -8,6 +8,7 @@ using Logging
 using RecipesBase
 using RecipesBase
 using TimeSeries
+using Plots
 
 import PowerSimulations.Simulation
 
@@ -18,15 +19,19 @@ export duals_constraint_names
 export evaluate_prices
 export evaluate_prices_UCEDRT
 export fuel_type_mapping
-#export plot_generation_curves
+export plot_generation_curves
+export plot_generation_curves_renewable
 export get_time_series_params
 export plot_generation_stack
 export plot_demand_stack
 export plot_net_demand_stack
 export plot_prices
-#export plot_price_curves
-#export plot_revenue_curves
+export plot_price_curves
+export plot_revenue_curves
+export plot_revenue_curves_renewable
+export plot_revenue_curves_renewable_plus_virtual
 export plot_thermal_commit
+export load_pq_curves
 export pq_curves_virtuals!
 export run_multiday_simulation
 export set_active_power_limits
