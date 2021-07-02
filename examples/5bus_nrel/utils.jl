@@ -8,12 +8,13 @@ Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
 """
 function build_5_bus_matpower_DA(
     data_dir::AbstractString;
-    case_file::AbstractString="case5_re_uc.m",
-    FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
-    forecasts_pointers_file::AbstractString=joinpath(
-        FORECASTS_DIR, "timeseries_pointers_da_7day.json"
+    case_file::AbstractString = "case5_re_uc.m",
+    FORECASTS_DIR::AbstractString = joinpath(data_dir, "forecasts"),
+    forecasts_pointers_file::AbstractString = joinpath(
+        FORECASTS_DIR,
+        "timeseries_pointers_da_7day.json",
     ),
-    add_reserves::Bool=true,
+    add_reserves::Bool = true,
 )
     case_file_path = joinpath(data_dir, case_file)
     sys = System(case_file_path)
@@ -48,10 +49,11 @@ Builds base system for the 5bus NREL case (a.k.a NESTA case) from:
 """
 function build_5_bus_matpower_RT(
     data_dir::AbstractString;
-    case_file::AbstractString="case5_re_uc.m",
-    FORECASTS_DIR::AbstractString=joinpath(data_dir, "forecasts"),
-    forecasts_pointers_file::AbstractString=joinpath(
-        FORECASTS_DIR, "timeseries_pointers_rt_7day.json"
+    case_file::AbstractString = "case5_re_uc.m",
+    FORECASTS_DIR::AbstractString = joinpath(data_dir, "forecasts"),
+    forecasts_pointers_file::AbstractString = joinpath(
+        FORECASTS_DIR,
+        "timeseries_pointers_rt_7day.json",
     ),
 )
     case_file_path = joinpath(data_dir, case_file)
@@ -71,10 +73,10 @@ to the appropriate interval and horizon.
 """
 function prep_systems_UCED(
     system::System;
-    horizon_uc::Int=24,
-    horizon_ed::Int=1,
-    interval_uc::TimePeriod=Hour(24),
-    interval_ed::TimePeriod=Hour(1),
+    horizon_uc::Int = 24,
+    horizon_ed::Int = 1,
+    interval_uc::TimePeriod = Hour(24),
+    interval_ed::TimePeriod = Hour(1),
 )
     system_uc = system
     system_ed = deepcopy(system)

@@ -54,14 +54,20 @@ function UCED(;
     template_ed::OperationsProblemTemplate,
     solver_uc::Any,
     solver_ed::Any,
-    kwargs=if template_uc.transmission == StandardPTDFModel
+    kwargs = if template_uc.transmission == StandardPTDFModel
         Dict(:PTDF => PSY.PTDF(system_ed))
     else
         Dict()
     end,
 )
     return UCED(
-        system_uc, system_ed, template_uc, template_ed, solver_uc, solver_ed, kwargs
+        system_uc,
+        system_ed,
+        template_uc,
+        template_ed,
+        solver_uc,
+        solver_ed,
+        kwargs,
     )
 end
 
@@ -115,14 +121,20 @@ function UCRT(;
     template_rt::OperationsProblemTemplate,
     solver_uc::Any,
     solver_rt::Any,
-    kwargs=if template_uc.transmission == StandardPTDFModel
+    kwargs = if template_uc.transmission == StandardPTDFModel
         Dict(:PTDF => PSY.PTDF(system_ed))
     else
         Dict()
     end,
 )
     return UCRT(
-        system_uc, system_rt, template_uc, template_rt, solver_uc, solver_rt, kwargs
+        system_uc,
+        system_rt,
+        template_uc,
+        template_rt,
+        solver_uc,
+        solver_rt,
+        kwargs,
     )
 end
 
@@ -179,7 +191,7 @@ function UCEDRT(;
     solver_uc::Any,
     solver_ed::Any,
     solver_rt::Any,
-    kwargs=if template_uc.transmission == StandardPTDFModel
+    kwargs = if template_uc.transmission == StandardPTDFModel
         Dict(:PTDF => PSY.PTDF(system_ed))
     else
         Dict()

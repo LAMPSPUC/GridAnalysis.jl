@@ -6,58 +6,60 @@ Builds a multiday UC-ED PSI.Simulation from a UCED market simulator, an initial 
 function PSI.Simulation(
     simulator::UCED,
     initial_time::Date,
-    steps::Int=1;
-    system_to_file::Bool=false,
-    services_slack_variables::Bool=true,
-    balance_slack_variables::Bool=true,
-    constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
-    name::String="test_case",
-    simulation_folder=pwd(),
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = true,
+    balance_slack_variables::Bool = true,
+    constraint_duals::Array{Symbol,1} = [:CopperPlateBalance, :network_flow],
+    name::String = "test_case",
+    simulation_folder = pwd(),
 )
     problems = SimulationProblems(;
-        UC=OperationsProblem(
+        UC = OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
-            optimizer=simulator.solver_uc,
-            system_to_file=system_to_file,
+            optimizer = simulator.solver_uc,
+            system_to_file = system_to_file,
             simulator.kwargs...,
         ),
-        ED=OperationsProblem(
+        ED = OperationsProblem(
             simulator.template_ed,
             simulator.system_ed;
-            optimizer=simulator.solver_ed,
-            system_to_file=system_to_file,
-            services_slack_variables=services_slack_variables,
-            balance_slack_variables=balance_slack_variables,
-            constraint_duals=constraint_duals,
+            optimizer = simulator.solver_ed,
+            system_to_file = system_to_file,
+            services_slack_variables = services_slack_variables,
+            balance_slack_variables = balance_slack_variables,
+            constraint_duals = constraint_duals,
             simulator.kwargs...,
         ),
     )
 
-    feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(; periods=24))
+    feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(; periods = 24))
 
     feedforward = Dict(
-        ("ED", :devices, :ThermalStandard) =>
-            SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
+        ("ED", :devices, :ThermalStandard) => SemiContinuousFF(;
+            binary_source_problem = ON,
+            affected_variables = [ACTIVE_POWER],
+        ),
     )
 
     intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))
 
     uc_ed_sequence = SimulationSequence(;
-        problems=problems,
-        intervals=intervals,
-        ini_cond_chronology=InterProblemChronology(),
-        feedforward_chronologies=feedforward_chronologies,
-        feedforward=feedforward,
+        problems = problems,
+        intervals = intervals,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforward_chronologies = feedforward_chronologies,
+        feedforward = feedforward,
     )
 
     sim = PSI.Simulation(;
-        name="da_"*name,
-        steps=steps,
-        problems=problems,
-        sequence=uc_ed_sequence,
-        simulation_folder=simulation_folder,
-        initial_time=initial_time,
+        name = "da_" * name,
+        steps = steps,
+        problems = problems,
+        sequence = uc_ed_sequence,
+        simulation_folder = simulation_folder,
+        initial_time = initial_time,
     )
 
     return sim
@@ -72,58 +74,60 @@ number of simulation steps.
 function PSI.Simulation(
     simulator::UCRT,
     initial_time::Date,
-    steps::Int=1;
-    system_to_file::Bool=false,
-    services_slack_variables::Bool=true,
-    balance_slack_variables::Bool=true,
-    constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
-    name::String="test_case",
-    simulation_folder=pwd(),
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = true,
+    balance_slack_variables::Bool = true,
+    constraint_duals::Array{Symbol,1} = [:CopperPlateBalance, :network_flow],
+    name::String = "test_case",
+    simulation_folder = pwd(),
 )
     problems = SimulationProblems(;
-        UC=OperationsProblem(
+        UC = OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
-            optimizer=simulator.solver_uc,
-            system_to_file=system_to_file,
+            optimizer = simulator.solver_uc,
+            system_to_file = system_to_file,
             simulator.kwargs...,
         ),
-        RT=OperationsProblem(
+        RT = OperationsProblem(
             simulator.template_rt,
             simulator.system_rt;
-            optimizer=simulator.solver_rt,
-            system_to_file=system_to_file,
-            services_slack_variables=services_slack_variables,
-            balance_slack_variables=balance_slack_variables,
-            constraint_duals=constraint_duals,
+            optimizer = simulator.solver_rt,
+            system_to_file = system_to_file,
+            services_slack_variables = services_slack_variables,
+            balance_slack_variables = balance_slack_variables,
+            constraint_duals = constraint_duals,
             simulator.kwargs...,
         ),
     )
 
-    feedforward_chronologies = Dict(("UC" => "RT") => Synchronize(; periods=24))
+    feedforward_chronologies = Dict(("UC" => "RT") => Synchronize(; periods = 24))
 
     feedforward = Dict(
-        ("RT", :devices, :ThermalStandard) =>
-            SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
+        ("RT", :devices, :ThermalStandard) => SemiContinuousFF(;
+            binary_source_problem = ON,
+            affected_variables = [ACTIVE_POWER],
+        ),
     )
 
     intervals = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(5), Consecutive()))
 
     uc_rt_sequence = SimulationSequence(;
-        problems=problems,
-        intervals=intervals,
-        ini_cond_chronology=InterProblemChronology(),
-        feedforward_chronologies=feedforward_chronologies,
-        feedforward=feedforward,
+        problems = problems,
+        intervals = intervals,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforward_chronologies = feedforward_chronologies,
+        feedforward = feedforward,
     )
 
     sim = PSI.Simulation(;
-        name="rt_"*name,
-        steps=steps,
-        problems=problems,
-        sequence=uc_rt_sequence,
-        simulation_folder=simulation_folder,
-        initial_time=initial_time,
+        name = "rt_" * name,
+        steps = steps,
+        problems = problems,
+        sequence = uc_rt_sequence,
+        simulation_folder = simulation_folder,
+        initial_time = initial_time,
     )
 
     return sim
@@ -138,104 +142,108 @@ number of simulation steps. It returns a tuple with both simulations.
 function PSI.Simulation(
     simulator::UCEDRT,
     initial_time::Date,
-    steps::Int=1;
-    system_to_file::Bool=false,
-    services_slack_variables::Bool=true,
-    balance_slack_variables::Bool=true,
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = true,
+    balance_slack_variables::Bool = true,
     constraint_duals::Vector{Vector{Symbol}},
-    name::String="test_case",
-    simulation_folder=pwd(),
+    name::String = "test_case",
+    simulation_folder = pwd(),
 )
     problem1 = SimulationProblems(;
-        UC=OperationsProblem(
+        UC = OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
-            optimizer=simulator.solver_uc,
-            system_to_file=system_to_file,
+            optimizer = simulator.solver_uc,
+            system_to_file = system_to_file,
             simulator.ext...,
         ),
-        ED=OperationsProblem(
+        ED = OperationsProblem(
             simulator.template_ed,
             simulator.system_ed;
-            optimizer=simulator.solver_ed,
-            system_to_file=system_to_file,
-            services_slack_variables=services_slack_variables,
-            balance_slack_variables=balance_slack_variables,
-            constraint_duals=constraint_duals[1],
+            optimizer = simulator.solver_ed,
+            system_to_file = system_to_file,
+            services_slack_variables = services_slack_variables,
+            balance_slack_variables = balance_slack_variables,
+            constraint_duals = constraint_duals[1],
             simulator.ext...,
         ),
     )
 
-    feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(; periods=24))
+    feedforward_chronologies = Dict(("UC" => "ED") => Synchronize(; periods = 24))
 
     feedforward = Dict(
-        ("ED", :devices, :ThermalStandard) =>
-            SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
+        ("ED", :devices, :ThermalStandard) => SemiContinuousFF(;
+            binary_source_problem = ON,
+            affected_variables = [ACTIVE_POWER],
+        ),
     )
 
     intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))
 
     uc_ed_sequence = SimulationSequence(;
-        problems=problem1,
-        intervals=intervals,
-        ini_cond_chronology=InterProblemChronology(),
-        feedforward_chronologies=feedforward_chronologies,
-        feedforward=feedforward,
+        problems = problem1,
+        intervals = intervals,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforward_chronologies = feedforward_chronologies,
+        feedforward = feedforward,
     )
 
     sim = PSI.Simulation(;
-        name="da_"*name,
-        steps=steps,
-        problems=problem1,
-        sequence=uc_ed_sequence,
-        simulation_folder=simulation_folder,
-        initial_time=initial_time,
+        name = "da_" * name,
+        steps = steps,
+        problems = problem1,
+        sequence = uc_ed_sequence,
+        simulation_folder = simulation_folder,
+        initial_time = initial_time,
     )
 
     problem2 = SimulationProblems(;
-        UC=OperationsProblem(
+        UC = OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
-            optimizer=simulator.solver_uc,
-            system_to_file=system_to_file,
+            optimizer = simulator.solver_uc,
+            system_to_file = system_to_file,
             simulator.ext...,
         ),
-        RT=OperationsProblem(
+        RT = OperationsProblem(
             simulator.template_rt,
             simulator.system_rt;
-            optimizer=simulator.solver_rt,
-            system_to_file=system_to_file,
-            services_slack_variables=services_slack_variables,
-            balance_slack_variables=balance_slack_variables,
-            constraint_duals=constraint_duals[2],
+            optimizer = simulator.solver_rt,
+            system_to_file = system_to_file,
+            services_slack_variables = services_slack_variables,
+            balance_slack_variables = balance_slack_variables,
+            constraint_duals = constraint_duals[2],
             simulator.ext...,
         ),
     )
 
-    feedforward_chronologies2 = Dict(("UC" => "RT") => Synchronize(; periods=24))
+    feedforward_chronologies2 = Dict(("UC" => "RT") => Synchronize(; periods = 24))
 
     feedforward2 = Dict(
-        ("RT", :devices, :ThermalStandard) =>
-            SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
+        ("RT", :devices, :ThermalStandard) => SemiContinuousFF(;
+            binary_source_problem = ON,
+            affected_variables = [ACTIVE_POWER],
+        ),
     )
 
     intervals2 = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(5), Consecutive()))
 
     uc_rt_sequence = SimulationSequence(;
-        problems=problem2,
-        intervals=intervals2,
-        ini_cond_chronology=InterProblemChronology(),
-        feedforward_chronologies=feedforward_chronologies2,
-        feedforward=feedforward2,
+        problems = problem2,
+        intervals = intervals2,
+        ini_cond_chronology = InterProblemChronology(),
+        feedforward_chronologies = feedforward_chronologies2,
+        feedforward = feedforward2,
     )
 
     sim2 = PSI.Simulation(;
-        name="rt_"*name,
-        steps=steps,
-        problems=problem2,
-        sequence=uc_rt_sequence,
-        simulation_folder=simulation_folder,
-        initial_time=initial_time,
+        name = "rt_" * name,
+        steps = steps,
+        problems = problem2,
+        sequence = uc_rt_sequence,
+        simulation_folder = simulation_folder,
+        initial_time = initial_time,
     )
 
     return sim, sim2
@@ -249,29 +257,29 @@ Runs a multiday PSI.Simulation from a MarketSimulator, an initial date and numbe
 function run_multiday_simulation(
     simulator::MarketSimulator,
     initial_time::Date,
-    steps::Int=1;
-    system_to_file::Bool=false,
-    services_slack_variables::Bool=false,
-    balance_slack_variables::Bool=false,
-    constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
-    name::String="test_case",
-    simulation_folder=pwd(),
-    console_level=Logging.Warn,
-    recorders=[:simulation],
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = false,
+    balance_slack_variables::Bool = false,
+    constraint_duals::Array{Symbol,1} = [:CopperPlateBalance, :network_flow],
+    name::String = "test_case",
+    simulation_folder = pwd(),
+    console_level = Logging.Warn,
+    recorders = [:simulation],
 )
     sim = Simulation(
         simulator,
         initial_time,
         steps;
-        simulation_folder=simulation_folder,
-        system_to_file=system_to_file,
-        services_slack_variables=services_slack_variables,
-        balance_slack_variables=balance_slack_variables,
-        constraint_duals=constraint_duals,
-        name=name,
+        simulation_folder = simulation_folder,
+        system_to_file = system_to_file,
+        services_slack_variables = services_slack_variables,
+        balance_slack_variables = balance_slack_variables,
+        constraint_duals = constraint_duals,
+        name = name,
     )
 
-    build!(sim; console_level=console_level, recorders=recorders)
+    build!(sim; console_level = console_level, recorders = recorders)
 
     execute!(sim)
 
@@ -290,35 +298,35 @@ simulation results.
 function run_multiday_simulation(
     simulator::UCEDRT,
     initial_time::Date,
-    steps::Int=1;
-    system_to_file::Bool=false,
-    services_slack_variables::Bool=false,
-    balance_slack_variables::Bool=false,
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = false,
+    balance_slack_variables::Bool = false,
     constraint_duals::Vector{Vector{Symbol}},
-    name::String="test_case",
-    simulation_folder=pwd(),
-    console_level=Logging.Warn,
-    recorders=[:simulation],
+    name::String = "test_case",
+    simulation_folder = pwd(),
+    console_level = Logging.Warn,
+    recorders = [:simulation],
 )
     sim1, sim2 = Simulation(
         simulator,
         initial_time,
         steps;
-        simulation_folder=simulation_folder,
-        system_to_file=system_to_file,
-        services_slack_variables=services_slack_variables,
-        balance_slack_variables=balance_slack_variables,
-        constraint_duals=constraint_duals,
-        name=name,
+        simulation_folder = simulation_folder,
+        system_to_file = system_to_file,
+        services_slack_variables = services_slack_variables,
+        balance_slack_variables = balance_slack_variables,
+        constraint_duals = constraint_duals,
+        name = name,
     )
 
-    build!(sim1; console_level=console_level, recorders=recorders)
+    build!(sim1; console_level = console_level, recorders = recorders)
 
     execute!(sim1)
 
     sim_results_1 = SimulationResults(sim1)
 
-    build!(sim2; console_level=console_level, recorders=recorders)
+    build!(sim2; console_level = console_level, recorders = recorders)
 
     execute!(sim2)
 

@@ -390,7 +390,7 @@ uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.59.0+4"
 
 [[GridAnalysis]]
-deps = ["DataFrames", "Dates", "Logging", "PowerSimulations", "PowerSystems", "RecipesBase", "TimeSeries"]
+deps = ["DataFrames", "Dates", "Logging", "Plots", "PowerSimulations", "PowerSystems", "RecipesBase", "TimeSeries"]
 path = "../.."
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
 version = "0.1.2"
@@ -605,9 +605,9 @@ version = "1.42.0+0"
 
 [[Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "8d22e127ea9a0917bc98ebd3755c8bd31989381e"
+git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+0"
+version = "1.16.1+1"
 
 [[Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
