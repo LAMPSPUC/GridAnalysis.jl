@@ -374,9 +374,9 @@ function plot_price_curves(
         end
         indices = vcat(indices, v)
     end
-    palette = :Dark2_8
     c = 1
     for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]]))
+        palette = :Dark2_8
         for b = 1:length(bus_name)
             for t = 1:length(period)
                 if length(lmps_df[collect(keys(lmps_df))[1]]) > 1 && k == "RT"

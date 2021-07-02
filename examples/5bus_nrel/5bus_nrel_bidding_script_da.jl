@@ -92,8 +92,8 @@ lmps_df, results_df = pq_curves_virtuals!(
     simulation_folder,
 )
 
-@test isa(results_df[range_quota[1]], Dict{String,SimulationResults}) #TODO: Make results_df always a dict
-@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame}) #TODO: Make lmps_df always a dict
+@test isa(results_df[range_quota[1]], Dict{String,SimulationResults}) 
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame}) 
 
 #Select data to plot
 generator_name = "bus5_virtual_supply"
@@ -102,9 +102,9 @@ bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
 plot_price_curves(lmps_df, period, bus_name, node, initial_time)
-plot_revenue_curves(market_simulator, lmps_df, results_df, period, generator_name)
+plot_revenue_curves(market_simulator, lmps_df, results_df, period, generator_name, initial_time)
 plot_generation_curves(market_simulator, lmps_df, results_df, period, generator_name, initial_time)
-type = "";
+type = "DA";
 plot_generation_stack_virtual(
     sys_uc,
     results_df;

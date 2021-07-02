@@ -89,7 +89,7 @@ market_simulator = UCEDRT(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-simulation_folder = joinpath(example_dir, "results", "virtual_5bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
+simulation_folder = joinpath(example_dir, "results", "virtual_1bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
 
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator,
@@ -173,7 +173,7 @@ plot_revenue_curves_renewable_plus_virtual(
     results_df,
     [0.0, 1.0, 2.0],
     "WindBusA",
-    "bus5_virtual_supply",
+    "bus1_virtual_supply",
 )
 
 plot_generation_curves_renewable(
