@@ -36,7 +36,6 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 
 # define systems with resolutions
 sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
-transform_single_time_series!(sys_rt, 12, Minute(15))
 sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 
 # generic market formulation templates with defined network formulation

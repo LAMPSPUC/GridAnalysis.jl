@@ -121,6 +121,11 @@ function UCRT(;
         Dict()
     end,
 )
+
+    params = get_time_series_params(system_rt)
+    interval = params.interval
+    kwargs[:Interval] = interval
+
     return UCRT(
         system_uc, system_rt, template_uc, template_rt, solver_uc, solver_rt, kwargs
     )
@@ -185,6 +190,11 @@ function UCEDRT(;
         Dict()
     end,
 )
+
+    params = get_time_series_params(system_rt)
+    interval = params.interval
+    kwargs[:Interval] = interval
+
     return UCEDRT(
         system_uc,
         system_ed,

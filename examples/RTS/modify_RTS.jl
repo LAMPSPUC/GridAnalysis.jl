@@ -34,6 +34,7 @@ function get_rts_sys(
     sys_DA = System(rawsys; time_series_resolution=time_series_resolution[1], kwargs...)
     sys_rt = System(rawsys; time_series_resolution=time_series_resolution[2], kwargs...)
     modifier_function(sys_DA, sys_rt;)
+    transform_single_time_series!(sys_rt, 12, Minute(15))
     return sys_DA, sys_rt
 end
 
