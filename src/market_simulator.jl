@@ -186,7 +186,16 @@ function UCEDRT(;
     end,
 )
     return UCEDRT(
-        system_uc, system_ed, system_rt, template_uc, template_rt, template_ed, solver_uc, solver_rt, solver_ed, kwargs
+        system_uc,
+        system_ed,
+        system_rt,
+        template_uc,
+        template_rt,
+        template_ed,
+        solver_uc,
+        solver_rt,
+        solver_ed,
+        kwargs,
     )
 end
 

@@ -52,7 +52,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="da_" * name,
         steps=steps,
         problems=problems,
         sequence=uc_ed_sequence,
@@ -118,7 +118,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="rt_" * name,
         steps=steps,
         problems=problems,
         sequence=uc_rt_sequence,
@@ -128,7 +128,6 @@ function PSI.Simulation(
 
     return sim
 end
-
 
 """
     Simulation(simulator::UCEDRT, initial_time::Date, steps::Int) -> PSI.Simulation
@@ -147,8 +146,7 @@ function PSI.Simulation(
     name::String="test_case",
     simulation_folder=pwd(),
 )
-
-    problem1 = SimulationProblems(; 
+    problem1 = SimulationProblems(;
         UC=OperationsProblem(
             simulator.template_uc,
             simulator.system_uc;
@@ -186,7 +184,7 @@ function PSI.Simulation(
     )
 
     sim = PSI.Simulation(;
-        name=name,
+        name="da_" * name,
         steps=steps,
         problems=problem1,
         sequence=uc_ed_sequence,
@@ -232,7 +230,7 @@ function PSI.Simulation(
     )
 
     sim2 = PSI.Simulation(;
-        name=name,
+        name="rt_" * name,
         steps=steps,
         problems=problem2,
         sequence=uc_rt_sequence,
@@ -282,7 +280,6 @@ function run_multiday_simulation(
     return sim_results
 end
 
-
 """
     run_multiday_simulation(simulator::MarketSimulator, initial_time::Date, steps::Int) -> SimulationResults
 
@@ -327,5 +324,85 @@ function run_multiday_simulation(
 
     sim_results_2 = SimulationResults(sim2)
 
-    return Dict("ED" => sim_results_1, "RT" => sim_results_2)
-end 
+    return Dict("DA" => sim_results_1, "RT" => sim_results_2)
+end
+
+"""
+    run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int) -> SimulationResults
+
+Runs a multiday PSI.Simulation from a MarketSimulator UCED, an initial date and number of simulation steps. It returns a dictionary with both 
+simulation results.
+"""
+function run_multiday_simulation(
+    simulator::UCED,
+    initial_time::Date,
+    steps::Int=1;
+    system_to_file::Bool=false,
+    services_slack_variables::Bool=false,
+    balance_slack_variables::Bool=false,
+    constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
+    name::String="test_case",
+    simulation_folder=pwd(),
+    console_level=Logging.Warn,
+    recorders=[:simulation],
+)
+    sim = Simulation(
+        simulator,
+        initial_time,
+        steps;
+        simulation_folder=simulation_folder,
+        system_to_file=system_to_file,
+        services_slack_variables=services_slack_variables,
+        balance_slack_variables=balance_slack_variables,
+        constraint_duals=constraint_duals,
+        name=name,
+    )
+
+    build!(sim; console_level=console_level, recorders=recorders)
+
+    execute!(sim)
+
+    sim_results = SimulationResults(sim)
+
+    return Dict("DA" => sim_results)
+end
+
+"""
+    run_multiday_simulation(simulator::UCRT, initial_time::Date, steps::Int) -> SimulationResults
+
+Runs a multiday PSI.Simulation from a MarketSimulator UCRT, an initial date and number of simulation steps. It returns a dictionary with both 
+simulation results.
+"""
+function run_multiday_simulation(
+    simulator::UCRT,
+    initial_time::Date,
+    steps::Int=1;
+    system_to_file::Bool=false,
+    services_slack_variables::Bool=false,
+    balance_slack_variables::Bool=false,
+    constraint_duals::Array{Symbol,1}=[:CopperPlateBalance, :network_flow],
+    name::String="test_case",
+    simulation_folder=pwd(),
+    console_level=Logging.Warn,
+    recorders=[:simulation],
+)
+    sim = Simulation(
+        simulator,
+        initial_time,
+        steps;
+        simulation_folder=simulation_folder,
+        system_to_file=system_to_file,
+        services_slack_variables=services_slack_variables,
+        balance_slack_variables=balance_slack_variables,
+        constraint_duals=constraint_duals,
+        name=name,
+    )
+
+    build!(sim; console_level=console_level, recorders=recorders)
+
+    execute!(sim)
+
+    sim_results = SimulationResults(sim)
+
+    return Dict("RT" => sim_results)
+end
