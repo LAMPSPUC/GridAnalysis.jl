@@ -29,26 +29,24 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)#(GLPK.Optimizer)
 base_system = build_5_bus_matpower_DA(
     data_dir;
     # using a modified (mod) file that reduced load for feasibility in DC-OPF
-    forecasts_pointers_file = joinpath(
-        data_dir,
-        "forecasts",
-        "timeseries_pointers_da_7day_mod.json",
+    forecasts_pointers_file=joinpath(
+        data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
     ),
-    add_reserves = false,
+    add_reserves=false,
 )
 
 # Add single generator at a defined bus
 node = "bus5" # define bus
-gen = add_gerator!(base_system, node, (min = 0.0, max = 0.0))
+gen = add_gerator!(base_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_system)
 
 # create and set variable cost time-series for the generator
 bidding_period = collect(1:24)#collect(1:24)#collect(1:24) #
 ts_array = create_generator_bids(;
-    initial_bidding_time = DateTime("2020-01-01"),
-    bidding_periods = bidding_period,
-    system = base_system,
-    costs = zeros(length(bidding_period)),
+    initial_bidding_time=DateTime("2020-01-01"),
+    bidding_periods=bidding_period,
+    system=base_system,
+    costs=zeros(length(bidding_period)),
 )
 set_variable_cost!(base_system, gen, ts_array)
 
@@ -63,17 +61,17 @@ sys_uc, sys_ed = prep_systems_UCED(base_system)
 # DC-OPF: network=DCPPowerModel
 # NFA-OPF (only line limit constraints): network=NFAPowerModel
 # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
-template_uc = template_unit_commitment(; network = DCPPowerModel)
-template_ed = template_economic_dispatch(; network = DCPPowerModel)
+template_uc = template_unit_commitment(; network=DCPPowerModel)
+template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
 # build a market clearing simulator (run `@doc UCED` for more information)
 market_simulator = UCED(;
-    system_uc = sys_uc,
-    system_ed = sys_ed,
-    template_uc = template_uc,
-    template_ed = template_ed,
-    solver_uc = solver_uc,
-    solver_ed = solver_ed,
+    system_uc=sys_uc,
+    system_ed=sys_ed,
+    template_uc=template_uc,
+    template_ed=template_ed,
+    solver_uc=solver_uc,
+    solver_ed=solver_ed,
 )
 
 @test isa(market_simulator, UCED)
@@ -84,16 +82,11 @@ initial_time = Date("2020-01-01");
 steps = 1;
 simulation_folder = mktempdir();
 lmps_df, results_df = pq_curves_virtuals!(
-    market_simulator,
-    name_generator,
-    range_quota,
-    initial_time,
-    steps,
-    simulation_folder,
+    market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
 )
 
-@test isa(results_df[range_quota[1]], Dict{String,SimulationResults}) 
-@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame}) 
+@test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
 #Select data to plot
 generator_name = "bus5_virtual_supply"
@@ -102,16 +95,20 @@ bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
 plot_price_curves(lmps_df, period, bus_name, node, initial_time)
-plot_revenue_curves(market_simulator, lmps_df, results_df, period, generator_name, initial_time)
-plot_generation_curves(market_simulator, lmps_df, results_df, period, generator_name, initial_time)
+plot_revenue_curves(
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+)
+plot_generation_curves(
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+)
 type = "DA";
 plot_generation_stack_virtual(
     sys_uc,
     results_df;
     type,
-    period = period,
+    period=period,
     initial_time,
-    xtickfontsize = 8,
-    margin = 8mm,
-    size = (800, 600),
+    xtickfontsize=8,
+    margin=8mm,
+    size=(800, 600),
 )
