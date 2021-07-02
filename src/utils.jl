@@ -170,12 +170,12 @@ function evaluate_prices(
 end
 
 """
-    evaluate_prices(market_simulator::UCED, problem_results::PSI.SimulationResults)
+    evaluate_prices(market_simulator::UCED, problem_results::Dict{String, SimulationResults})
 
 Returns energy prices for the simulation's data-range.  
 """
-function evaluate_prices(market_simulator::UCED, problem_results::PSI.SimulationResults)
-    ed_results = get_problem_results(problem_results, "DA")
+function evaluate_prices(market_simulator::UCED, problem_results::Dict{String, SimulationResults},)
+    ed_results = get_problem_results(problem_results["DA"], "ED")
 
     return Dict(
         "DA" => evaluate_prices(
@@ -192,8 +192,8 @@ end
 
 Returns energy prices for the simulation's data-range.  
 """
-function evaluate_prices(market_simulator::UCRT, problem_results::PSI.SimulationResults)
-    rt_results = get_problem_results(problem_results, "RT")
+function evaluate_prices(market_simulator::UCRT, problem_results::Dict{String, SimulationResults},)
+    rt_results = get_problem_results(problem_results["RT"], "RT")
 
     return Dict(
         "RT" => evaluate_prices(
@@ -304,7 +304,7 @@ function load_pq_curves(
     for max_gen in range_quota
         results_df[max_gen] = Dict(
             "RT" => SimulationResults(
-                joinpath(simulation_folder, "rt_quota_$max_gen", "1"),
+                joinpath(simulation_folder, "rt_quota_$max_gen", "1"), #It is assumed that the simulation is done just once
             ),
         )
         lmps_df[max_gen] = evaluate_prices(market_simulator, results_df[max_gen])
@@ -874,9 +874,9 @@ function plot_revenue_curves_renewable_plus_virtual(
         data[:, 2:length(bids)+1, 1] + data[:, 2:length(bids)+1, 2]
     palette = :Dark2_8
     title = [
-        renewable_gen * " Revenue - Virtual Offer on " * node,
-        virtual_gen * " Revenue - Virtual Offer on " * node,
-        "Joint Revenue - Virtual Offer on " * node,
+        renewable_gen * " Revenue - Virtual Offer on " * bus_v,
+        virtual_gen * " Revenue - Virtual Offer on " * bus_v,
+        "Joint Revenue - Virtual Offer on " * bus_v,
     ]
     plt = Array{Any}(nothing, (3)) #TODO: Change to typeof(plot): Plots.Plot{Plots.PlotlyBackend}
     for i = 1:3
@@ -927,6 +927,7 @@ plot_revenue_curves(
     results_df::Dict{Any,Any},
     period::Vector{Int64},
     generator_name::String,
+    initial_time::Date,
 )
 
 Function to plot the virtual generation curve for the virtual offer bids. 
@@ -940,6 +941,7 @@ function plot_generation_curves(
     results_df::Dict{Any,Any},
     period::Vector{Int64},
     generator_name::String,
+    initial_time::Date,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)

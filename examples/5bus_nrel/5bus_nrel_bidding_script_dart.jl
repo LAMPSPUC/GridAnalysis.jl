@@ -41,7 +41,7 @@ base_da_system = build_5_bus_matpower_DA(
 )
 
 # Add single generator at a defined bus
-node = "bus5" # define bus
+node = "bus1" # define bus
 gen = add_gerator!(base_da_system, node, (min = 0.0, max = 0.0))
 @test gen in get_components(Generator, base_da_system)
 
@@ -90,6 +90,7 @@ name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
 simulation_folder = joinpath(example_dir, "results", "virtual_5bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
+
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator,
     name_generator,
@@ -105,8 +106,11 @@ lmps_df, results_df = pq_curves_virtuals!(
 #Load the simulation done previously 
 lmps_df, results_df = load_pq_curves(market_simulator, range_quota, simulation_folder)
 
+@test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
+
 #Select data to plot
-generator_name = "bus5_virtual_supply"
+generator_name = "bus1_virtual_supply"
 period = [19] 
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
@@ -120,7 +124,7 @@ plot_revenue_curves(
     generator_name,
     initial_time,
 )
-plot_generation_curves(market_simulator, lmps_df, results_df, period, generator_name)
+plot_generation_curves(market_simulator, lmps_df, results_df, period, generator_name, initial_time)
 
 type = "DA";
 plot_generation_stack_virtual(
@@ -153,6 +157,7 @@ plot_revenue_curves_renewable(
     "SolarBusC",
     node,
 )
+
 plot_revenue_curves_renewable(
     market_simulator,
     lmps_df,

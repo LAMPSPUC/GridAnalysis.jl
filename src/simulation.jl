@@ -334,3 +334,83 @@ function run_multiday_simulation(
 
     return Dict("DA" => sim_results_1, "RT" => sim_results_2)
 end
+
+"""
+    run_multiday_simulation(simulator::UCED, initial_time::Date, steps::Int) -> SimulationResults
+
+Runs a multiday PSI.Simulation from a MarketSimulator UCED, an initial date and number of simulation steps. It returns a dictionary with both 
+simulation results.
+"""
+function run_multiday_simulation(
+    simulator::UCED,
+    initial_time::Date,
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = false,
+    balance_slack_variables::Bool = false,
+    constraint_duals::Array{Symbol,1} = [:CopperPlateBalance, :network_flow],
+    name::String = "test_case",
+    simulation_folder = pwd(),
+    console_level = Logging.Warn,
+    recorders = [:simulation],
+)
+    sim = Simulation(
+        simulator,
+        initial_time,
+        steps;
+        simulation_folder = simulation_folder,
+        system_to_file = system_to_file,
+        services_slack_variables = services_slack_variables,
+        balance_slack_variables = balance_slack_variables,
+        constraint_duals = constraint_duals,
+        name = name,
+    )
+
+    build!(sim; console_level = console_level, recorders = recorders)
+
+    execute!(sim)
+
+    sim_results = SimulationResults(sim)
+
+    return Dict("DA" => sim_results)
+end
+
+"""
+    run_multiday_simulation(simulator::UCRT, initial_time::Date, steps::Int) -> SimulationResults
+
+Runs a multiday PSI.Simulation from a MarketSimulator UCRT, an initial date and number of simulation steps. It returns a dictionary with both 
+simulation results.
+"""
+function run_multiday_simulation(
+    simulator::UCRT,
+    initial_time::Date,
+    steps::Int = 1;
+    system_to_file::Bool = false,
+    services_slack_variables::Bool = false,
+    balance_slack_variables::Bool = false,
+    constraint_duals::Array{Symbol,1} = [:CopperPlateBalance, :network_flow],
+    name::String = "test_case",
+    simulation_folder = pwd(),
+    console_level = Logging.Warn,
+    recorders = [:simulation],
+)
+    sim = Simulation(
+        simulator,
+        initial_time,
+        steps;
+        simulation_folder = simulation_folder,
+        system_to_file = system_to_file,
+        services_slack_variables = services_slack_variables,
+        balance_slack_variables = balance_slack_variables,
+        constraint_duals = constraint_duals,
+        name = name,
+    )
+
+    build!(sim; console_level = console_level, recorders = recorders)
+
+    execute!(sim)
+
+    sim_results = SimulationResults(sim)
+
+    return Dict("RT" => sim_results)
+end

@@ -82,7 +82,7 @@ market_simulator = UCED(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-simulation_folder = mktempdir();#joinpath(example_dir, "results");
+simulation_folder = mktempdir();
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator,
     name_generator,
@@ -93,7 +93,7 @@ lmps_df, results_df = pq_curves_virtuals!(
 )
 
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults}) #TODO: Make results_df always a dict
-@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
+@test isa(lmps_df[range_quota[1]], Dict{String,DataFrame}) #TODO: Make lmps_df always a dict
 
 #Select data to plot
 generator_name = "bus5_virtual_supply"
