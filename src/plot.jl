@@ -427,3 +427,203 @@ The `start_time` controls in which day is going to be ploted for the Determinist
         end
     end
 end
+
+"""
+    plot_generation_stack_virtual(
+        system::System,
+        results::SimulationProblemResults;
+        generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+        period::Int=1)
+
+Plot the generation mix during the time 'period' for the range of virtual bids in 'results'. 
+"""
+@userplot plot_generation_stack_virtual
+@recipe function f(
+    p::plot_generation_stack_virtual;
+    generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+    type::AbstractString,
+    period::Int=1,
+    initial_time::Date,
+)
+    system, results_df, = p.args
+    results_df = sort(results_df)
+    aux_period = DateTime(initial_time) + Hour(period[1] - 1)
+
+    for q in keys(results_df)
+        if type == "RT"
+            system_results = get_problem_results(results_df[q][type], "RT")
+        elseif type == "ED" || type == "DA"
+            system_results = get_problem_results(results_df[q][type], "UC")
+        else
+            system_results = get_problem_results(results_df[q], "UC")
+        end
+
+        # get mapping from busname to fuel type
+        fuel_type_dict = fuel_type_mapping(system)
+
+        # get the output data for given fuel types
+        variable_results = read_realized_variables(system_results; names=generator_fields)
+        generator_data = getindex.(Ref(variable_results), generator_fields)
+        for i in 1:length(generator_data)
+            generation = generator_data[i][
+                aux_period .<= generator_data[i].DateTime .< aux_period + Hour(1), :
+            ]
+            generation[!, "DateTime"] .= aux_period
+            generator_data[i] = combine(
+                groupby(generation, :DateTime),
+                names(generation, Not(:DateTime)) .=> sum;
+                renamecols=false,
+            )
+            lin, col = size(generator_data[i])
+            for j in 2:col
+                generator_data[i][1, j] =
+                    generator_data[i][1, j] / length(generation[!, "DateTime"])
+            end
+        end
+        if length(generator_data) > 1
+            generator_data = innerjoin(generator_data...; on=:DateTime)
+        else
+            generator_data = first(generator_data)
+        end
+
+        # stack the data and aggregate by fuel type
+        stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
+        bus_map = bus_mapping(system)
+        stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
+
+        #= select rows for the given bus names, default to all buses.
+        if !isempty(bus_names)
+            bus_names = String.(bus_names)
+            @assert all(bus_names .∈ [stacked_data.bus_name])
+            filter!(:bus_name => in(bus_names), stacked_data)
+        end
+        =#
+
+        stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
+
+        aggregated_data = combine(
+            groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
+        )
+
+        # convert the output units into MWh.
+        aggregated_data.output = aggregated_data.output .* get_base_power(system)
+
+        # unstack aggregated data and make area plot 
+        global unstacked_data = unstack(aggregated_data, :fuel_type, :output)
+        if q == minimum(keys(results_df))
+            global data_frame = unstacked_data
+        else
+            global data_frame = append!(data_frame, unstacked_data)
+        end
+    end
+
+    if type == "ED" || type == "DA"
+        aux = data_frame[!, "OTHER"]
+        global data_frame = select(data_frame, Not(:OTHER))
+        global data_frame[!, "OTHER"] = aux
+    end
+
+    times = collect(keys(results_df))
+    palette = :Dark2_8
+
+    plot_data = select(data_frame, Not(:DateTime))
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Output (MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+    color_palette --> palette
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
+end
+
+#= TODO: curves plots with recipe function
+@userplot plot_offert_price()
+@recipe function f(p::plot_offert_price; period::Vector{Int64}, bus_name::AbstractArray=["bus5"])
+    lmps_df, = p.args
+
+    lmps_df = sort(lmps_df)
+
+    indices=[]
+    data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in period #arrumar
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            c=2
+            for j in bus_name
+                data[t,c,i]=lmps_df[v][!,j][t]
+                c=c+1
+            end
+        end
+        indices = vcat(indices, v)
+    end #TODO: select period better
+
+    plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
+    #label --> reduce(hcat, names(plot_data))
+    yguide --> "Prices (\$/MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    for i in bus_name
+        for t in Base.axes(plot_data, 1) # verificar
+            @series begin
+                indices, plot_data[t,:,i] #pegar a coluna do bus_name
+            end
+        end
+    end
+end
+
+@userplot plot_revenue()
+@recipe function f(p::plot_revenue; g::, period::Vector{Int64}, generator_name::AbstractArray)
+    lmps_df,=p.args
+    lmps_df = sort(lmps_df)
+    results_df=g
+    gen=get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_name=get_bus(gen)
+
+    #ED price (bus_name)
+    #RT price (bus_name)
+    #UC generation (bus_name)
+
+    #Revenue = (price["ED"] - price["RT"])*generation("UC")
+    #Revenue = (price["RT"] - price["ED"])*generation("UC")
+
+    #Revenue = price*generation("UC")
+
+    indices=[]
+    data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in period
+            data[t,1,i]=lmps_df[v][!,"DateTime"][t]
+            variable_results = read_realized_variables(get_problem_results(results_df[v], "UC"), names=[:P__ThermalStandard])
+            generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            virtual_gen=generator_data[1][!,7][t] #name_generator
+            data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
+        end
+        indices = vcat(indices, v)
+    end#TODO: select only period
+
+    plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
+    #label --> reduce(hcat, names(plot_data))
+    yguide --> "Revenues (\$/MWh)"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+
+    for t in Base.axes(plot_data, 2) # verificar
+        @series begin
+            indices, plot_data[t,2,:]
+        end
+    end
+
+end
+=#
