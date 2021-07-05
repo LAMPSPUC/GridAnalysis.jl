@@ -79,76 +79,21 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, SimulationResults)
+@test isa(results, Dict{String, SimulationResults})
 
 # separate results
-uc_results = get_problem_results(results, "UC");
-ed_results = get_problem_results(results, "ED");
+uc_results = get_problem_results(results["DA"], "UC");
+ed_results = get_problem_results(results["DA"], "ED");
 
 # calculate prices
 prices = evaluate_prices(market_simulator, results)
 
 @test isa(prices, Dict{String,DataFrame})
 
-names(prices["ED"][!, :])
-
-# get the generator data
-generator_metadata = [gen for gen in get_components(Generator, sys_ed)]
-
-# get the fuel type for all buses
-fuel_type_dict = fuel_type_mapping(sys_ed)
-
-# get all names of the fuel types and make sure its unique
-fuel_names = unique(keys(fuel_type_dict))
-
-# create the vectors, one for each type of fuel
-hydro = Vector{String}()
-wind = Vector{String}()
-solar = Vector{String}()
-coal = Vector{String}()
-natural_gas = Vector{String}()
-nuclear = Vector{String}()
-
-# put the name of the bus in its respective vector
-# these vectors are useful for selecting which bus is desired to plot
-# for example: if is wanted to plot only the wind or only the solar generators
-for i in 1:length(fuel_names)
-    if occursin("HYDRO", fuel_names[i]) == true
-        push!(hydro, get_bus_name(generator_metadata[i]))
-    elseif occursin("WIND", fuel_names[i]) == true
-        push!(wind, get_bus_name(generator_metadata[i]))
-    elseif occursin("PV", fuel_names[i]) == true || occursin("CSP", fuel_names[i]) == true
-        push!(solar, get_bus_name(generator_metadata[i]))
-    elseif occursin("STEAM", fuel_names[i]) == true
-        push!(coal, get_bus_name(generator_metadata[i]))
-    elseif occursin("CT", fuel_names[i]) == true || occursin("CC", fuel_names[i]) == true
-        push!(natural_gas, get_bus_name(generator_metadata[i]))
-    else
-        push!(nuclear, get_bus_name(generator_metadata[i]))
-    end
-end
-
-# change the name of the fuel type so that it follows a pattern
-for (i, key) in enumerate(fuel_names)
-    if occursin("HYDRO", fuel_names[i]) == true
-        fuel_type_dict[key] = "HYDRO"
-    elseif occursin("WIND", fuel_names[i]) == true
-        fuel_type_dict[key] = "WIND"
-    elseif occursin("PV", fuel_names[i]) == true || occursin("CSP", fuel_names[i]) == true
-        fuel_type_dict[key] = "SOLAR"
-    elseif occursin("STEAM", fuel_names[i]) == true
-        fuel_type_dict[key] = "COAL"
-    elseif occursin("CT", fuel_names[i]) == true || occursin("CC", fuel_names[i]) == true
-        fuel_type_dict[key] = "NATURAL GAS"
-    else
-        fuel_type_dict[key] = "NUCLEAR"
-    end
-end
+names(prices["DA"][!, :])
 
 # Plots
 plot_generation_stack(sys_DA, ed_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_DA, ed_results; bus_names=wind, xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_DA, ed_results; bus_names=coal, xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(
     sys_DA,
     ed_results;
@@ -182,15 +127,6 @@ plot_prices(
     xtickfontsize=8,
     size=(800, 600),
 )
-plot_prices(
-    market_simulator, results; bus_names=unique(solar), xtickfontsize=8, size=(800, 600)
-)
-plot_prices(
-    market_simulator, results; bus_names=unique(wind), xtickfontsize=8, size=(800, 600)
-)
-plot_prices(
-    market_simulator, results; bus_names=unique(nuclear), xtickfontsize=8, size=(800, 600)
-)
 
 plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 
@@ -215,8 +151,6 @@ plot_net_demand_stack(
     type="Deterministic",
     start_time=DateTime("2020-09-01"),
 )
-#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
-#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
 # UCRT
 
@@ -250,11 +184,11 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, SimulationResults)
+@test isa(results, Dict{String, SimulationResults})
 
 # separate results
-uc_results = get_problem_results(results, "UC");
-rt_results = get_problem_results(results, "RT");
+uc_results = get_problem_results(results["RT"], "UC");
+rt_results = get_problem_results(results["RT"], "RT");
 
 # calculate prices
 prices = evaluate_prices(market_simulator, results)
@@ -318,7 +252,7 @@ plot_demand_stack(
     size=(800, 600),
     type="Deterministic",
     start_time=DateTime("2020-09-01"),
-)
+) # TO-DO: make it plot the whole day
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600))
@@ -337,7 +271,7 @@ plot_net_demand_stack(
     size=(800, 600),
     type="Deterministic",
     start_time=DateTime("2020-09-01"),
-)
+) # TO-DO: make it plot the whole day
 
 plot_prices_RT_hour(prices, (-5, 20))
 
@@ -380,9 +314,9 @@ results = run_multiday_simulation(
 @test isa(results, Dict{String,SimulationResults})
 
 # separate results
-uc_results = get_problem_results(results["ED"], "UC");
+uc_results = get_problem_results(results["DA"], "UC");
 rt_results = get_problem_results(results["RT"], "RT");
-ed_results = get_problem_results(results["ED"], "ED");
+ed_results = get_problem_results(results["DA"], "ED");
 
 @test isa(rt_results, PowerSimulations.SimulationProblemResults)
 
@@ -393,8 +327,6 @@ prices = evaluate_prices_UCEDRT(market_simulator, results)
 
 # Plots
 plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_rt, rt_results; bus_names=["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, margin=8mm, size=(800, 600))
-#plot_generation_stack(sys_rt, rt_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"], xtickfontsize=8, margin=8mm, size=(800, 600))
 plot_generation_stack(
     sys_rt,
     rt_results;
@@ -428,7 +360,7 @@ plot_generation_stack(
     size=(800, 600),
 )
 
-plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="ED")
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="DA")
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="RT")
 plot_prices(
     market_simulator,
@@ -439,27 +371,24 @@ plot_prices(
 )
 
 plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
-#plot_thermal_commit(sys_DA, uc_results; bus_names=["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 # plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600)) # too much computer demmanding
 plot_demand_stack(
-    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic"
+    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
 )
 plot_demand_stack(
-    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic"
-)
-#plot_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
-#plot_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
+    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+) # TO-DO: make it plot the whole day
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
-    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic"
+    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
 )
 plot_net_demand_stack(
-    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic"
-)
+    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+) # TO-DO: make it plot the whole day
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 

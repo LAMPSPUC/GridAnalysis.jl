@@ -390,10 +390,10 @@ uuid = "7746bdde-850d-59dc-9ae8-88ece973131d"
 version = "2.68.1+0"
 
 [[GridAnalysis]]
-deps = ["DataFrames", "Dates", "Logging", "PowerSimulations", "PowerSystems", "RecipesBase"]
+deps = ["DataFrames", "Dates", "Logging", "Plots", "PowerSimulations", "PowerSystems", "RecipesBase", "TimeSeries"]
 path = "../.."
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
-version = "0.1.0"
+version = "0.1.2"
 
 [[Grisu]]
 git-tree-sha1 = "53bb909d1151e57e2484c3d1b53e19552b887fb2"
@@ -599,9 +599,9 @@ version = "1.36.0+3"
 
 [[Libiconv_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "8d22e127ea9a0917bc98ebd3755c8bd31989381e"
+git-tree-sha1 = "42b62845d70a619f063a7da093d995ec8e15e778"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+0"
+version = "1.16.1+1"
 
 [[Libmount_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1143,7 +1143,7 @@ uuid = "02c8fc9c-b97f-50b9-bbe4-9be30ff0a78a"
 version = "2.9.12+0"
 
 [[XSLT_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgcrypt_jll", "Pkg", "XML2_jll"]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgcrypt_jll", "Libgpg_error_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "2b3eac39df218762d2d005702d601cd44c997497"
 uuid = "aed1982a-8fda-507f-9586-7b0439959a61"
 version = "1.1.33+4"

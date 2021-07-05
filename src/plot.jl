@@ -102,13 +102,13 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
     if isa(market_simulator, UCEDRT)
         prices = evaluate_prices_UCEDRT(market_simulator, system_results)
 
-        if type == "ED"
+        if type == "DA"
             # Selects the plot data if is desired to plot the ED prices
-            plot_data = select(prices["ED"], Not(:DateTime))
+            plot_data = select(prices["DA"], Not(:DateTime))
 
             yguide --> "Prices (\$/MWh)"
 
-            times = prices["ED"][!, 1]
+            times = prices["DA"][!, 1]
         else
             # Selects the plot data if is desired to plot the ED prices
             plot_data = select(prices["RT"], Not(:DateTime))
