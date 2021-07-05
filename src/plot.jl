@@ -115,7 +115,7 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
 
             interval = market_simulator.ext[:Interval]
             string_interval = string(interval.value)
-            yguide --> "Prices (\$/MW-"*string_interval*"min)"
+            yguide --> "Prices (\$/MW-" * string_interval * "min)"
 
             times = prices["RT"][!, 1]
         end
@@ -139,7 +139,7 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
     if isa(market_simulator, UCRT)
         interval = market_simulator.kwargs[:Interval]
         string_interval = string(interval.value)
-        yguide --> "Prices (\$/MW-"*string_interval*"min)"
+        yguide --> "Prices (\$/MW-" * string_interval * "min)"
     elseif isa(market_simulator, UCED)
         yguide --> "Prices (\$/MWh)"
     end

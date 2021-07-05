@@ -79,7 +79,7 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, Dict{String, SimulationResults})
+@test isa(results, Dict{String,SimulationResults})
 
 # separate results
 uc_results = get_problem_results(results["DA"], "UC");
@@ -184,7 +184,7 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, Dict{String, SimulationResults})
+@test isa(results, Dict{String,SimulationResults})
 
 # separate results
 uc_results = get_problem_results(results["RT"], "UC");
@@ -375,19 +375,39 @@ plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 # plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600)) # too much computer demmanding
 plot_demand_stack(
-    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+    sys_uc,
+    uc_results;
+    xtickfontsize=8,
+    size=(800, 600),
+    type="Deterministic",
+    start_time=DateTime("2020-09-01"),
 )
 plot_demand_stack(
-    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+    sys_rt,
+    rt_results;
+    xtickfontsize=8,
+    size=(800, 600),
+    type="Deterministic",
+    start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
 
 plot_net_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
-    sys_uc, uc_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+    sys_uc,
+    uc_results;
+    xtickfontsize=8,
+    size=(800, 600),
+    type="Deterministic",
+    start_time=DateTime("2020-09-01"),
 )
 plot_net_demand_stack(
-    sys_rt, rt_results; xtickfontsize=8, size=(800, 600), type="Deterministic", start_time=DateTime("2020-09-01"),
+    sys_rt,
+    rt_results;
+    xtickfontsize=8,
+    size=(800, 600),
+    type="Deterministic",
+    start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
 #plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))

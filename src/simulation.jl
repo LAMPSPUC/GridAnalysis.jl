@@ -86,7 +86,13 @@ function PSI.Simulation(
             simulator.system_uc;
             optimizer=simulator.solver_uc,
             system_to_file=system_to_file,
-            (haskey(simulator.kwargs, :PTDF) ? Dict(:PTDF => simulator.kwargs[:PTDF]) : Dict())... ,
+            (
+                if haskey(simulator.kwargs, :PTDF)
+                    Dict(:PTDF => simulator.kwargs[:PTDF])
+                else
+                    Dict()
+                end
+            )...,
         ),
         RT=OperationsProblem(
             simulator.template_rt,
@@ -96,7 +102,13 @@ function PSI.Simulation(
             services_slack_variables=services_slack_variables,
             balance_slack_variables=balance_slack_variables,
             constraint_duals=constraint_duals,
-            (haskey(simulator.kwargs, :PTDF) ? Dict(:PTDF => simulator.kwargs[:PTDF]) : Dict())... ,
+            (
+                if haskey(simulator.kwargs, :PTDF)
+                    Dict(:PTDF => simulator.kwargs[:PTDF])
+                else
+                    Dict()
+                end
+            )...,
         ),
     )
 
@@ -107,7 +119,10 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals = Dict("UC" => (Hour(24), Consecutive()), "RT" => (simulator.kwargs[:Interval], Consecutive()))
+    intervals = Dict(
+        "UC" => (Hour(24), Consecutive()),
+        "RT" => (simulator.kwargs[:Interval], Consecutive()),
+    )
 
     uc_rt_sequence = SimulationSequence(;
         problems=problems,
@@ -152,7 +167,9 @@ function PSI.Simulation(
             simulator.system_uc;
             optimizer=simulator.solver_uc,
             system_to_file=system_to_file,
-            (haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict())... ,
+            (
+                haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict()
+            )...,
         ),
         ED=OperationsProblem(
             simulator.template_ed,
@@ -162,7 +179,9 @@ function PSI.Simulation(
             services_slack_variables=services_slack_variables,
             balance_slack_variables=balance_slack_variables,
             constraint_duals=constraint_duals[1],
-            (haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict())... ,
+            (
+                haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict()
+            )...,
         ),
     )
 
@@ -198,7 +217,9 @@ function PSI.Simulation(
             simulator.system_uc;
             optimizer=simulator.solver_uc,
             system_to_file=system_to_file,
-            (haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict())... ,
+            (
+                haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict()
+            )...,
         ),
         RT=OperationsProblem(
             simulator.template_rt,
@@ -208,7 +229,9 @@ function PSI.Simulation(
             services_slack_variables=services_slack_variables,
             balance_slack_variables=balance_slack_variables,
             constraint_duals=constraint_duals[2],
-            (haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict())... ,
+            (
+                haskey(simulator.ext, :PTDF) ? Dict(:PTDF => simulator.ext[:PTDF]) : Dict()
+            )...,
         ),
     )
 

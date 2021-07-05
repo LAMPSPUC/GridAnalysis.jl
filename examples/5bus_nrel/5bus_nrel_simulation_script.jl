@@ -78,7 +78,7 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, Dict{String, SimulationResults})
+@test isa(results, Dict{String,SimulationResults})
 
 # separate results
 uc_results = get_problem_results(results["DA"], "UC");

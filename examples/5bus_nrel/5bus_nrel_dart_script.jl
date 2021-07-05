@@ -82,7 +82,7 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, Dict{String, SimulationResults})
+@test isa(results, Dict{String,SimulationResults})
 
 # separate results
 uc_results = get_problem_results(results["RT"], "UC");
@@ -149,13 +149,15 @@ plot_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(
     base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
-plot_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600), type = "Deterministic")
+plot_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600), type="Deterministic")
 
 plot_net_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
     base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
-plot_net_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600), type = "Deterministic")
+plot_net_demand_stack(
+    base_da_system; xtickfontsize=8, size=(800, 600), type="Deterministic"
+)
 
 plot_prices_RT_hour(prices)
 
