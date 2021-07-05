@@ -82,11 +82,11 @@ results = run_multiday_simulation(
     simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
 );
 
-@test isa(results, SimulationResults)
+@test isa(results, Dict{String, SimulationResults})
 
 # separate results
-uc_results = get_problem_results(results, "UC");
-rt_results = get_problem_results(results, "RT");
+uc_results = get_problem_results(results["RT"], "UC");
+rt_results = get_problem_results(results["RT"], "RT");
 
 # calculate prices
 prices = evaluate_prices(market_simulator, results)
@@ -149,11 +149,13 @@ plot_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(
     base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
+plot_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 
 plot_net_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(
     base_da_system; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600)
 )
+plot_net_demand_stack(base_da_system; xtickfontsize=8, size=(800, 600), type = "Deterministic")
 
 plot_prices_RT_hour(prices)
 
@@ -196,9 +198,9 @@ results = run_multiday_simulation(
 @test isa(results, Dict{String,SimulationResults})
 
 # separate results
-uc_results = get_problem_results(results["ED"], "UC");
+uc_results = get_problem_results(results["DA"], "UC");
 rt_results = get_problem_results(results["RT"], "RT");
-ed_results = get_problem_results(results["ED"], "ED");
+ed_results = get_problem_results(results["DA"], "ED");
 
 @test isa(rt_results, PowerSimulations.SimulationProblemResults)
 
@@ -266,7 +268,7 @@ plot_generation_stack(
     size=(800, 600),
 )
 
-plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="ED")
+plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="DA")
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="RT")
 
 plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
