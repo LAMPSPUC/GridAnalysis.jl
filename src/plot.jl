@@ -465,9 +465,7 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         variable_results = read_realized_variables(system_results; names=generator_fields)
         generator_data = getindex.(Ref(variable_results), generator_fields)
         for i in 1:length(generator_data)
-            generation = generator_data[i][
-                aux_period .<= generator_data[i].DateTime .< aux_period + Hour(1), :
-            ]
+            generation = generator_data[i][aux_period .<= generator_data[i].DateTime .< aux_period + Hour(1), :]
             generation[!, "DateTime"] .= aux_period
             generator_data[i] = combine(
                 groupby(generation, :DateTime),
