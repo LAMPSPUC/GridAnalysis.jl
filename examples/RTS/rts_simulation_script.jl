@@ -16,7 +16,8 @@ const PSY = PowerSystems
 
 # set directory
 rts_dir = download("https://github.com/GridMod/RTS-GMLC", "master", mktempdir())
-#rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC"
+# Or clone the directory and open as:
+# for example: rts_dir = "/home/rafaela/Documents/PUC/LAMPS/github/RTS-GMLC"
 rts_src_dir = joinpath(rts_dir, "RTS_Data", "SourceData")
 rts_siip_dir = joinpath(rts_dir, "RTS_Data", "FormattedData", "SIIP");
 
@@ -273,7 +274,7 @@ plot_net_demand_stack(
     start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
 
-plot_prices_RT_hour(prices, (-5, 20))
+plot_prices_RT_hour(prices, sys_rt, (-10, 50))
 
 # UCEDRT
 
@@ -409,8 +410,6 @@ plot_net_demand_stack(
     type="Deterministic",
     start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
-#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["101_CT_1", "101_CT_2", "102_CT_1", "102_CT_2"], xtickfontsize=8, size=(800, 600))
-#plot_net_demand_stack(sys_uc, uc_results; bus_names = ["Calvin", "Beethoven", "Anna", "Cole"], xtickfontsize=8, size=(800, 600))
 
-plot_prices_RT_hour(prices, (-5, 20))
-plot_DA_RT(prices, (-10, 50))
+plot_prices_RT_hour(prices, sys_rt, (-10, 50))
+plot_DA_RT(prices, sys_rt, (-10, 50))

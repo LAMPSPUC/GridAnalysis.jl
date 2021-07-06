@@ -113,9 +113,24 @@ function evaluate_prices(
     kwargs,
 )
     duals = read_dual(problem_results, :nodal_balance_active__Bus)
-    # we only want the first hour prices (stored in the first row)
-    # in case each problem has more than one hour
-    df = vcat([DataFrame(duals[i][1, :]) for i in keys(duals)]...)
+    # get the interval
+    params = get_time_series_params(system)
+    interval = params.interval
+    if typeof(interval) == Hour
+        int_interval = interval.value*60
+    else
+        int_interval = Int(interval.value)
+    end
+    # get the interval resolution
+    resolution_mili_seg = get_time_series_resolution(system)
+    resolution_seg = resolution_mili_seg/1000
+    resolution_min = resolution_seg/60
+    int_resolution = Int(resolution_min.value)
+    # makes interval/resolution to know how many prices are needed
+    tot = Int(int_interval/int_resolution)
+    # gets the needed number of prices hours, depending on the interval 
+    # and on the resolution of the problem
+    df = vcat([DataFrame(duals[i][1:tot, :]) for i in keys(duals)]...)
     # in this case, the lmps are the negative of the duals
     df[:, 2:end] = df[:, 2:end] ./ -get_base_power(system)
     return df
@@ -143,8 +158,24 @@ function evaluate_prices(
     # get line limit duals
     # ignoring transformer, because it seems that PSI is also ignoring
     flow_duals = read_dual(problem_results, :network_flow__Line)
-    # we only want the first hour of the ED prices (stored in the first row here)
-    flow_duals = vcat([DataFrame(flow_duals[i][1, :]) for i in keys(flow_duals)]...)
+    # get the interval
+    params = get_time_series_params(system)
+    interval = params.interval
+    if typeof(interval) == Hour
+        int_interval = interval.value*60
+    else
+        int_interval = Int(interval.value)
+    end
+    # get the interval resolution
+    resolution_mili_seg = get_time_series_resolution(system)
+    resolution_seg = resolution_mili_seg/1000
+    resolution_min = resolution_seg/60
+    int_resolution = Int(resolution_min.value)
+    # makes interval/resolution to know how many prices are needed
+    tot = int_interval/int_resolution
+    # gets the needed number of prices hours, depending on the interval 
+    # and on the resolution of the problem
+    flow_duals = vcat([DataFrame(flow_duals[i][1:tot, :]) for i in keys(flow_duals)]...)
     # get duals in a matrix form ordered by the line names available in the PTDF
     line_names = intersect(PTDF_matrix.axes[1], names(flow_duals[:, 2:end]))
     μ = Matrix(flow_duals[:, line_names])
@@ -225,13 +256,13 @@ function evaluate_prices_UCEDRT(
             market_simulator.template_ed.transmission,
             market_simulator.system_ed,
             ed_results,
-            market_simulator.ext,
+            market_simulator.kwargs,
         ),
         "RT" => evaluate_prices(
             market_simulator.template_rt.transmission,
             market_simulator.system_rt,
             rt_results,
-            market_simulator.ext,
+            market_simulator.kwargs,
         ),
     )
 end

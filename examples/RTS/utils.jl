@@ -27,20 +27,23 @@ function prep_systems_UCED(
 end
 
 """
-    plot_prices_RT_hour(prices, ylim::Tuple)
+    plot_prices_RT_hour(prices, system, ylim::Tuple)
 
 Plot the RT prices with all simulator forecast
 """
-function plot_prices_RT_hour(prices, ylim::Tuple)
+function plot_prices_RT_hour(prices, system, ylim::Tuple)
     prices_keys = collect(keys(prices))
     prices_rt_df = prices[prices_keys[1]]
 
     values = select(prices_rt_df, Not(:DateTime))
     n_prev, n_bus = size(values)
 
-    intervals = get_time_series_params(market_simulator.system_rt).interval
-
-    n_prev_hour = Int(60 / intervals.value)
+    resolution_mili_seg = get_time_series_resolution(system)
+    resolution_seg = resolution_mili_seg/1000
+    resolution_min = resolution_seg/60
+    int_resolution = Int(resolution_min.value)
+    
+    n_prev_hour = Int(60 / int_resolution)
     n_days = Int(n_prev / n_prev_hour)
 
     names_bus = names(values)
@@ -72,27 +75,31 @@ function plot_prices_RT_hour(prices, ylim::Tuple)
         ylab="Prices (\$/MWh)",
         label=labels,
         ylim=ylim,
+        xlim=(1,length(times)),
     )
 end
 
 """
-    plot_prices_hour(prices, ylim::Tuple)
+    plot_prices_hour(prices, system, ylim::Tuple)
 
 Plot Both ED and RT in the same plot
 """
-function plot_DA_RT(prices, ylim::Tuple)
+function plot_DA_RT(prices, system, ylim::Tuple)
     prices_keys = collect(keys(prices))
     prices_rt_df = prices[prices_keys[1]]
 
-    values_rt = select(prices_rt_df, Not(:DateTime))
-    n_prev, n_bus = size(values_rt)
+    values = select(prices_rt_df, Not(:DateTime))
+    n_prev, n_bus = size(values)
 
-    intervals = get_time_series_params(market_simulator.system_rt).interval
-
-    n_prev_hour = Int(60 / intervals.value)
+    resolution_mili_seg = get_time_series_resolution(system)
+    resolution_seg = resolution_mili_seg/1000
+    resolution_min = resolution_seg/60
+    int_resolution = Int(resolution_min.value)
+    
+    n_prev_hour = Int(60 / int_resolution)
     n_days = Int(n_prev / n_prev_hour)
 
-    names_bus = names(values_rt)
+    names_bus = names(values)
     prices_rt = zeros(n_days, n_bus)
 
     i = 1
@@ -129,6 +136,7 @@ function plot_DA_RT(prices, ylim::Tuple)
         linestyle=:dash,
         palette=palette,
         ylim=ylim,
+        xlim=(1,length(times)),
     )
     return plot!(
         values_ed;
@@ -138,5 +146,6 @@ function plot_DA_RT(prices, ylim::Tuple)
         label=labels,
         palette=palette,
         ylim=ylim,
+        xlim=(1,length(times)),
     )
 end

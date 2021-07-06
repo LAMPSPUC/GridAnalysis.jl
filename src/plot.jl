@@ -110,10 +110,12 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
 
             times = prices["DA"][!, 1]
         else
-            # Selects the plot data if is desired to plot the ED prices
+            # Selects the plot data if is desired to plot the RT prices
             plot_data = select(prices["RT"], Not(:DateTime))
 
-            interval = market_simulator.ext[:Interval]
+            sys_rt = market_simulator.system_rt
+            params = get_time_series_params(sys_rt)
+            interval = params.interval
             string_interval = string(interval.value)
             yguide --> "Prices (\$/MW-" * string_interval * "min)"
 
@@ -137,7 +139,9 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
     end
 
     if isa(market_simulator, UCRT)
-        interval = market_simulator.kwargs[:Interval]
+        sys_rt = market_simulator.system_rt
+        params = get_time_series_params(sys_rt)
+        interval = params.interval
         string_interval = string(interval.value)
         yguide --> "Prices (\$/MW-" * string_interval * "min)"
     elseif isa(market_simulator, UCED)
