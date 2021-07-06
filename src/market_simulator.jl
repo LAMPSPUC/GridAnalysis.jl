@@ -145,7 +145,7 @@ struct UCEDRT <: DART
     solver_uc::Any
     solver_ed::Any
     solver_rt::Any
-    ext::Dict
+    kwargs::Dict
 end
 
 """

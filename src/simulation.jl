@@ -41,7 +41,11 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))
+    sys_ed = simulator.system_ed
+    params = get_time_series_params(sys_ed)
+    interval = params.interval
+    
+    intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (interval, Consecutive()))
 
     uc_ed_sequence = SimulationSequence(;
         problems=problems,
@@ -107,7 +111,14 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(5), Consecutive()))
+    sys_rt = simulator.system_rt
+    params = get_time_series_params(sys_rt)
+    interval = params.interval
+
+    intervals = Dict(
+        "UC" => (Hour(24), Consecutive()),
+        "RT" => (interval, Consecutive()),
+    )
 
     uc_rt_sequence = SimulationSequence(;
         problems=problems,
@@ -152,7 +163,7 @@ function PSI.Simulation(
             simulator.system_uc;
             optimizer=simulator.solver_uc,
             system_to_file=system_to_file,
-            simulator.ext...,
+            simulator.kwargs...,
         ),
         ED=OperationsProblem(
             simulator.template_ed,
@@ -162,7 +173,7 @@ function PSI.Simulation(
             services_slack_variables=services_slack_variables,
             balance_slack_variables=balance_slack_variables,
             constraint_duals=constraint_duals[1],
-            simulator.ext...,
+            simulator.kwargs...,
         ),
     )
 
@@ -173,7 +184,11 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (Hour(1), Consecutive()))
+    sys_ed = simulator.system_ed
+    params = get_time_series_params(sys_ed)
+    interval = params.interval
+    
+    intervals = Dict("UC" => (Hour(24), Consecutive()), "ED" => (interval, Consecutive()))
 
     uc_ed_sequence = SimulationSequence(;
         problems=problem1,
@@ -198,7 +213,7 @@ function PSI.Simulation(
             simulator.system_uc;
             optimizer=simulator.solver_uc,
             system_to_file=system_to_file,
-            simulator.ext...,
+            simulator.kwargs...,
         ),
         RT=OperationsProblem(
             simulator.template_rt,
@@ -208,7 +223,7 @@ function PSI.Simulation(
             services_slack_variables=services_slack_variables,
             balance_slack_variables=balance_slack_variables,
             constraint_duals=constraint_duals[2],
-            simulator.ext...,
+            simulator.kwargs...,
         ),
     )
 
@@ -219,7 +234,13 @@ function PSI.Simulation(
             SemiContinuousFF(; binary_source_problem=ON, affected_variables=[ACTIVE_POWER]),
     )
 
-    intervals2 = Dict("UC" => (Hour(24), Consecutive()), "RT" => (Minute(5), Consecutive()))
+    sys_rt = simulator.system_rt
+    params = get_time_series_params(sys_rt)
+    interval = params.interval
+
+    intervals2 = Dict(
+        "UC" => (Hour(24), Consecutive()), "RT" => (interval, Consecutive())
+    )
 
     uc_rt_sequence = SimulationSequence(;
         problems=problem2,
