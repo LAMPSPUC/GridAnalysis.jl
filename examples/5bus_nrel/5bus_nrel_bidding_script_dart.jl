@@ -4,11 +4,11 @@ using Dates
 using DataFrames
 using GridAnalysis
 using Gurobi
+using Measures
+using Plots
 using PowerSystems
 using PowerSimulations
 using Test
-using Measures
-using Plots
 
 # might not work if running lines manually 
 # (solution: edit to be the path for this examples directory 
@@ -87,7 +87,8 @@ market_simulator = UCEDRT(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-simulation_folder = joinpath(example_dir, "results", "virtual_1bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
+#simulation_folder = joinpath(example_dir, "results", "virtual_1bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
+simulation_folder = mktempdir()
 
 lmps_df, results_df = pq_curves_virtuals!(
     market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder

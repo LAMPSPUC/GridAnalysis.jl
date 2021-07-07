@@ -3,12 +3,12 @@
 using Dates
 using DataFrames
 using GridAnalysis
+using Gurobi
+using Measures
+using Plots
 using PowerSystems
 using PowerSimulations
 using Test
-using Measures
-using Plots
-using Gurobi
 
 # might not work if running lines manually 
 # (solution: edit to be the path for this examples directory 
@@ -41,7 +41,7 @@ gen = add_gerator!(base_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_system)
 
 # create and set variable cost time-series for the generator
-bidding_period = collect(1:24)#collect(1:24)#collect(1:24) #
+bidding_period = collect(1:24)
 ts_array = create_generator_bids(;
     initial_bidding_time=DateTime("2020-01-01"),
     bidding_periods=bidding_period,
