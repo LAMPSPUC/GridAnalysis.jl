@@ -230,6 +230,7 @@ end
 
 Run a set of simulations to 5bus_nrel with descripted sistems as in 'df'
 """
+#TODO: add changes to minimal_generation and ramp
 function run_set_of_simulations(df::DataFrame, 
     data_dir::String, 
     example_dir::String, 
@@ -327,7 +328,7 @@ end
         solver_rt, 
         range_quota::Vector{Float64}, 
         initial_time::Date, 
-        lines::Vector{Float64},
+        lines::Vector{Int64},
         period_analysed::Vector{Vector{Int64}},
         initial_bidding_time::DateTime
     )
@@ -343,7 +344,7 @@ function load_set_of_simulations(
     solver_rt, 
     range_quota::Vector{Float64}, 
     initial_time::Date, 
-    lines::Vector{Float64},
+    lines::Vector{Int64},
     period_analysed::Vector{Vector{Int64}},
     initial_bidding_time::DateTime
 )
