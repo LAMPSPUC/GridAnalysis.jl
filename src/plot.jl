@@ -529,13 +529,14 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         global data_frame[!, "OTHER"] = aux
     end
 
-    times = collect(keys(results_df))
+    times = collect(keys(results_df)) * get_base_power(system)
     palette = :Dark2_8
 
     plot_data = select(data_frame, Not(:DateTime))
 
     label --> reduce(hcat, names(plot_data))
     yguide --> "Output (MWh)"
+    xguide --> "Bid offers (MW)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
@@ -558,7 +559,7 @@ end
 
     lmps_df = sort(lmps_df)
 
-    indices=[]
+    index=[]
     data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
     for (i, v) in enumerate(keys(lmps_df))
         for t in period #arrumar
@@ -569,7 +570,7 @@ end
                 c=c+1
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end #TODO: select period better
 
     plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
@@ -582,7 +583,7 @@ end
     for i in bus_name
         for t in Base.axes(plot_data, 1) # verificar
             @series begin
-                indices, plot_data[t,:,i] #pegar a coluna do bus_name
+                index, plot_data[t,:,i] #pegar a coluna do bus_name
             end
         end
     end
@@ -605,7 +606,7 @@ end
 
     #Revenue = price*generation("UC")
 
-    indices=[]
+    index=[]
     data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
         for t in period
@@ -615,7 +616,7 @@ end
             virtual_gen=generator_data[1][!,7][t] #name_generator
             data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end#TODO: select only period
 
     plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
@@ -627,7 +628,7 @@ end
 
     for t in Base.axes(plot_data, 2) # verificar
         @series begin
-            indices, plot_data[t,2,:]
+            index, plot_data[t,2,:]
         end
     end
 

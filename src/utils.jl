@@ -342,6 +342,7 @@ plot_price_curves(
     bus_name::AbstractArray=["bus5"],
     node::String="bus5",
     initial_time::Date,
+    system::System,
 )
 
 Function to plot the price curve for the virtual offer bids. 
@@ -355,13 +356,14 @@ function plot_price_curves(
     bus_name::AbstractArray,
     node::String,
     initial_time::Date,
+    system::System,
 )
     lmps_df = sort(lmps_df)
     aux_period = []
     for t in period
         aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
     end
-    indices = []
+    index = []
     max_element = 0
     min_element = 0
     data = Array{Any}(
@@ -396,8 +398,9 @@ function plot_price_curves(
                 end
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
+    index = index*get_base_power(system)
     c = 1
     for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]]))
         palette = :Dark2_8
@@ -406,7 +409,7 @@ function plot_price_curves(
                 if length(lmps_df[collect(keys(lmps_df))[1]]) > 1 && k == "RT"
                     if c == 1
                         plot(
-                            indices,
+                            index,
                             data[t, b + 1, :, l];
                             label="hour:" *
                                   string(period[t] - 1) *
@@ -420,7 +423,7 @@ function plot_price_curves(
                         )
                     else
                         plot!(
-                            indices,
+                            index,
                             data[t, b + 1, :, l];
                             label="hour:" *
                                   string(period[t] - 1) *
@@ -436,7 +439,7 @@ function plot_price_curves(
                 else
                     if c == 1
                         plot(
-                            indices,
+                            index,
                             data[t, b + 1, :, l];
                             label="hour:" *
                                   string(period[t] - 1) *
@@ -449,7 +452,7 @@ function plot_price_curves(
                         )
                     else
                         plot!(
-                            indices,
+                            index,
                             data[t, b + 1, :, l];
                             label="hour:" *
                                   string(period[t] - 1) *
@@ -470,7 +473,7 @@ function plot_price_curves(
     return plot!(;
         title="Price per Virtual Bid on " * node,
         ylabel="Prices (\$/MWh)",
-        xlabel="Bid offers (p.u.)",
+        xlabel="Bid offers (MW)",
         ylims=(min_element - 1, max_element * 1.1 + 1),
     )
 end
@@ -483,6 +486,7 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
 
 Function to plot the revenue curve for the the virtual offer bids. 
@@ -496,12 +500,13 @@ function plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
 
-    indices = []
+    index = []
     aux_period = []
     min_element = 0
     max_element = 0
@@ -539,14 +544,15 @@ function plot_revenue_curves(
                 min_element = data[t, 2, i]
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -554,7 +560,7 @@ function plot_revenue_curves(
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -567,7 +573,7 @@ function plot_revenue_curves(
     return plot!(;
         title="Virtual Revenue per Offer on " * bus_name,
         ylabel="Revenue (\$)",
-        xlabel="Bid offers (p.u)",
+        xlabel="Bid offers (MW)",
         ylims=(min_element - 1, max_element * 1.1 + 1),
     )
 end
@@ -580,6 +586,7 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
 
 Function to plot the revenue curve for the the virtual offer bids. 
@@ -593,12 +600,13 @@ function plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
 
-    indices = []
+    index = []
     aux_period = []
     min_element = 0
     max_element = 0
@@ -636,14 +644,15 @@ function plot_revenue_curves(
                 min_element = data[t, 2, i]
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -651,7 +660,7 @@ function plot_revenue_curves(
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -664,7 +673,7 @@ function plot_revenue_curves(
     return plot!(;
         title="Virtual Revenue per Offer on " * bus_name,
         ylabel="Revenue (\$)",
-        xlabel="Bid offers (p.u)",
+        xlabel="Bid offers (MW)",
         ylims=(min_element - 1, max_element * 1.1 + 1),
     )
 end
@@ -937,6 +946,7 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
 
 Function to plot the virtual generation curve for the virtual offer bids. 
@@ -951,6 +961,7 @@ function plot_generation_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
@@ -960,7 +971,7 @@ function plot_generation_curves(
         aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
     end
 
-    indices = []
+    index = []
     data = Array{Any}(nothing, (length(period), 2, length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
         for t in 1:length(period)
@@ -972,15 +983,15 @@ function plot_generation_curves(
             virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
             data[t, 2, i] = virtual_gen
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
-
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -988,7 +999,7 @@ function plot_generation_curves(
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
                 label="hour:" * string(period[t] - 1),
                 legend=:outertopright,
@@ -1001,7 +1012,7 @@ function plot_generation_curves(
     return plot!(;
         title=generator_name * " generation per Offer on " * bus_name,
         ylabel="Generation(MWh)",
-        xlabel="Bid offers (p.u)",
+        xlabel="Bid offers (MW)",
     )
 end
 
