@@ -109,12 +109,12 @@ period = [19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, true)
 plot_revenue_curves(
-    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_rt, true
 )
 plot_generation_curves(
-    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_rt
 )
 
 type = "DA";
@@ -141,11 +141,11 @@ plot_generation_stack_virtual(
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0], "SolarBusC", node
+    market_simulator, lmps_df, results_df, [0.0, 1.0], "SolarBusC", node, false
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node
+    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node, false
 )
 
 plot_revenue_curves_renewable_plus_virtual(
@@ -154,9 +154,10 @@ plot_revenue_curves_renewable_plus_virtual(
     results_df,
     [0.0, 1.0, 2.0],
     "WindBusA",
-    "bus1_virtual_supply",
+    name_generator,
+    false
 )
 
 plot_generation_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node
+    lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node
 )

@@ -180,6 +180,24 @@ The `results` should be from the unit commitment problem.
     thermal_commit_results = variable_results[:On__ThermalStandard]
 
     plot_data = select(thermal_commit_results, Not(:DateTime))
+    names_plot_data = names(plot_data)
+    steam = zeros(24)
+    NG = zeros(24)
+    nuclear = zeros(24)
+    for i in 1:length(names_plot_data)
+        if occursin("STEAM", names_plot_data[i]) == true
+            steam = hcat(steam, plot_data[!,i])
+        elseif occursin("CT", names_plot_data[i]) == true || occursin("CC", names_plot_data[i]) == true
+            NG = hcat(NG, plot_data[!,i])
+        elseif occursin("NUCLEAR", names_plot_data[i]) == true
+            nuclear = hcat(nuclear, plot_data[!,i])
+        end
+    end
+
+    steam = vec(sum(steam, dims = 2))
+    NG = vec(sum(NG, dims = 2))
+    nuclear = vec(sum(nuclear, dims = 2))
+    plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
 
     times = thermal_commit_results[!, 1]
 
@@ -200,9 +218,12 @@ The `results` should be from the unit commitment problem.
     xrotation --> 45
     title --> "Thermal Standard Commit over the hours"
 
-    for i in Base.axes(plot_data, 2)
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
         @series begin
-            times, plot_data[:, i]
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
         end
     end
 end
@@ -497,6 +518,18 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         bus_map = bus_mapping(system)
         stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
 
+        fuel_names = unique(keys(fuel_type_dict))
+        for (i, key) in enumerate(fuel_names)
+            if occursin("HYDRO", fuel_names[i]) == true
+                fuel_type_dict[key] = "HYDRO"
+            elseif occursin("WIND", fuel_names[i]) == true
+                fuel_type_dict[key] = "WIND"
+            elseif occursin("PV", fuel_names[i]) == true ||
+                occursin("CSP", fuel_names[i]) == true
+                fuel_type_dict[key] = "SOLAR"
+            end
+        end
+
         #= select rows for the given bus names, default to all buses.
         if !isempty(bus_names)
             bus_names = String.(bus_names)
@@ -540,7 +573,13 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    color_palette --> palette
+    for i in 1:ncol(data_frame)
+        if data_frame[!, i] == "OTHER"
+            color --> "black"
+        else
+            color_palette --> palette
+        end
+    end
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)

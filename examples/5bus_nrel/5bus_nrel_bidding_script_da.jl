@@ -94,12 +94,12 @@ period = [5] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
 plot_revenue_curves(
-    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_ed, false
 )
 plot_generation_curves(
-    market_simulator, lmps_df, results_df, period, generator_name, initial_time
+    market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_ed
 )
 type = "DA";
 plot_generation_stack_virtual(
