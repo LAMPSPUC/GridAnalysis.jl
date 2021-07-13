@@ -1,3 +1,4 @@
+using Core: GeneratedFunctionStub
 """
     build_5_bus_matpower_DA(
         data_dir::AbstractString;
@@ -225,7 +226,8 @@ end
         solver_rt, 
         range_quota::Vector{Float64}, 
         initial_time::Date, 
-        initial_bidding_time::DateTime
+        initial_bidding_time::DateTime,
+        path::String
     )
 
 Run a set of simulations to 5bus_nrel with descripted sistems as in 'df'
@@ -239,15 +241,16 @@ function run_set_of_simulations(df::DataFrame,
     solver_rt, 
     range_quota::Vector{Float64}, 
     initial_time::Date, 
-    initial_bidding_time::DateTime
+    initial_bidding_time::DateTime,
+    path::String
 )
     for l=1:size(df)[1]
 
         directory_name= "Network_" * string(df.Network[l]) * "__Ramp_" * string(df.Ramp[l]) * 
         "__Min_gen_" * string(df.Minimal_generation[l]) * "__Reserve_" * string(df.Reserve[l]) *
-        "__Offer_Bus_" * string(df.Offer_Bus[l]) * "__bidding_period_1-" * string(length(df.bidding_period[l]))
+        "__Offer_Bus_" * string(df.Offer_Bus[l]) * "__bid_period_1-" * string(length(df.bidding_period[l]))
 
-        if isdir(joinpath(example_dir, "price_impact_analysis_5bus_nrel/results", directory_name))==false
+        if isdir(joinpath(example_dir, path, directory_name))==false
 
             # call our data preparation to build base system
             # the case was modified to not have hydros nor transformers
@@ -262,6 +265,47 @@ function run_set_of_simulations(df::DataFrame,
                 add_reserves=df.Reserve[l],
             )
 
+            #change minimal generation if it is false
+            generator_metadata = [gen for gen in get_components(Generator, sys_rt)]
+
+            if df.Minimal_generation==false
+                for generator in generator_metadata
+                    name_generator=generator.name
+                    try
+                        generator_rt = get_component(
+                            ThermalStandard, sys_rt, name_generator
+                        )
+                        generator_da = get_component(
+                            ThermalStandard, base_da_system, name_generator
+                        )
+                        active_power_limits = (min=0.0, max=generator.active_power_limits[:max])  #max in da to rt, right?            
+                        PowerSystems.set_active_power_limits!(generator_rt, active_power_limits)
+                        PowerSystems.set_active_power_limits!(generator_da, active_power_limits)
+                        
+                    catch
+                    end
+
+                end
+            end
+
+            #change ramp if it is false
+            if df.Ramp==false
+                for generator in generator_metadata
+                    try
+                        name_generator=generator.name
+                        generator_rt = get_component(
+                            ThermalStandard, sys_rt, name_generator
+                        )
+                        generator_da = get_component(
+                            ThermalStandard, base_da_system, name_generator
+                        )
+                        ramp_limits = (up=0.0, down=0.0)                
+                        PowerSystems.set_ramp_limits!(generator_rt, ramp_limits) 
+                        PowerSystems.set_ramp_limits!(generator_da, ramp_limits)
+                    catch
+                    end
+                end
+            end
 
             # Add single generator at a defined bus
             gen = add_gerator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
@@ -307,8 +351,8 @@ function run_set_of_simulations(df::DataFrame,
             name_generator = get_name(gen);
             steps = 1;
 
-            mkdir(joinpath(example_dir, "price_impact_analysis_5bus_nrel/results", directory_name))
-            simulation_folder = joinpath(example_dir, "price_impact_analysis_5bus_nrel/results", directory_name)
+            mkdir(joinpath(example_dir, path, directory_name))
+            simulation_folder = joinpath(example_dir, path, directory_name)
 
             lmps_df, results_df = pq_curves_virtuals!(
                 market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
@@ -330,7 +374,9 @@ end
         initial_time::Date, 
         lines::Vector{Int64},
         period_analysed::Vector{Vector{Int64}},
-        initial_bidding_time::DateTime
+        initial_bidding_time::DateTime,
+        path::String,
+        graphic::String,
     )
 
 Load a set of simulations of 5bus_nrel with descripted sistems in 'lines' from 'df'
@@ -346,11 +392,17 @@ function load_set_of_simulations(
     initial_time::Date, 
     lines::Vector{Int64},
     period_analysed::Vector{Vector{Int64}},
-    initial_bidding_time::DateTime
+    initial_bidding_time::DateTime,
+    path::String,
+    graphic::String,
 )
-
-    plt=Array{Any}(nothing, length(lines), length(period_analysed))
-
+    if graphic == "plot_price_curves" 
+        global plt=Array{Any}(nothing, length(lines), length(period_analysed))
+    elseif graphic == "plot_generation_stack_virtual"
+        global plt=Array{Any}(nothing, length(lines), length(period_analysed),2)
+    elseif graphic == "plot_revenue_curves_renewable_plus_virtual"
+        global plt=Array{Any}(nothing, length(lines))
+    end
     for (x,l) in enumerate(lines)
 
         # call our data preparation to build base system
@@ -408,17 +460,26 @@ function load_set_of_simulations(
 
         directory_name= "Network_" * string(df.Network[l]) * "__Ramp_" * string(df.Ramp[l]) * 
         "__Min_gen_" * string(df.Minimal_generation[l]) * "__Reserve_" * string(df.Reserve[l]) *
-        "__Offer_Bus_" * string(df.Offer_Bus[l]) * "__bidding_period_1-" * string(length(df.bidding_period[l]))
+        "__Offer_Bus_" * string(df.Offer_Bus[l]) * "__bid_period_1-" * string(length(df.bidding_period[l]))
 
-        simulation_folder = joinpath(example_dir, "price_impact_analysis_5bus_nrel/results", directory_name)
+        simulation_folder = joinpath(example_dir, path, directory_name)
 
         lmps_df, results_df = load_pq_curves(market_simulator, range_quota, simulation_folder)
 
         @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
         @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
-        for (y,t) in enumerate(period_analysed)
-            plt[x,y] = plot_price_curves(lmps_df, period_analysed[y], unique(df.Offer_Bus), df.Offer_Bus[l], initial_time)
+        if graphic == "plot_price_curves" 
+            for (y,t) in enumerate(period_analysed)
+                global plt[x,y] = plot_price_curves(lmps_df, period_analysed[y], unique(df.Offer_Bus), df.Offer_Bus[l], initial_time)
+            end
+        elseif graphic == "plot_generation_stack_virtual"
+            for (y,t) in enumerate(period_analysed)
+                global plt[x,y,1] = plot_generation_stack_virtual(sys_uc, results_df; type="DA", period=period_analysed[y], initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
+                global plt[x,y,2] = plot_generation_stack_virtual(sys_rt, results_df; type="RT", period=period_analysed[y], initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
+            end
+        elseif graphic == "plot_revenue_curves_renewable_plus_virtual"
+            global plt[x] = plot_revenue_curves_renewable_plus_virtual(market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0],"WindBusA", df.Offer_Bus[l]*"_virtual_supply",)
         end
     end
     return plt

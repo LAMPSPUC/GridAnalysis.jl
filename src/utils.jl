@@ -865,10 +865,19 @@ function plot_revenue_curves_renewable_plus_virtual(
             end
         end
 
-        data[:, j + 1, 1] =
-            gen_da_r .* price["DA"][!, bus_r] +
-            (gen_rt_r - gen_da_r) .* price["RT"][!, bus_r]
-        data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus_v] - price["RT"][!, bus_v])
+        try
+            data[:, j + 1, 1] =
+                gen_da_r .* price["DA"][!, bus_r] +
+                (gen_rt_r - gen_da_r) .* price["RT"][!, bus_r]
+            data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus_v] - price["RT"][!, bus_v])
+        catch
+            bus="lmp"
+            data[:, j + 1, 1] =
+                gen_da_r .* price["DA"][!, bus] +
+                (gen_rt_r - gen_da_r) .* price["RT"][!, bus]
+            data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus] - price["RT"][!, bus])
+        end
+        
         for c in 1:size(data)[1]
             for i in 1:2
                 if data[c, j + 1, i] > max_element && data[c, j + 1, i] < 1e3
