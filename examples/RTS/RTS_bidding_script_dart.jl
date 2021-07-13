@@ -54,10 +54,28 @@ ts_array = create_generator_bids(;
 set_variable_cost!(sys_DA, gen, ts_array)
 
 #Define range quota
-range_quota = Float64.(collect(0:1:10));
+range_quota = Float64.(collect(0:1:4));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(sys_DA)
+
+reserves = get_components(VariableReserve{ReserveUp}, sys_uc)
+list_reserve = [i for i in get_components(VariableReserve{ReserveUp}, sys_uc)]
+list_reserve_original = deepcopy(list_reserve)
+
+#= 
+
+To make the problem feasible, make sure to run the code commented.
+It was tried to multiply the reserves for a factor between 2 and 3,
+adding 0.1 each try. 
+Obs: code on examples/RTS/rts_simulation_script.jl
+It was found that, for this case, the problem is feasible when k is 2.5, 2.7, 2.9 or 3.0.
+
+for r in 1:length(reserves)
+    list_reserve[r].requirement = list_reserve_original[r].requirement*k
+end
+
+=#
 
 # generic market formulation templates with defined network formulation
 # CopperPlate-OPF: network=CopperPlatePowerModel
@@ -105,11 +123,11 @@ lmps_df, results_df = load_pq_curves(market_simulator, range_quota, simulation_f
 
 #Select data to plot
 generator_name = name_generator
-period = [19]
+period = [16]
 bus_name = [get_name(i) for i in get_components(Bus,sys_rt)]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, true)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, false)
 plot_revenue_curves(
     market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_rt, false
 )
