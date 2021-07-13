@@ -114,9 +114,10 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
             plot_data = select(prices["RT"], Not(:DateTime))
 
             sys_rt = market_simulator.system_rt
-            params = get_time_series_params(sys_rt)
-            interval = params.interval
-            string_interval = string(interval.value)
+            resolution_mili_seg = get_time_series_resolution(sys_rt)
+            resolution_seg = resolution_mili_seg/1000
+            resolution_min = resolution_seg/60
+            string_interval = string(resolution_min.value)
             yguide --> "Prices (\$/MW-" * string_interval * "min)"
 
             times = prices["RT"][!, 1]
@@ -572,14 +573,8 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
     xguide --> "Bid offers (MW)"
     legend --> :outertopright
     seriestype --> :line
-    xrotation --> 45
-    for i in 1:ncol(data_frame)
-        if data_frame[!, i] == "OTHER"
-            color --> "black"
-        else
-            color_palette --> palette
-        end
-    end
+    xrotation --> 0
+    color_palette --> palette
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
