@@ -357,6 +357,7 @@ function plot_price_curves(
     initial_time::Date,
 )
     lmps_df = sort(lmps_df)
+    bus="lmp"
     aux_period = []
     for t in period
         aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
@@ -379,10 +380,17 @@ function plot_price_curves(
                 data[t, 1, i, l] = aux_period[t]
                 c = 2
                 for j in bus_name
-                    prices_hour = lmps_df[v][k][
-                        aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
-                        j,
-                    ]
+                    try
+                        global prices_hour = lmps_df[v][k][
+                            aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                            j,
+                        ]
+                    catch
+                        global prices_hour = lmps_df[v][k][
+                            aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                            bus,
+                        ]
+                    end
 
                     data[t, c, i, l] = sum(prices_hour; dims=1)[1]
 
@@ -525,10 +533,17 @@ function plot_revenue_curves(
             virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
 
             for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
-                prices_hour = lmps_df[v][k][
-                    aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
-                    bus_name,
-                ]
+                try
+                    global prices_hour = lmps_df[v][k][
+                        aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                        bus_name,
+                    ]
+                catch
+                    global prices_hour = lmps_df[v][k][
+                        aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                        "lmp",
+                    ]
+                end
                 price[k] = sum(prices_hour; dims=1)[1]
             end
             data[t, 2, i] = (price["DA"] - price["RT"]) * virtual_gen
@@ -871,11 +886,19 @@ function plot_revenue_curves_renewable_plus_virtual(
                 (gen_rt_r - gen_da_r) .* price["RT"][!, bus_r]
             data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus_v] - price["RT"][!, bus_v])
         catch
-            bus="lmp"
-            data[:, j + 1, 1] =
+            try
+                bus="lmp"
+                data[:, j + 1, 1] =
+                    gen_da_r .* price["DA"][!, bus] +
+                    (gen_rt_r - gen_da_r) .* price["RT"][!, bus]
+                data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus] - price["RT"][!, bus])
+            catch
+                bus="lmp"
+                data[:, j + 1, 1] =
                 gen_da_r .* price["DA"][!, bus] +
-                (gen_rt_r - gen_da_r) .* price["RT"][!, bus]
-            data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus] - price["RT"][!, bus])
+                (gen_rt_r - gen_da_r) .* price["RT"][!, bus_r]
+                data[:, j + 1, 2] = gen_da_v .* (price["DA"][!, bus] - price["RT"][!, bus_v])
+            end
         end
         
         for c in 1:size(data)[1]
