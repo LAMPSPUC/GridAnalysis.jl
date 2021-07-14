@@ -28,11 +28,11 @@ function create_generator_bids(;
 end
 
 """
-    add_gerator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
+    add_generator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
 
 Function to creat and add generator to the system following an especified node with a defined active power limits.
 """
-function add_gerator!(
+function add_generator!(
     system::System, node::String, active_power_limits::NamedTuple{(:min, :max),Tuple{T,T}}
 ) where {T<:AbstractFloat}
     bus = get_component(Bus, system, node)

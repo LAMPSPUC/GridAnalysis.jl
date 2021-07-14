@@ -40,7 +40,7 @@ base_da_system = build_5_bus_matpower_DA(
 
 # Add single generator at a defined bus
 node = "bus1" # define bus
-gen = add_gerator!(base_da_system, node, (min=0.0, max=0.0))
+gen = add_generator!(base_da_system, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, base_da_system)
 
 # create and set variable cost time-series for the generator

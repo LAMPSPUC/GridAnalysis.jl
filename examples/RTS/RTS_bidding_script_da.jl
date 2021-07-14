@@ -40,7 +40,7 @@ sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
 
 # Add single generator at a defined bus
 node = "Bach" # define bus
-gen = add_gerator!(sys_DA, node, (min=0.0, max=0.0))
+gen = add_generator!(sys_DA, node, (min=0.0, max=0.0))
 @test gen in get_components(Generator, sys_DA)
 
 # create and set variable cost time-series for the generator
