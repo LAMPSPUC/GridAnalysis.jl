@@ -588,6 +588,97 @@ function plot_revenue_curves(
 end
 
 """
+plot_sum_revenue_curves(
+    market_simulator::UCEDRT,
+    lmps_df::Dict{Any,Any},
+    results_df::Dict{Any,Any},
+    period::Vector{Int64},
+    generator_name::String,
+    initial_time::Date,
+)
+
+Function to plot the total revenue curve for the the virtual offer bids. 
+The 'generator_name' defines which is the virtual generator that we want to plot it's results
+and 'periods' controls which periods we want to include in the sum of the plot.
+"""
+function plot_sum_revenue_curves(
+    market_simulator::UCEDRT,
+    lmps_df::Dict{Any,Any},
+    results_df::Dict{Any,Any},
+    period::Vector{Int64},
+    generator_name::String,
+    initial_time::Date,
+)
+    lmps_df = sort(lmps_df)
+    gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_name = get_name(get_bus(gen))
+
+    indices = []
+    aux_period = []
+    min_element = 0
+    max_element = 0
+    for t in period
+        aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
+    end
+    data = Array{Any}(nothing, (length(period), 2, length(lmps_df)))
+    price = zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
+    price = Dict()
+    for k in keys(lmps_df[collect(keys(lmps_df))[1]])
+        price[k] = 0
+    end
+
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in 1:length(period)
+            data[t, 1, i] = aux_period[t]
+            variable_results = read_realized_variables(
+                get_problem_results(results_df[v]["DA"], "UC"); names=[:P__ThermalStandard]
+            )
+            generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
+
+            for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
+                try
+                    global prices_hour = lmps_df[v][k][
+                        aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                        bus_name,
+                    ]
+                catch
+                    global prices_hour = lmps_df[v][k][
+                        aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                        "lmp",
+                    ]
+                end
+                price[k] = sum(prices_hour; dims=1)[1]
+            end
+            data[t, 2, i] = (price["DA"] - price["RT"]) * virtual_gen
+
+            if data[t, 2, i] > max_element && data[t, 2, i] < 1e3
+                max_element = data[t, 2, i]
+            elseif data[t, 2, i] < min_element && data[t, 2, i] > -1e3
+                min_element = data[t, 2, i]
+            end
+        end
+        indices = vcat(indices, v)
+    end
+   
+    palette = :Dark2_8
+    plot(
+        indices,
+        sum(data[t, 2, :] for t=1:length(period));
+        label=false,
+        legend=:outertopright,
+        palette=palette,
+    )
+
+    return plot!(;
+        title="Total Virtual Revenue per Offer on " * bus_name,
+        ylabel="Revenue (\$)",
+        xlabel="Bid offers (p.u)",
+        ylims=(min_element - 1, max_element * 1.1 + 1),
+    )
+end
+
+"""
 plot_revenue_curves(
     market_simulator::UCED,
     lmps_df::Dict{Any,Any},

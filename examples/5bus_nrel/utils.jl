@@ -504,7 +504,7 @@ function load_plot_set_of_simulations(
         global plt=Array{Any}(nothing, length(lines), length(period_analysed))
     elseif graphic == "plot_generation_stack_virtual"
         global plt=Array{Any}(nothing, length(lines), length(period_analysed),2)
-    elseif graphic == "plot_revenue_curves_renewable_plus_virtual" || graphic == "plot_revenue_curves"
+    elseif graphic == "plot_revenue_curves_renewable_plus_virtual" || graphic == "plot_revenue_curves" || graphic =="plot_sum_revenue_curves"
         global plt=Array{Any}(nothing, length(lines))
     end
     
@@ -582,6 +582,11 @@ function load_plot_set_of_simulations(
         elseif graphic == "plot_revenue_curves"
             period=[period_analysed[i][1] for i=1:length(period_analysed)]
             global plt[x] = plot_revenue_curves(
+                market_simulator, lmps_df, results_df, period, df.Offer_Bus[l]*"_virtual_supply", initial_time
+            )
+        elseif graphic == "plot_sum_revenue_curves"
+            period=[period_analysed[i][1] for i=1:length(period_analysed)]
+            global plt[x] = plot_sum_revenue_curves(
                 market_simulator, lmps_df, results_df, period, df.Offer_Bus[l]*"_virtual_supply", initial_time
             )
         end

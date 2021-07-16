@@ -30,6 +30,7 @@ export plot_price_curves
 export plot_revenue_curves
 export plot_revenue_curves_renewable
 export plot_revenue_curves_renewable_plus_virtual
+export plot_sum_revenue_curves
 export plot_thermal_commit
 export load_pq_curves
 export pq_curves_virtuals!
