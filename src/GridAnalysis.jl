@@ -13,7 +13,9 @@ using Plots
 import PowerSimulations.Simulation
 
 export add_generator!
+export add_load!
 export bus_mapping
+export create_demand_series
 export create_generator_bids
 export duals_constraint_names
 export evaluate_prices
@@ -33,8 +35,10 @@ export plot_revenue_curves_renewable_plus_virtual
 export plot_thermal_commit
 export load_pq_curves
 export pq_curves_virtuals!
+export pq_curves_load_virtuals!
 export run_multiday_simulation
 export set_active_power_limits
+export set_active_power_max!
 export plot_generation_stack_virtual
 export UCED
 export UCEDRT
