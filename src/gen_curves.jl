@@ -93,8 +93,8 @@ function set_active_power_max!(
         PowerLoad, market_simulator.system_ed, name_load
     )
 
-    PowerSystems.set_active_power!(load_uc, active_power_max)
-    return PowerSystems.set_active_power!(load_ed, active_power_max)
+    PowerSystems.set_max_active_power!(load_uc, active_power_max)
+    return PowerSystems.set_max_active_power!(load_ed, active_power_max)
 end
 
 """

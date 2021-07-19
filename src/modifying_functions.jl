@@ -30,7 +30,7 @@ end
 """
     add_generator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
 
-Function to creat and add generator to the system following an especified node with a defined active power limits.
+Function to create and add generator to the system following an especified node with a defined active power limits.
 """
 function add_generator!(
     system::System, node::String, active_power_limits::NamedTuple{(:min, :max),Tuple{T,T}}
@@ -61,12 +61,19 @@ end
 
 
 """
-    add_generator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
+    add_load!(
+        system::System, 
+        node::String, 
+        max_active_power::Float64
+    )
 
-Function to creat and add generator to the system following an especified node with a defined active power limits.
+Function to create and add a load to the system following an especified node with a defined 
+maximum active power.
 """
 function add_load!(
-    system::System, node::String, max_active_power::Float64#, ts::Vector{Float64}
+    system::System,
+    node::String, 
+    max_active_power::Float64
 )
     bus = get_component(Bus, system, node)
     load = PowerLoad(;
@@ -79,17 +86,23 @@ function add_load!(
         base_power=get_base_power(system),
         max_active_power=max_active_power,
         max_reactive_power=0.0, # won't influence our simulations
-        #time_series_container=ts,
     )
     add_component!(system, load)
     return load
 end
 
 """
-    create_generator_bids(initial_bidding_time::DateTime, bidding_periods::Vector{Int}, system::System, costs::Vector{T}) where {T<:AbstractFloat}
+    create_demand_series(;
+        initial_bidding_time::DateTime,
+        bidding_periods::Vector{Int},
+        system::System,
+        demands::Vector{T},
+    ) where {T<:AbstractFloat}
 
-Creates `SingleTimeSeries` for a generator `variable_cost`. Allows the user to define bidding periods (`bidding_periods`) relative to a 'initial_bidding_time' where 'costs' will be applied.
-Every other period (not defined by the user) is set to `1e7 \$/MWh`.
+Creates `SingleTimeSeries` for a load `max_active_power`. 
+Allows the user to define bidding periods (`bidding_periods`) relative to a 'initial_bidding_time' 
+where 'max_active_power' will be applied.
+Every other period (not defined by the user) is set to `0.0 \$/MWh`.
 """
 function create_demand_series(;
     initial_bidding_time::DateTime,
@@ -97,7 +110,8 @@ function create_demand_series(;
     system::System,
     demands::Vector{T},
 ) where {T<:AbstractFloat}
-    load = first(get_components(PowerLoad, system))
+
+    load = first(get_components(Generator, system))
     timestamps = get_time_series_timestamps(SingleTimeSeries, load, "max_active_power")
     @assert initial_bidding_time in timestamps
 
@@ -109,7 +123,7 @@ function create_demand_series(;
         ts_demand[t] = demands[i]
     end
     bids = TimeArray(timestamps, ts_demand)
-    ts_array = SingleTimeSeries(; name="variable_cost", data=bids)
+    ts_array = SingleTimeSeries(; name="max_active_power", data=bids)
     return ts_array
 end
 

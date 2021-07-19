@@ -37,6 +37,11 @@ base_system = build_5_bus_matpower_DA(
 
 [i for i in get_components(PowerLoad, base_system)][1]
 
+# Add single load at a defined bus
+node = "bus5" # define bus
+load = add_load!(base_system, node, 1.0)
+@test load in get_components(PowerLoad, base_system)
+
 # create and set variable cost time-series for the load
 bidding_period = collect(1:24)
 ts_array = create_demand_series(;
@@ -45,19 +50,10 @@ ts_array = create_demand_series(;
     system=base_system,
     demands=ones(length(bidding_period)),
 )
-
-ts = values(ts_array.data)
-
-#PowerSystems.set_time_series_container!(ts)
-
-# Add single load at a defined bus
-node = "bus5" # define bus
-# TO-DO: change vector to InfrastructureSystems.TimeSeriesContainer
-load = add_load!(base_system, node, 1.0)#, ts)
-@test load in get_components(PowerLoad, base_system)
+add_time_series!(base_system, load, ts_array)
 
 # Define range quota
-range_quota = [1.0];
+range_quota = Float64.(collect(1:0.5:3));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
