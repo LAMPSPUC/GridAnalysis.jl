@@ -111,7 +111,7 @@ function create_demand_series(;
     demands::Vector{T},
 ) where {T<:AbstractFloat}
 
-    load = first(get_components(Generator, system))
+    load = first(get_components(PowerLoad, system))
     timestamps = get_time_series_timestamps(SingleTimeSeries, load, "max_active_power")
     @assert initial_bidding_time in timestamps
 
@@ -123,7 +123,7 @@ function create_demand_series(;
         ts_demand[t] = demands[i]
     end
     bids = TimeArray(timestamps, ts_demand)
-    ts_array = SingleTimeSeries(; name="max_active_power", data=bids)
+    ts_array = SingleTimeSeries(; name="max_active_power", data=bids, scaling_factor_multiplier = get_max_active_power,)
     return ts_array
 end
 

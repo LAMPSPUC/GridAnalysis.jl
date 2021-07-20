@@ -37,11 +37,6 @@ base_system = build_5_bus_matpower_DA(
 
 [i for i in get_components(PowerLoad, base_system)][1]
 
-# Add single load at a defined bus
-node = "bus5" # define bus
-load = add_load!(base_system, node, 1.0)
-@test load in get_components(PowerLoad, base_system)
-
 # create and set variable cost time-series for the load
 bidding_period = collect(1:24)
 ts_array = create_demand_series(;
@@ -50,10 +45,16 @@ ts_array = create_demand_series(;
     system=base_system,
     demands=ones(length(bidding_period)),
 )
+
+# Add single load at a defined bus
+node = "bus5" # define bus
+load = add_load!(base_system, node, 1.0)
+@test load in get_components(PowerLoad, base_system)
+
 add_time_series!(base_system, load, ts_array)
 
 # Define range quota
-range_quota = Float64.(collect(1:0.5:3));
+range_quota = Float64.(collect(0:0.1:4));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_system)
@@ -87,30 +88,18 @@ lmps_df, results_df = pq_curves_load_virtuals!(
     market_simulator, name_load, range_quota, initial_time, steps, simulation_folder
 )
 
+lmps_df[1.0]["DA"]
+
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
 @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
 #Select data to plot
-load_name = "bus5_virtual_supply"
 period = [5] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
-plot_revenue_curves(
-    market_simulator, lmps_df, results_df, period, load_name, initial_time, sys_ed, false
-)
-plot_generation_curves(
-    market_simulator, lmps_df, results_df, period, load_name, initial_time, sys_ed
-)
-type = "DA";
-plot_generation_stack_virtual(
-    sys_uc,
-    results_df;
-    type,
-    period=period,
-    initial_time,
-    xtickfontsize=8,
-    margin=8mm,
-    size=(800, 600),
+p=plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
+
+p=plot_revenue_curves_load(
+    market_simulator, lmps_df, period, range_quota, initial_time, load, sys_ed, false
 )
