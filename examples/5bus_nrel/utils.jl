@@ -293,7 +293,8 @@ function run_set_of_simulations(df::DataFrame,
             end
 
             # Add single generator at a defined bus
-            gen = add_gerator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+            gen = add_generator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+            @test gen in get_components(Generator, base_da_system)
 
             # create and set variable cost time-series for the generator
             ts_array = create_generator_bids(;
@@ -399,7 +400,8 @@ function load_set_of_simulations(
         )
 
         # Add single generator at a defined bus
-        gen = add_gerator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+        gen = add_generator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+        @test gen in get_components(Generator, base_da_system)
 
         # create and set variable cost time-series for the generator
         ts_array = create_generator_bids(;

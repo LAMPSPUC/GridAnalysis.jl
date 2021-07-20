@@ -48,6 +48,66 @@ template_uc = template_unit_commitment(; network=DCPPowerModel)
 template_rt = template_economic_dispatch(; network=DCPPowerModel)
 template_ed = template_economic_dispatch(; network=DCPPowerModel)
 
+reserves = get_components(VariableReserve{ReserveUp}, sys_uc)
+list_reserve = [i for i in get_components(VariableReserve{ReserveUp}, sys_uc)]
+list_reserve_original = deepcopy(list_reserve)
+
+#= 
+
+This code is the loop used to find the cases that make this problem feasible.
+It was found that multiplying for two the ploblem remained infeasible but
+when multiplying for three the ploblem would now be feasible.
+Because of that, it was decided to find the smallest factor that belongs to that interval
+moving with steps of size of 0.1.
+It was found that, for this case, the problem is feasible when k is 2.5, 2.7, 2.9 or 3.0.
+
+list = []
+for k in 2:0.1:3
+    for r in 1:length(reserves)
+        list_reserve[r].requirement = list_reserve_original[r].requirement*k
+    end
+    try 
+        market_simulator = UCEDRT(;
+            system_uc=sys_uc,
+            system_rt=sys_rt,
+            system_ed=sys_ed,
+            template_uc=template_uc,
+            template_rt=template_rt,
+            template_ed=template_ed,
+            solver_uc=solver_uc,
+            solver_rt=solver_rt,
+            solver_ed=solver_ed,
+            )
+    
+        @test isa(market_simulator, UCEDRT)
+        
+        # for each formulation you will need to save different dual variables:
+        constraint_duals = duals_constraint_names(market_simulator)
+        
+        @test isa(constraint_duals[1], AbstractVector{Symbol})
+        @test isa(constraint_duals[2], AbstractVector{Symbol})
+        
+        # Simulate market
+        # build and run simulation
+        results = run_multiday_simulation(
+            market_simulator,
+            Date("2020-09-01"), # initial time for simulation
+            1; # number of steps in simulation (normally number of days to simulate)
+            services_slack_variables=false,
+            balance_slack_variables=false,
+            constraint_duals=constraint_duals,
+            name="test_case_5bus",
+            simulation_folder=mktempdir(), # Locally can use: joinpath(example_dir, "results"),
+        );
+        println(k)
+        append!(list, k)
+    catch
+        println("Deficit")
+    end
+end
+
+=#
+
 # UC-ED
 
 # build a market clearing simulator (run `@doc UCED` for more information)
@@ -154,6 +214,19 @@ plot_net_demand_stack(
 )
 
 # UCRT
+
+#= 
+
+To make the problem feasible, make sure to run the code commented.
+It was tried to multiply the reserves for a factor between 2 and 3,
+adding 0.1 each try.
+It was found that, for this case, the problem is feasible when k is 2.5, 2.7, 2.9 or 3.0.
+
+for r in 1:length(reserves)
+    list_reserve[r].requirement = list_reserve_original[r].requirement*k
+end
+
+=#
 
 # build a market clearing simulator (run `@doc UCED` for more information)
 market_simulator = UCRT(;
@@ -277,6 +350,19 @@ plot_net_demand_stack(
 plot_prices_RT_hour(prices, sys_rt, (-10, 50))
 
 # UCEDRT
+
+#= 
+
+To make the problem feasible, make sure to run the code commented.
+It was tried to multiply the reserves for a factor between 2 and 3,
+adding 0.1 each try.
+It was found that, for this case, the problem is feasible when k is 2.5, 2.7, 2.9 or 3.0.
+
+for r in 1:length(reserves)
+    list_reserve[r].requirement = list_reserve_original[r].requirement*k
+end
+
+=#
 
 # build a market clearing simulator
 market_simulator = UCEDRT(;

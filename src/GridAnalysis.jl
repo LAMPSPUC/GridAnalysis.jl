@@ -12,7 +12,7 @@ using Plots
 
 import PowerSimulations.Simulation
 
-export add_gerator!
+export add_generator!
 export bus_mapping
 export create_generator_bids
 export duals_constraint_names
