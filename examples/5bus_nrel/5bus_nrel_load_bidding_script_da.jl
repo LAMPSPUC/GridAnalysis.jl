@@ -88,8 +88,6 @@ lmps_df, results_df = pq_curves_load_virtuals!(
     market_simulator, name_load, range_quota, initial_time, steps, simulation_folder
 )
 
-lmps_df[1.0]["DA"]
-
 @test isa(results_df[range_quota[1]], Dict{String,SimulationResults})
 @test isa(lmps_df[range_quota[1]], Dict{String,DataFrame})
 
@@ -98,8 +96,8 @@ period = [5] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-p=plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
 
-p=plot_revenue_curves_load(
+plot_revenue_curves_load(
     market_simulator, lmps_df, period, range_quota, initial_time, load, sys_ed, false
 )
