@@ -30,6 +30,7 @@ export plot_net_demand_stack
 export plot_prices
 export plot_price_curves
 export plot_revenue_curves
+export plot_revenue_curves_load
 export plot_revenue_curves_renewable
 export plot_revenue_curves_renewable_plus_virtual
 export plot_thermal_commit
