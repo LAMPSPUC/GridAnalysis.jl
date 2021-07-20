@@ -342,6 +342,8 @@ plot_price_curves(
     bus_name::AbstractArray=["bus5"],
     node::String="bus5",
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
 
 Function to plot the price curve for the virtual offer bids. 
@@ -355,13 +357,15 @@ function plot_price_curves(
     bus_name::AbstractArray,
     node::String,
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
     lmps_df = sort(lmps_df)
     aux_period = []
     for t in period
         aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
     end
-    indices = []
+    index = []
     max_element = 0
     min_element = 0
     data = Array{Any}(
@@ -396,8 +400,9 @@ function plot_price_curves(
                 end
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
+    index = index*get_base_power(system)
     c = 1
     for (l, k) in enumerate(keys(lmps_df[collect(keys(lmps_df))[1]]))
         palette = :Dark2_8
@@ -405,61 +410,127 @@ function plot_price_curves(
             for t in 1:length(period)
                 if length(lmps_df[collect(keys(lmps_df))[1]]) > 1 && k == "RT"
                     if c == 1
-                        plot(
-                            indices,
-                            data[t, b + 1, :, l];
-                            label="hour:" *
-                                  string(period[t] - 1) *
-                                  "- " *
-                                  string(bus_name[b]) *
-                                  "- " *
-                                  k,
-                            legend=:outertopright,
-                            linestyle=:dash,
-                            palette=palette,
-                        )
+                        if bus_name[b] == node
+                            plot(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                linestyle=:dash,
+                                color = "black",
+                                linewidth=3,
+                            )
+                        else
+                            plot(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                linestyle=:dash,
+                                palette=palette,
+                            )
+                        end
                     else
-                        plot!(
-                            indices,
-                            data[t, b + 1, :, l];
-                            label="hour:" *
-                                  string(period[t] - 1) *
-                                  "- " *
-                                  string(bus_name[b]) *
-                                  "- " *
-                                  k,
-                            legend=:outertopright,
-                            linestyle=:dash,
-                            palette=palette,
-                        )
+                        if bus_name[b] == node
+                            plot!(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                linestyle=:dash,
+                                color = "black",
+                                linewidth=3,
+                            )
+                        else
+                            plot!(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                linestyle=:dash,
+                                palette=palette,
+                            )
+                        end
                     end
                 else
                     if c == 1
-                        plot(
-                            indices,
-                            data[t, b + 1, :, l];
-                            label="hour:" *
-                                  string(period[t] - 1) *
-                                  "- " *
-                                  string(bus_name[b]) *
-                                  "- " *
-                                  k,
-                            legend=:outertopright,
-                            palette=palette,
-                        )
+                        if bus_name[b] == node
+                            plot(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                color = "black",
+                                linewidth=3,
+                            )
+                        else
+                            plot(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                palette=palette,
+                            )
+                        end
                     else
-                        plot!(
-                            indices,
-                            data[t, b + 1, :, l];
-                            label="hour:" *
-                                  string(period[t] - 1) *
-                                  "- " *
-                                  string(bus_name[b]) *
-                                  "- " *
-                                  k,
-                            legend=:outertopright,
-                            palette=palette,
-                        )
+                        if bus_name[b] == node
+                            plot!(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                color = "black",
+                                linewidth=3,
+                            )
+                        else
+                            plot!(
+                                index,
+                                data[t, b + 1, :, l];
+                                label="hour: " *
+                                    string(period[t] - 1) *
+                                    " - " *
+                                    string(bus_name[b]) *
+                                    " - " *
+                                    k,
+                                legend=:outertopright,
+                                palette=palette,
+                            )
+                        end
                     end
                 end
                 c = c + 1
@@ -467,12 +538,22 @@ function plot_price_curves(
         end
     end
 
-    return plot!(;
+    if ylimit == true
+        return plot!(;
         title="Price per Virtual Bid on " * node,
         ylabel="Prices (\$/MWh)",
-        xlabel="Bid offers (p.u.)",
+        xlabel="Bid offers (MW)",
         ylims=(min_element - 1, max_element * 1.1 + 1),
     )
+    else
+        return plot!(;
+        title="Price per Virtual Bid on " * node,
+        ylabel="Prices (\$/MWh)",
+        xlabel="Bid offers (MW)",
+    )
+    end
+
+    
 end
 
 """
@@ -483,6 +564,8 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
 
 Function to plot the revenue curve for the the virtual offer bids. 
@@ -496,12 +579,14 @@ function plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
 
-    indices = []
+    index = []
     aux_period = []
     min_element = 0
     max_element = 0
@@ -539,24 +624,25 @@ function plot_revenue_curves(
                 min_element = data[t, 2, i]
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
@@ -564,12 +650,20 @@ function plot_revenue_curves(
         c = c + 1
     end
 
-    return plot!(;
+    if ylimit == true
+        return plot!(;
+            title="Virtual Revenue per Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Bid offers (MW)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot!(;
         title="Virtual Revenue per Offer on " * bus_name,
         ylabel="Revenue (\$)",
-        xlabel="Bid offers (p.u)",
-        ylims=(min_element - 1, max_element * 1.1 + 1),
+        xlabel="Bid offers (MW)",
     )
+    end
 end
 
 """
@@ -580,6 +674,8 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
 
 Function to plot the revenue curve for the the virtual offer bids. 
@@ -593,12 +689,14 @@ function plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
+    ylimit::Bool,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
 
-    indices = []
+    index = []
     aux_period = []
     min_element = 0
     max_element = 0
@@ -636,24 +734,25 @@ function plot_revenue_curves(
                 min_element = data[t, 2, i]
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
@@ -661,12 +760,20 @@ function plot_revenue_curves(
         c = c + 1
     end
 
-    return plot!(;
+    if ylimit == true
+        return plot!(;
+            title="Virtual Revenue per Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Bid offers (MW)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot!(;
         title="Virtual Revenue per Offer on " * bus_name,
         ylabel="Revenue (\$)",
-        xlabel="Bid offers (p.u)",
-        ylims=(min_element - 1, max_element * 1.1 + 1),
+        xlabel="Bid offers (MW)",
     )
+    end
 end
 
 """
@@ -677,6 +784,7 @@ plot_revenue_curves_renewable(
     bids::Vector{Float64},
     generator_name::String,
     node::String,
+    ylimit::Bool,
 )
 
 Function to plot the revenue curve for the the renewable generators. 
@@ -690,6 +798,7 @@ function plot_revenue_curves_renewable(
     bids::Vector{Float64},
     generator_name::String,
     node::String,
+    ylimit::Bool,
 )
     gen = get_component(RenewableDispatch, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
@@ -765,12 +874,20 @@ function plot_revenue_curves_renewable(
         c = c + 1
     end
 
-    return plot!(;
+    if ylimit == true
+        return plot!(;
+            title=generator_name * " Revenue per Virtual Offer on " * node,
+            ylabel="Revenue (\$)",
+            xlabel="Period",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else    
+        return plot!(;
         title=generator_name * " Revenue per Virtual Offer on " * node,
         ylabel="Revenue (\$)",
         xlabel="Period",
-        ylims=(min_element - 1, max_element * 1.1 + 1),
     )
+    end
 end
 
 """
@@ -781,6 +898,7 @@ plot_revenue_curves_renewable_plus_virtual(
     bids::Vector{Float64},
     renewable_gen::String,
     virtual_gen::String,
+    ylimit::Bool,
 )
 
 Function to plot the revenue curve for the the renewable and virtual generators. 
@@ -794,6 +912,7 @@ function plot_revenue_curves_renewable_plus_virtual(
     bids::Vector{Float64},
     renewable_gen::String,
     virtual_gen::String,
+    ylimit::Bool,
 )
     gen_r = get_component(RenewableDispatch, market_simulator.system_uc, renewable_gen)
     bus_r = get_name(get_bus(gen_r))
@@ -921,12 +1040,20 @@ function plot_revenue_curves_renewable_plus_virtual(
         end
     end
 
-    return plot(
-        plt...;
-        layout=(3, 1),
-        ylabel="Revenue (\$)",
-        ylims=(min_element - 1, max_element * 1.1 + 1),
-    )
+    if ylimit == true
+        return plot(
+            plt...;
+            layout=(3, 1),
+            ylabel="Revenue (\$)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot(
+            plt...;
+            layout=(3, 1),
+            ylabel="Revenue (\$)",
+        )
+    end
 end
 
 """
@@ -937,6 +1064,7 @@ plot_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
 
 Function to plot the virtual generation curve for the virtual offer bids. 
@@ -951,6 +1079,7 @@ function plot_generation_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    system::System,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
@@ -960,7 +1089,7 @@ function plot_generation_curves(
         aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
     end
 
-    indices = []
+    index = []
     data = Array{Any}(nothing, (length(period), 2, length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
         for t in 1:length(period)
@@ -972,25 +1101,25 @@ function plot_generation_curves(
             virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
             data[t, 2, i] = virtual_gen
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end
     palette = :Dark2_8
-
+    index = index*get_base_power(system)
     c = 1
     for t in 1:length(period)
         if c == 1
             plot(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
         else
             plot!(
-                indices,
+                index,
                 data[t, 2, :];
-                label="hour:" * string(period[t] - 1),
+                label="hour: " * string(period[t] - 1),
                 legend=:outertopright,
                 palette=palette,
             )
@@ -1001,13 +1130,12 @@ function plot_generation_curves(
     return plot!(;
         title=generator_name * " generation per Offer on " * bus_name,
         ylabel="Generation(MWh)",
-        xlabel="Bid offers (p.u)",
+        xlabel="Bid offers (MW)",
     )
 end
 
 """
 plot_revenue_curves_renewable(
-    market_simulator::UCEDRT,
     lmps_df::Dict{Any,Any},
     results_df::Dict{Any,Any},
     bids::Vector{Float64},
@@ -1021,7 +1149,6 @@ and 'bids' controls which possible virtual bids we want to include in the plot.
 """
 
 function plot_generation_curves_renewable(
-    market_simulator::UCEDRT,
     lmps_df::Dict{Any,Any},
     results_df::Dict{Any,Any},
     bids::Vector{Float64},

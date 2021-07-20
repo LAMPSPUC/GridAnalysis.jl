@@ -114,9 +114,10 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
             plot_data = select(prices["RT"], Not(:DateTime))
 
             sys_rt = market_simulator.system_rt
-            params = get_time_series_params(sys_rt)
-            interval = params.interval
-            string_interval = string(interval.value)
+            resolution_mili_seg = get_time_series_resolution(sys_rt)
+            resolution_seg = resolution_mili_seg/1000
+            resolution_min = resolution_seg/60
+            string_interval = string(resolution_min.value)
             yguide --> "Prices (\$/MW-" * string_interval * "min)"
 
             times = prices["RT"][!, 1]
@@ -180,6 +181,24 @@ The `results` should be from the unit commitment problem.
     thermal_commit_results = variable_results[:On__ThermalStandard]
 
     plot_data = select(thermal_commit_results, Not(:DateTime))
+    names_plot_data = names(plot_data)
+    steam = zeros(24)
+    NG = zeros(24)
+    nuclear = zeros(24)
+    for i in 1:length(names_plot_data)
+        if occursin("STEAM", names_plot_data[i]) == true
+            steam = hcat(steam, plot_data[!,i])
+        elseif occursin("CT", names_plot_data[i]) == true || occursin("CC", names_plot_data[i]) == true
+            NG = hcat(NG, plot_data[!,i])
+        elseif occursin("NUCLEAR", names_plot_data[i]) == true
+            nuclear = hcat(nuclear, plot_data[!,i])
+        end
+    end
+
+    steam = vec(sum(steam, dims = 2))
+    NG = vec(sum(NG, dims = 2))
+    nuclear = vec(sum(nuclear, dims = 2))
+    plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
 
     times = thermal_commit_results[!, 1]
 
@@ -200,9 +219,12 @@ The `results` should be from the unit commitment problem.
     xrotation --> 45
     title --> "Thermal Standard Commit over the hours"
 
-    for i in Base.axes(plot_data, 2)
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
         @series begin
-            times, plot_data[:, i]
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
         end
     end
 end
@@ -497,6 +519,18 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         bus_map = bus_mapping(system)
         stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
 
+        fuel_names = unique(keys(fuel_type_dict))
+        for (i, key) in enumerate(fuel_names)
+            if occursin("HYDRO", fuel_names[i]) == true
+                fuel_type_dict[key] = "HYDRO"
+            elseif occursin("WIND", fuel_names[i]) == true
+                fuel_type_dict[key] = "WIND"
+            elseif occursin("PV", fuel_names[i]) == true ||
+                occursin("CSP", fuel_names[i]) == true
+                fuel_type_dict[key] = "SOLAR"
+            end
+        end
+
         #= select rows for the given bus names, default to all buses.
         if !isempty(bus_names)
             bus_names = String.(bus_names)
@@ -529,16 +563,17 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
         global data_frame[!, "OTHER"] = aux
     end
 
-    times = collect(keys(results_df))
+    times = collect(keys(results_df)) * get_base_power(system)
     palette = :Dark2_8
 
     plot_data = select(data_frame, Not(:DateTime))
 
     label --> reduce(hcat, names(plot_data))
     yguide --> "Output (MWh)"
+    xguide --> "Bid offers (MW)"
     legend --> :outertopright
     seriestype --> :line
-    xrotation --> 45
+    xrotation --> 0
     color_palette --> palette
 
     # now stack the matrix to get the cumulative values over all fuel types
@@ -558,7 +593,7 @@ end
 
     lmps_df = sort(lmps_df)
 
-    indices=[]
+    index=[]
     data=Array{Any}(nothing, (length(period),length(bus_name)+1,length(lmps_df))) #length(period)-size(lmps_df[0])[1]
     for (i, v) in enumerate(keys(lmps_df))
         for t in period #arrumar
@@ -569,7 +604,7 @@ end
                 c=c+1
             end
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end #TODO: select period better
 
     plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
@@ -582,7 +617,7 @@ end
     for i in bus_name
         for t in Base.axes(plot_data, 1) # verificar
             @series begin
-                indices, plot_data[t,:,i] #pegar a coluna do bus_name
+                index, plot_data[t,:,i] #pegar a coluna do bus_name
             end
         end
     end
@@ -605,7 +640,7 @@ end
 
     #Revenue = price*generation("UC")
 
-    indices=[]
+    index=[]
     data=Array{Any}(nothing, (length(period),2,length(lmps_df)))
     for (i, v) in enumerate(keys(lmps_df))
         for t in period
@@ -615,7 +650,7 @@ end
             virtual_gen=generator_data[1][!,7][t] #name_generator
             data[t,2,i]=(lmps_df[v][t,bus_name][1])*virtual_gen #arrumar 
         end
-        indices = vcat(indices, v)
+        index = vcat(index, v)
     end#TODO: select only period
 
     plot_data = data #data[t,bus,max_gen]: selecionado a linha que quero
@@ -627,7 +662,7 @@ end
 
     for t in Base.axes(plot_data, 2) # verificar
         @series begin
-            indices, plot_data[t,2,:]
+            index, plot_data[t,2,:]
         end
     end
 
