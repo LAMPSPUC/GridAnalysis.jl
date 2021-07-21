@@ -162,7 +162,7 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
 end
 
 """
-    plot_thermal_commit(
+    plot_thermal_commit_generator_stack(
         system::System,
         results::SimulationProblemResults;
         bus_names::AbstractArray=[],
@@ -172,8 +172,8 @@ Function to plot the Thermal Standard Commit variables over the time period cove
 The `results` should be from the unit commitment problem.
 1 is ON, 0 is OFF.
 """
-@userplot plot_thermal_commit
-@recipe function f(p::plot_thermal_commit; bus_names::AbstractArray=[])
+@userplot plot_thermal_commit_generator_stack
+@recipe function f(p::plot_thermal_commit_generator_stack; bus_names::AbstractArray=[])
     system, system_results, = p.args
 
     # get the output data for all fuel types
@@ -181,6 +181,57 @@ The `results` should be from the unit commitment problem.
     thermal_commit_results = variable_results[:On__ThermalStandard]
 
     plot_data = select(thermal_commit_results, Not(:DateTime))
+    
+    times = thermal_commit_results[!, 1]
+
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        generator_names = names(plot_data)
+        bus_map = bus_mapping(system)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, [bus_map[gen] for gen in generator_names])
+        generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
+        select!(plot_data, generator_names)
+    end
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Commitment"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+    title --> "Thermal Standard Commit over the hours"
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
+end
+
+"""
+    plot_thermal_commit_type_stack(
+        system::System,
+        results::SimulationProblemResults;
+        bus_names::AbstractArray=[],
+    )
+
+Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
+The `results` should be from the unit commitment problem.
+1 is ON, 0 is OFF.
+"""
+@userplot plot_thermal_commit_type_stack
+@recipe function f(p::plot_thermal_commit_type_stack; bus_names::AbstractArray=[])
+    system, system_results, = p.args
+
+    # get the output data for all fuel types
+    variable_results = read_realized_variables(system_results)
+    thermal_commit_results = variable_results[:On__ThermalStandard]
+
+    plot_data = select(thermal_commit_results, Not(:DateTime))
+
     names_plot_data = names(plot_data)
     steam = zeros(24)
     NG = zeros(24)
@@ -199,7 +250,7 @@ The `results` should be from the unit commitment problem.
     NG = vec(sum(NG, dims = 2))
     nuclear = vec(sum(nuclear, dims = 2))
     plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
-
+    
     times = thermal_commit_results[!, 1]
 
     # select rows for the given bus names, default to all buses.

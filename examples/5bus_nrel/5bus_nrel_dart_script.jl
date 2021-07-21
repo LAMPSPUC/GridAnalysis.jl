@@ -139,8 +139,8 @@ plot_prices(
 )
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 
-plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(
+plot_thermal_commit_generator_stack(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(
     base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
 )
 
@@ -273,8 +273,8 @@ plot_generation_stack(
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="DA")
 plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600), type="RT")
 
-plot_thermal_commit(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(
+plot_thermal_commit_generator_stack(base_da_system, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(
     base_da_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
 )
 

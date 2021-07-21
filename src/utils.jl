@@ -1,7 +1,7 @@
 """
     fuel_type_mapping(system)
 
-    return a mapping between the bus name and the fuel type for the given `system`.
+Return a mapping between the bus name and the fuel type for the given `system`.
 """
 function fuel_type_mapping(system::System)
     generator_metadata = [gen for gen in get_components(Generator, system)]
@@ -22,6 +22,7 @@ end
 
 """
     get_bus_name(gen::Generator)
+
 Returns the bus name of a generator or load.
 """
 function get_bus_name(gen::Union{Generator,PowerLoad})
@@ -275,7 +276,7 @@ Returns the parameters associated with the time-series attached to the system.
 get_time_series_params(system::System) = system.data.time_series_params.forecast_params
 
 """
-load_pq_curves(market_simulator::UCEDRT, range_quota::Vector{Float64}, simulation_folder::String=pwd())
+    load_pq_curves(market_simulator::UCEDRT, range_quota::Vector{Float64}, simulation_folder::String=pwd())
 
 Returns the results of a simulation done previously.
 """
@@ -297,7 +298,7 @@ function load_pq_curves(
 end
 
 """
-load_pq_curves(market_simulator::UCED, range_quota::Vector{Float64}, simulation_folder::String=pwd())
+    load_pq_curves(market_simulator::UCED, range_quota::Vector{Float64}, simulation_folder::String=pwd())
 
 Returns the results of a simulation done previously.
 """
@@ -316,7 +317,7 @@ function load_pq_curves(
 end
 
 """
-load_pq_curves(market_simulator::UCRT, range_quota::Vector{Float64}, simulation_folder::String=pwd())
+    load_pq_curves(market_simulator::UCRT, range_quota::Vector{Float64}, simulation_folder::String=pwd())
 
 Returns the results of a simulation done previously.
 """
@@ -337,14 +338,14 @@ function load_pq_curves(
 end
 
 """
-plot_price_curves(
-    lmps_df::Dict{Any, Any}, period::Vector{Int64}, 
-    bus_name::AbstractArray=["bus5"],
-    node::String="bus5",
-    initial_time::Date,
-    system::System,
-    ylimit::Bool,
-)
+    plot_price_curves(
+        lmps_df::Dict{Any, Any}, period::Vector{Int64}, 
+        bus_name::AbstractArray=["bus5"],
+        node::String="bus5",
+        initial_time::Date,
+        system::System,
+        ylimit::Bool,
+    )
 
 Function to plot the price curve for the virtual offer bids. 
 The 'bus_names' and 'periods' controls which buses and periods we want to include
@@ -565,16 +566,16 @@ function plot_price_curves(
 end
 
 """
-plot_revenue_curves(
-    market_simulator::UCEDRT,
-    lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    period::Vector{Int64},
-    generator_name::String,
-    initial_time::Date,
-    system::System,
-    ylimit::Bool,
-)
+    plot_revenue_curves(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        period::Vector{Int64},
+        generator_name::String,
+        initial_time::Date,
+        system::System,
+        ylimit::Bool,
+    )
 
 Function to plot the revenue curve for the the virtual offer bids. 
 The 'generator_name' defines which is the virtual generator that we want to plot it's results
@@ -682,14 +683,14 @@ function plot_revenue_curves(
 end
 
 """
-plot_sum_revenue_curves(
-    market_simulator::UCEDRT,
-    lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    period::Vector{Int64},
-    generator_name::String,
-    initial_time::Date,
-)
+    plot_sum_revenue_curves(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        period::Vector{Int64},
+        generator_name::String,
+        initial_time::Date,
+    )
 
 Function to plot the total revenue curve for the the virtual offer bids. 
 The 'generator_name' defines which is the virtual generator that we want to plot it's results
@@ -773,16 +774,16 @@ function plot_sum_revenue_curves(
 end
 
 """
-plot_revenue_curves(
-    market_simulator::UCED,
-    lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    period::Vector{Int64},
-    generator_name::String,
-    initial_time::Date,
-    system::System,
-    ylimit::Bool,
-)
+    plot_revenue_curves(
+        market_simulator::UCED,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        period::Vector{Int64},
+        generator_name::String,
+        initial_time::Date,
+        system::System,
+        ylimit::Bool,
+    )
 
 Function to plot the revenue curve for the the virtual offer bids. 
 The 'generator_name' defines which is the virtual generator that we want to plot it's results
@@ -883,15 +884,229 @@ function plot_revenue_curves(
 end
 
 """
-plot_revenue_curves_renewable(
-    market_simulator::UCEDRT,
+    plot_revenue_curves_load(
+        market_simulator::UCED,
+        lmps_df::Dict{Any,Any},
+        period::Vector{Int64},
+        range_quota::Vector{Float64},
+        initial_time::Date,
+        load::PowerLoad,
+        system::System,
+        ylimit::Bool,
+    )
+
+Function to plot the revenue curve for the the virtual demand bids. 
+The 'load' defines which is the virtual load that we want to plot it's results
+and 'period' controls which periods we want to include in the plot.
+"""
+function plot_revenue_curves_load(
+    market_simulator::UCED,
     lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    bids::Vector{Float64},
-    generator_name::String,
-    node::String,
+    period::Vector{Int64},
+    range_quota::Vector{Float64},
+    initial_time::Date,
+    load::PowerLoad,
+    system::System,
     ylimit::Bool,
 )
+
+    lmps_df = sort(lmps_df)
+    
+    index = []
+    aux_period = []
+    min_element = 0
+    max_element = 0
+    start_time = DateTime(initial_time)
+    for t in period
+        aux_period = vcat(aux_period, start_time + Hour(t - 1))
+    end
+
+    data = zeros(length(keys(lmps_df)), length(period))
+    price = zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
+    price = Dict()
+    for k in keys(lmps_df[collect(keys(lmps_df))[1]])
+        price[k] = 0
+    end
+
+    loads = collect(get_components(PowerLoad, system))
+    bus_name = get_name(get_bus(load))
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
+    ts_values = get_time_series_values(Deterministic, load, ts_names[1]; start_time)
+    period = period .- 1
+
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in 1:length(period)
+            for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
+                prices_hour = lmps_df[v][k][
+                    aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                    bus_name,
+                ]
+                price[k] = sum(prices_hour; dims=1)[1]
+            end
+            data[i,t] = -price["DA"] * ts_values[t] * range_quota[i]
+        end
+        index = vcat(index, v)
+    end
+
+    palette = :Dark2_8
+    index = index*get_base_power(system)
+    
+    c = 1
+    for t in 1:length(period)
+        if c == 1
+            plot(
+                index,
+                data[:,t];
+                label="hour: " * string(period[t]),
+                legend=:outertopright,
+                palette=palette,
+            )
+        else
+            plot!(
+                index,
+                data[:,t];
+                label="hour: " * string(period[t]),
+                legend=:outertopright,
+                palette=palette,
+            )
+        end
+        c = c + 1
+    end
+
+    if ylimit == true
+        return plot!(;
+            title="Virtual Revenue per Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Bid offers (MW)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot!(;
+        title="Virtual Revenue per Offer on " * bus_name,
+        ylabel="Revenue (\$)",
+        xlabel="Bid offers (MW)",
+    )
+    
+    end
+end
+
+"""
+    plot_revenue_curves_load(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        period::Vector{Int64},
+        range_quota::Vector{Float64},
+        initial_time::Date,
+        load::PowerLoad,
+        system::System,
+        ylimit::Bool,
+    )
+
+Function to plot the revenue curve for the the virtual demand bids. 
+The 'load' defines which is the virtual load that we want to plot it's results
+and 'period' controls which periods we want to include in the plot.
+"""
+function plot_revenue_curves_load(
+    market_simulator::UCEDRT,
+    lmps_df::Dict{Any,Any},
+    period::Vector{Int64},
+    range_quota::Vector{Float64},
+    initial_time::Date,
+    load::PowerLoad,
+    system::System,
+    ylimit::Bool,
+)
+
+    lmps_df = sort(lmps_df)
+    
+    index = []
+    aux_period = []
+    min_element = 0
+    max_element = 0
+    start_time = DateTime(initial_time)
+    for t in period
+        aux_period = vcat(aux_period, start_time + Hour(t - 1))
+    end
+
+    data = zeros(length(keys(lmps_df)), length(period))
+    price = zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
+    price = Dict()
+    for k in keys(lmps_df[collect(keys(lmps_df))[1]])
+        price[k] = 0
+    end
+
+    loads = collect(get_components(PowerLoad, system))
+    bus_name = get_name(get_bus(load))
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
+    ts_values = get_time_series_values(Deterministic, load, ts_names[1]; start_time)
+    period = period .- 1
+
+    for (i, v) in enumerate(keys(lmps_df))
+        for t in 1:length(period)
+            for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
+                prices_hour = lmps_df[v][k][
+                    aux_period[t] .<= lmps_df[v][k].DateTime .< aux_period[t] + Hour(1),
+                    bus_name,
+                ]
+                price[k] = sum(prices_hour; dims=1)[1]
+            end
+            data[i,t] = (price["RT"]-price["DA"]) * ts_values[t] * range_quota[i]
+        end
+        index = vcat(index, v)
+    end
+
+    palette = :Dark2_8
+    index = index*get_base_power(system)
+    
+    c = 1
+    for t in 1:length(period)
+        if c == 1
+            plot(
+                index,
+                data[:,t];
+                label="hour: " * string(period[t]),
+                legend=:outertopright,
+                palette=palette,
+            )
+        else
+            plot!(
+                index,
+                data[:,t];
+                label="hour: " * string(period[t]),
+                legend=:outertopright,
+                palette=palette,
+            )
+        end
+        c = c + 1
+    end
+
+    if ylimit == true
+        return plot!(;
+            title="Virtual Revenue per Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Bid offers (MW)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot!(;
+        title="Virtual Revenue per Offer on " * bus_name,
+        ylabel="Revenue (\$)",
+        xlabel="Bid offers (MW)",
+    )
+    
+    end
+end
+
+"""
+    plot_revenue_curves_renewable(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        bids::Vector{Float64},
+        generator_name::String,
+        node::String,
+        ylimit::Bool,
+    )
 
 Function to plot the revenue curve for the the renewable generators. 
 The 'generator_name' defines which is the generator that we want to plot it's results
@@ -997,15 +1212,15 @@ function plot_revenue_curves_renewable(
 end
 
 """
-plot_revenue_curves_renewable_plus_virtual(
-    market_simulator::UCEDRT,
-    lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    bids::Vector{Float64},
-    renewable_gen::String,
-    virtual_gen::String,
-    ylimit::Bool,
-)
+    plot_revenue_curves_renewable_plus_virtual(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        bids::Vector{Float64},
+        renewable_gen::String,
+        virtual_gen::String,
+        ylimit::Bool,
+    )
 
 Function to plot the revenue curve for the the renewable and virtual generators. 
 The 'renewable_gen' and 'virtual_gen' defines which are the generators that we want to plot it's results
@@ -1180,15 +1395,183 @@ function plot_revenue_curves_renewable_plus_virtual(
 end
 
 """
-plot_revenue_curves(
+    plot_revenue_curves_renewable_plus_virtual_load(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        bids::Vector{Float64},
+        renewable_gen::String,
+        virtual_load::String,
+        ylimit::Bool,
+        load::PowerLoad,
+    )
+
+Function to plot the revenue curve for the the renewable and virtual generators. 
+The 'renewable_gen' and 'virtual_gen' defines which are the generators that we want to plot it's results
+and 'bids' controls which bids we want to include in the plot.
+"""
+function plot_revenue_curves_renewable_plus_virtual_load(
     market_simulator::UCEDRT,
     lmps_df::Dict{Any,Any},
     results_df::Dict{Any,Any},
-    period::Vector{Int64},
-    generator_name::String,
-    initial_time::Date,
-    system::System,
+    bids::Vector{Float64},
+    renewable_gen::String,
+    virtual_load::String,
+    ylimit::Bool,
+    load::PowerLoad,
 )
+    gen_r = get_component(RenewableDispatch, market_simulator.system_uc, renewable_gen)
+    bus_r = get_name(get_bus(gen_r))
+    load_v = get_component(PowerLoad, market_simulator.system_uc, virtual_load)
+    bus_v = get_name(get_bus(load_v))
+    min_element = 0
+    max_element = 0
+    data = Array{Any}(nothing, (24, length(bids) + 1, 3))
+    data[:, 1, 1] = lmps_df[first(keys(lmps_df))]["DA"][!, "DateTime"]
+    data[:, 1, 2] = data[:, 1, 1]
+    data[:, 1, 3] = data[:, 1, 1]
+    for (j, q) in enumerate(bids)
+        variable_results = read_realized_variables(
+            get_problem_results(results_df[q]["DA"], "UC"); names=[:P__RenewableDispatch]
+        )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_da_r = generator_data[1][!, renewable_gen]
+
+        variable_results = read_realized_variables(
+            get_problem_results(results_df[q]["RT"], "RT"); names=[:P__RenewableDispatch]
+        )
+        generator_data = getindex.(Ref(variable_results), [:P__RenewableDispatch])
+        gen_rt_aux = generator_data[1][!, renewable_gen]
+        gen_rt_r = []
+
+        for i in 1:(round(Int, length(gen_rt_aux) / 12)) #TODO: Change "12" to get horizon
+            gen_rt_r = vcat(
+                gen_rt_r, [sum(gen_rt_aux[(1 + 12 * (i - 1)):(12 + 12 * (i - 1))]) / 12]
+            )
+        end
+
+        loads = collect(get_components(PowerLoad, market_simulator.system_uc))
+        ts_names = get_time_series_names(SingleTimeSeries, loads[1])
+        start_time = data[:,:,1][1,1]
+        ts_values = get_time_series_values(Deterministic, load, ts_names[1]; start_time)
+        gen_da_v = ts_values
+
+        price = Dict()
+        for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
+            for t in 1:24
+                prices_hour = lmps_df[q][k][
+                    lmps_df[first(keys(lmps_df))]["DA"][!, "DateTime"][t] .<= lmps_df[q][k].DateTime .< lmps_df[first(keys(lmps_df))]["DA"][!, "DateTime"][t] + Hour(
+                        1
+                    ),
+                    :,
+                ]
+                if t == 1
+                    prices_hour[!, "DateTime"] .= lmps_df[first(keys(lmps_df))]["DA"][
+                        !, "DateTime"
+                    ][t]
+                    price[k] = combine(
+                        groupby(prices_hour, :DateTime),
+                        names(prices_hour, Not(:DateTime)) .=> sum;
+                        renamecols=false,
+                    )
+                else
+                    prices_hour[!, "DateTime"] .= lmps_df[first(keys(lmps_df))]["DA"][
+                        !, "DateTime"
+                    ][t]
+                    price[k] = vcat(
+                        price[k],
+                        combine(
+                            groupby(prices_hour, :DateTime),
+                            names(prices_hour, Not(:DateTime)) .=> sum;
+                            renamecols=false,
+                        ),
+                    )
+                end
+            end
+        end
+
+        data[:, j + 1, 1] =
+            gen_da_r .* price["DA"][!, bus_r] +
+            (gen_rt_r - gen_da_r) .* price["RT"][!, bus_r]
+        data[:, j + 1, 2] = gen_da_v .* (price["RT"][!, bus_v] - price["DA"][!, bus_v])
+        for c in 1:size(data)[1]
+            for i in 1:2
+                if data[c, j + 1, i] > max_element && data[c, j + 1, i] < 1e3
+                    max_element = data[c, j + 1, i]
+                end
+                if data[c, j + 1, i] < min_element && data[c, j + 1, i] > -1e3
+                    min_element = data[c, j + 1, i]
+                end
+            end
+        end
+    end
+    data[:, 2:(length(bids) + 1), 3] =
+        data[:, 2:(length(bids) + 1), 1] + data[:, 2:(length(bids) + 1), 2]
+    palette = :Dark2_8
+    title = [
+        renewable_gen * " Revenue - Virtual Offer on " * bus_v,
+        virtual_load * " Revenue - Virtual Offer on " * bus_v,
+        "Joint Revenue - Virtual Offer on " * bus_v,
+    ]
+    plt = Array{Any}(nothing, (3)) #TODO: Change to typeof(plot): Plots.Plot{Plots.PlotlyBackend}
+    for i in 1:3
+        c = 1
+        for (j, q) in enumerate(bids)
+            if i == 1
+                label = "bid: " * string(q)
+            else
+                label = false
+            end
+            if c == 1
+                plt[i] = plot(
+                    0:(length(data[:, 1, i]) - 1),
+                    data[:, j + 1, i];
+                    label=label,
+                    legend=:outertopright,
+                    palette=palette,
+                    title=title[i],
+                    titlefont=font(10, "Arial"),
+                )
+            else
+                plot!(
+                    plt[i],
+                    0:(length(data[:, 1, i]) - 1),
+                    data[:, j + 1, i];
+                    label=label,
+                    legend=:outertopright,
+                    palette=palette,
+                )
+            end
+            c = c + 1
+        end
+    end
+
+    if ylimit == true
+        return plot(
+            plt...;
+            layout=(3, 1),
+            ylabel="Revenue (\$)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot(
+            plt...;
+            layout=(3, 1),
+            ylabel="Revenue (\$)",
+        )
+    end
+end
+
+"""
+    plot_revenue_curves(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        period::Vector{Int64},
+        generator_name::String,
+        initial_time::Date,
+        system::System,
+    )
 
 Function to plot the virtual generation curve for the virtual offer bids. 
 The 'generator_name' defines which is the virtual generator that we want to plot it's results

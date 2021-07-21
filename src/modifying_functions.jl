@@ -30,7 +30,7 @@ end
 """
     add_generator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
 
-Function to creat and add generator to the system following an especified node with a defined active power limits.
+Function to create and add generator to the system following an especified node with a defined active power limits.
 """
 function add_generator!(
     system::System, node::String, active_power_limits::NamedTuple{(:min, :max),Tuple{T,T}}
@@ -57,6 +57,74 @@ function add_generator!(
     )
     add_component!(system, gen)
     return gen
+end
+
+
+"""
+    add_load!(
+        system::System, 
+        node::String, 
+        max_active_power::Float64
+    )
+
+Function to create and add a load to the system following an especified node with a defined 
+maximum active power.
+"""
+function add_load!(
+    system::System,
+    node::String, 
+    max_active_power::Float64
+)
+    bus = get_component(Bus, system, node)
+    load = PowerLoad(;
+        name=get_name(bus) * "_virtual_load",
+        available=true,
+        bus=bus,
+        model=LoadModels.ConstantPower, # CHECK HERE!!!!
+        active_power=0.0,
+        reactive_power=0.0,
+        base_power=get_base_power(system),
+        max_active_power=max_active_power,
+        max_reactive_power=0.0, # won't influence our simulations
+    )
+    add_component!(system, load)
+    return load
+end
+
+"""
+    create_demand_series(;
+        initial_bidding_time::DateTime,
+        bidding_periods::Vector{Int},
+        system::System,
+        demands::Vector{T},
+    ) where {T<:AbstractFloat}
+
+Creates `SingleTimeSeries` for a load `max_active_power`. 
+Allows the user to define bidding periods (`bidding_periods`) relative to a 'initial_bidding_time' 
+where 'max_active_power' will be applied.
+Every other period (not defined by the user) is set to `0.0 \$/MWh`.
+"""
+function create_demand_series(;
+    initial_bidding_time::DateTime,
+    bidding_periods::Vector{Int},
+    system::System,
+    demands::Vector{T},
+) where {T<:AbstractFloat}
+
+    load = first(get_components(PowerLoad, system))
+    timestamps = get_time_series_timestamps(SingleTimeSeries, load, "max_active_power")
+    @assert initial_bidding_time in timestamps
+
+    bidding_stamps =
+        (bidding_periods .- 1) .+ findall(x -> x == initial_bidding_time, timestamps)[1]
+    ts_demand = fill(0.0, length(timestamps))
+    for i in 1:length(bidding_stamps)
+        t = bidding_stamps[i]
+        ts_demand[t] = demands[i]
+    end
+    bids = TimeArray(timestamps, ts_demand)
+    ts_array = SingleTimeSeries(; name="max_active_power", data=bids, scaling_factor_multiplier = get_max_active_power,)
+    return ts_array
 end
 
 #  TODO: Finish implementation 
