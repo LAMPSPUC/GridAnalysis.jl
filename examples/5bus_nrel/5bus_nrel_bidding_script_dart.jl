@@ -87,7 +87,7 @@ market_simulator = UCEDRT(;
 name_generator = get_name(gen);
 initial_time = Date("2020-01-01");
 steps = 1;
-#simulation_folder = joinpath(example_dir, "results", "virtual_1bus", "reserve_false"); #if you don't want to save the results, change to: mktempdir();
+#simulation_folder = joinpath(example_dir, "results", "...");
 simulation_folder = mktempdir()
 
 lmps_df, results_df = pq_curves_virtuals!(
@@ -161,3 +161,5 @@ plot_revenue_curves_renewable_plus_virtual(
 plot_generation_curves_renewable(
     lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node
 )
+
+plot_thermal_commit_virtual(sys_uc, results_df; period=period, initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
