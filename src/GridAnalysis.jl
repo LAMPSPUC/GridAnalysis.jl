@@ -33,7 +33,8 @@ export plot_revenue_curves
 export plot_revenue_curves_load
 export plot_revenue_curves_renewable
 export plot_revenue_curves_renewable_plus_virtual
-export plot_thermal_commit
+export plot_thermal_commit_generator_stack
+export plot_thermal_commit_type_stack
 export load_pq_curves
 export pq_curves_virtuals!
 export pq_curves_load_virtuals!

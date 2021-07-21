@@ -189,7 +189,8 @@ plot_prices(
     size=(800, 600),
 )
 
-plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_type_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 plot_demand_stack(sys_ed, ed_results; xtickfontsize=8, size=(800, 600))
@@ -307,7 +308,8 @@ plot_prices(
     size=(800, 600),
 )
 
-plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_type_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 # plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600)) # too much computer demmanding
@@ -457,7 +459,8 @@ plot_prices(
     size=(800, 600),
 )
 
-plot_thermal_commit(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_type_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 
 plot_demand_stack(sys_uc, uc_results; xtickfontsize=8, size=(800, 600))
 # plot_demand_stack(sys_rt, rt_results; xtickfontsize=8, size=(800, 600)) # too much computer demmanding
