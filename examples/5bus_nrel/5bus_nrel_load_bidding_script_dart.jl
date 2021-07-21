@@ -57,7 +57,7 @@ load = add_load!(base_da_system, node, 1.0)
 add_time_series!(base_da_system, load, ts_array)
 
 # Define range quota
-range_quota = Float64.(collect(0:1:4));
+range_quota = Float64.(collect(0:0.1:4));
 
 # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
 sys_uc, sys_ed = prep_systems_UCED(base_da_system)
@@ -112,11 +112,11 @@ bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
 plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, true)
-savefig(p, "price_bus4_4.png")
-p=plot_revenue_curves_load(
+
+plot_revenue_curves_load(
     market_simulator, lmps_df, period, range_quota, initial_time, load, sys_ed, false
 )
-savefig(p, "revenue_bus4_4.png")
+
 plot_revenue_curves_renewable(
     market_simulator, lmps_df, results_df, [0.0, 1.0], "SolarBusC", node, false
 )
@@ -125,14 +125,15 @@ plot_revenue_curves_renewable(
     market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node, false
 )
 
-plot_revenue_curves_renewable_plus_virtual(
+plot_revenue_curves_renewable_plus_virtual_load(
     market_simulator,
     lmps_df,
     results_df,
     [0.0, 1.0, 2.0],
     "WindBusA",
-    name_generator,
-    false
+    name_load,
+    false,
+    load
 )
 
 plot_generation_curves_renewable(
