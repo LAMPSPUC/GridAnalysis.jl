@@ -500,6 +500,7 @@ function load_plot_set_of_simulations(
     initial_bidding_time::DateTime,
     path::String,
     graphic::String,
+    bool::Bool,
 )
 
     if graphic == "plot_price_curves" 
@@ -508,6 +509,8 @@ function load_plot_set_of_simulations(
         global plt=Array{Any}(nothing, length(lines), length(period_analysed),2)
     elseif graphic == "plot_revenue_curves_renewable_plus_virtual" || graphic == "plot_revenue_curves" || graphic =="plot_sum_revenue_curves"
         global plt=Array{Any}(nothing, length(lines))
+    elseif graphic == "plot_thermal_commit_virtual"
+        global plt=Array{Any}(nothing, length(lines), length(period_analysed))
     end
     
     for (x,l) in enumerate(lines)
@@ -526,7 +529,7 @@ function load_plot_set_of_simulations(
         )
 
         # Add single generator at a defined bus
-        gen = add_gerator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+        gen = add_generator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
 
         # create and set variable cost time-series for the generator
         ts_array = create_generator_bids(;
@@ -572,19 +575,23 @@ function load_plot_set_of_simulations(
         
         if graphic == "plot_price_curves" 
             for (y,t) in enumerate(period_analysed)
-                global plt[x,y] = plot_price_curves(lmps_df, period_analysed[y], unique(df.Offer_Bus), df.Offer_Bus[l], initial_time)
+                global plt[x,y] = plot_price_curves(lmps_df, period_analysed[y], unique(df.Offer_Bus), df.Offer_Bus[l], initial_time, sys_uc, bool)
             end
         elseif graphic == "plot_generation_stack_virtual"
             for (y,t) in enumerate(period_analysed)
                 global plt[x,y,1] = plot_generation_stack_virtual(sys_uc, results_df; type="DA", period=period_analysed[y], initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
                 global plt[x,y,2] = plot_generation_stack_virtual(sys_rt, results_df; type="RT", period=period_analysed[y], initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
             end
+        elseif graphic == "plot_thermal_commit_virtual"
+            for (y,t) in enumerate(period_analysed)
+                global plt[x,y] = plot_thermal_commit_virtual(sys_uc, results_df; period=period_analysed[y], initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
+            end
         elseif graphic == "plot_revenue_curves_renewable_plus_virtual"
-            global plt[x] = plot_revenue_curves_renewable_plus_virtual(market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0],"WindBusA", df.Offer_Bus[l]*"_virtual_supply",)
+            global plt[x] = plot_revenue_curves_renewable_plus_virtual(market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0],"WindBusA", df.Offer_Bus[l]*"_virtual_supply", bool)
         elseif graphic == "plot_revenue_curves"
             period=[period_analysed[i][1] for i=1:length(period_analysed)]
             global plt[x] = plot_revenue_curves(
-                market_simulator, lmps_df, results_df, period, df.Offer_Bus[l]*"_virtual_supply", initial_time
+                market_simulator, lmps_df, results_df, period, df.Offer_Bus[l]*"_virtual_supply", initial_time, bool
             )
         elseif graphic == "plot_sum_revenue_curves"
             period=[period_analysed[i][1] for i=1:length(period_analysed)]

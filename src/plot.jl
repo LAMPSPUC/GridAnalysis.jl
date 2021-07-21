@@ -586,6 +586,99 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
     end
 end
 
+
+"""
+    plot_thermal_commit_virtual(
+        system::System,
+        results::SimulationProblemResults;
+        period::Int=1,
+        initial_time::Date,
+    )
+
+Function to plot the Thermal Standard Commit variables curve depending on the range_quota.
+The `results` should be from the unit commitment problem.
+1 is ON, 0 is OFF.
+"""
+@userplot plot_thermal_commit_virtual
+@recipe function f(
+    p::plot_thermal_commit_virtual; 
+    period::Int=1,
+    initial_time::Date,
+)
+
+    system, results_df, = p.args
+    results_df = sort(results_df)
+    aux_period = DateTime(initial_time) + Hour(period[1] - 1)
+
+    for v in keys(results_df)
+        # get the output data for all fuel types
+        system_results = get_problem_results(results_df[v]["DA"], "UC")
+        variable_results = read_realized_variables(system_results)
+        commit_results = variable_results[:On__ThermalStandard]
+
+        commit_results = commit_results[aux_period .<= commit_results.DateTime .< aux_period + Hour(1), :]
+        commit_results[!, "DateTime"] .= aux_period
+
+        if v == minimum(keys(results_df))
+            global thermal_commit_results = commit_results
+        else
+            global thermal_commit_results = append!(thermal_commit_results, commit_results)
+        end
+    end
+
+    plot_data = select(thermal_commit_results, Not(:DateTime))
+    
+    #=
+    names_plot_data = names(plot_data)
+    steam = zeros(length(results_df))
+    NG = zeros(length(results_df))
+    nuclear = zeros(length(results_df))
+    for i in 1:length(names_plot_data)
+        if occursin("STEAM", names_plot_data[i]) == true
+            steam = hcat(steam, plot_data[!,i])
+        elseif occursin("CT", names_plot_data[i]) == true || occursin("CC", names_plot_data[i]) == true
+            NG = hcat(NG, plot_data[!,i])
+        elseif occursin("NUCLEAR", names_plot_data[i]) == true
+            nuclear = hcat(nuclear, plot_data[!,i])
+        end
+    end
+
+    steam = vec(sum(steam, dims = 2))
+    NG = vec(sum(NG, dims = 2))
+    nuclear = vec(sum(nuclear, dims = 2))
+    plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
+
+    #= select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        generator_names = names(plot_data)
+        bus_map = bus_mapping(system)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, [bus_map[gen] for gen in generator_names])
+        generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
+        select!(plot_data, generator_names)
+    end
+    =#
+    =#
+
+    times = collect(keys(results_df)) * get_base_power(system)
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Commitment"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+    title --> "Thermal Standard Commit over the hours"
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
+end
+
 #= TODO: curves plots with recipe function
 @userplot plot_offert_price()
 @recipe function f(p::plot_offert_price; period::Vector{Int64}, bus_name::AbstractArray=["bus5"])
