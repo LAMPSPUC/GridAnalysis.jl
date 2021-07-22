@@ -131,8 +131,8 @@ plot_prices(
     market_simulator, results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
 )
 
-plot_thermal_commit(base_system, uc_results; xtickfontsize=8, size=(800, 600))
-plot_thermal_commit(
+plot_thermal_commit_generator_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
+plot_thermal_commit_generator_stack(
     base_system, uc_results; bus_names=["bus1", "bus3"], xtickfontsize=8, size=(800, 600)
 )
 
