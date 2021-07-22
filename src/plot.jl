@@ -170,7 +170,8 @@ end
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
-1 is ON, 0 is OFF.
+It stacks the data so that it is possible to know how many generators are ON in each hour.
+It groups by the generators.
 """
 @userplot plot_thermal_commit_generator_stack
 @recipe function f(p::plot_thermal_commit_generator_stack; bus_names::AbstractArray=[])
@@ -220,7 +221,8 @@ end
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
-1 is ON, 0 is OFF.
+It stacks the data so that it is possible to know how many generators are ON in each hour.
+It groups by the fuel type.
 """
 @userplot plot_thermal_commit_type_stack
 @recipe function f(p::plot_thermal_commit_type_stack; bus_names::AbstractArray=[])
@@ -514,9 +516,10 @@ end
         system::System,
         results::SimulationProblemResults;
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-        period::Int=1)
+        period::Int=1
+    )
 
-Plot the generation mix during the time 'period' for the range of virtual bids in 'results'. 
+Plot the generation mix during the time `period` for the range of virtual bids in `results`. 
 """
 @userplot plot_generation_stack_virtual
 @recipe function f(

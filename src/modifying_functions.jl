@@ -1,8 +1,14 @@
 
 """
-    create_generator_bids(initial_bidding_time::DateTime, bidding_periods::Vector{Int}, system::System, costs::Vector{T}) where {T<:AbstractFloat}
+    create_generator_bids(;
+    initial_bidding_time::DateTime,
+    bidding_periods::Vector{Int},
+    system::System,
+    costs::Vector{T},
+    ) where {T<:AbstractFloat}
 
-Creates `SingleTimeSeries` for a generator `variable_cost`. Allows the user to define bidding periods (`bidding_periods`) relative to a 'initial_bidding_time' where 'costs' will be applied.
+Creates `SingleTimeSeries` for a generator `variable_cost`. Allows the user to define bidding periods 
+(`bidding_periods`) relative to a `initial_bidding_time` where `costs` will be applied.
 Every other period (not defined by the user) is set to `1e7 \$/MWh`.
 """
 function create_generator_bids(;
@@ -28,9 +34,12 @@ function create_generator_bids(;
 end
 
 """
-    add_generator!(system::System, node::String, active_power_limits::NamedTuple{(:min, :max), Tuple{AbstractFloat, AbstractFloat}})
+    add_generator!(
+        system::System, node::String, active_power_limits::NamedTuple{(:min, :max),Tuple{T,T}}
+    ) where {T<:AbstractFloat}
 
-Function to create and add generator to the system following an especified node with a defined active power limits.
+Function to create and add generator to the system following an especified node with a defined 
+active power limits.
 """
 function add_generator!(
     system::System, node::String, active_power_limits::NamedTuple{(:min, :max),Tuple{T,T}}
@@ -80,7 +89,7 @@ function add_load!(
         name=get_name(bus) * "_virtual_load",
         available=true,
         bus=bus,
-        model=LoadModels.ConstantPower, # CHECK HERE!!!!
+        model=LoadModels.ConstantPower,
         active_power=0.0,
         reactive_power=0.0,
         base_power=get_base_power(system),
@@ -100,8 +109,8 @@ end
     ) where {T<:AbstractFloat}
 
 Creates `SingleTimeSeries` for a load `max_active_power`. 
-Allows the user to define bidding periods (`bidding_periods`) relative to a 'initial_bidding_time' 
-where 'max_active_power' will be applied.
+Allows the user to define bidding periods (`bidding_periods`) relative to a `initial_bidding_time` 
+where `max_active_power` will be applied.
 Every other period (not defined by the user) is set to `0.0 \$/MWh`.
 """
 function create_demand_series(;

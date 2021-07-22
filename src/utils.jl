@@ -1,7 +1,7 @@
 """
     fuel_type_mapping(system)
 
-Return a mapping between the bus name and the fuel type for the given `system`.
+Return a mapping between the bus name and the fuel type for the given 'system`.
 """
 function fuel_type_mapping(system::System)
     generator_metadata = [gen for gen in get_components(Generator, system)]
@@ -339,16 +339,17 @@ end
 
 """
     plot_price_curves(
-        lmps_df::Dict{Any, Any}, period::Vector{Int64}, 
-        bus_name::AbstractArray=["bus5"],
-        node::String="bus5",
+        lmps_df::Dict{Any,Any},
+        period::Vector{Int64},
+        bus_name::AbstractArray,
+        node::String,
         initial_time::Date,
         system::System,
         ylimit::Bool,
     )
 
 Function to plot the price curve for the virtual offer bids. 
-The 'bus_names' and 'periods' controls which buses and periods we want to include
+The `bus_names` and `periods` controls which buses and periods we want to include
 in the plot, respectively.
 """
 
@@ -578,8 +579,8 @@ end
     )
 
 Function to plot the revenue curve for the the virtual offer bids. 
-The 'generator_name' defines which is the virtual generator that we want to plot it's results
-and 'periods' controls which periods we want to include in the plot.
+The `generator_name` defines which is the virtual generator that we want to plot it's results
+and `periods` controls which periods we want to include in the plot.
 """
 function plot_revenue_curves(
     market_simulator::UCEDRT,
@@ -693,8 +694,8 @@ end
     )
 
 Function to plot the total revenue curve for the the virtual offer bids. 
-The 'generator_name' defines which is the virtual generator that we want to plot it's results
-and 'periods' controls which periods we want to include in the sum of the plot.
+The `generator_name` defines which is the virtual generator that we want to plot it's results
+and `periods` controls which periods we want to include in the sum of the plot.
 """
 function plot_sum_revenue_curves(
     market_simulator::UCEDRT,
@@ -786,8 +787,8 @@ end
     )
 
 Function to plot the revenue curve for the the virtual offer bids. 
-The 'generator_name' defines which is the virtual generator that we want to plot it's results
-and 'periods' controls which periods we want to include in the plot.
+The `generator_name` defines which is the virtual generator that we want to plot it's results
+and `periods` controls which periods we want to include in the plot.
 """
 function plot_revenue_curves(
     market_simulator::UCED,
@@ -895,9 +896,9 @@ end
         ylimit::Bool,
     )
 
-Function to plot the revenue curve for the the virtual demand bids. 
-The 'load' defines which is the virtual load that we want to plot it's results
-and 'period' controls which periods we want to include in the plot.
+Function to plot the revenue curve for the the virtual demand bids for the UCED `market_simulator`. 
+The `load` defines which is the virtual load that we want to plot it's results
+and `period` controls which periods we want to include in the plot.
 """
 function plot_revenue_curves_load(
     market_simulator::UCED,
@@ -1002,9 +1003,9 @@ end
         ylimit::Bool,
     )
 
-Function to plot the revenue curve for the the virtual demand bids. 
-The 'load' defines which is the virtual load that we want to plot it's results
-and 'period' controls which periods we want to include in the plot.
+Function to plot the revenue curve for the the virtual demand bids for the UCEDRT `market_simulator`. 
+The `load` defines which is the virtual load that we want to plot it's results
+and `period` controls which periods we want to include in the plot.
 """
 function plot_revenue_curves_load(
     market_simulator::UCEDRT,
@@ -1109,8 +1110,8 @@ end
     )
 
 Function to plot the revenue curve for the the renewable generators. 
-The 'generator_name' defines which is the generator that we want to plot it's results
-and 'bids' controls which bids we want to include in the plot.
+The `generator_name` defines which is the generator that we want to plot it's results
+and `bids` controls which bids we want to include in the plot.
 """
 function plot_revenue_curves_renewable(
     market_simulator::UCEDRT,
@@ -1223,8 +1224,8 @@ end
     )
 
 Function to plot the revenue curve for the the renewable and virtual generators. 
-The 'renewable_gen' and 'virtual_gen' defines which are the generators that we want to plot it's results
-and 'bids' controls which bids we want to include in the plot.
+The `renewable_gen` and `virtual_gen` defines which are the generators that we want to plot it's results
+and `bids` controls which bids we want to include in the plot.
 """
 function plot_revenue_curves_renewable_plus_virtual(
     market_simulator::UCEDRT,
@@ -1406,9 +1407,10 @@ end
         load::PowerLoad,
     )
 
-Function to plot the revenue curve for the the renewable and virtual generators. 
-The 'renewable_gen' and 'virtual_gen' defines which are the generators that we want to plot it's results
-and 'bids' controls which bids we want to include in the plot.
+Function to plot the revenue curve for the the renewable generator and the virtual demand. 
+The `renewable_gen` defines which are the renewable generators that we want to plot it's results,
+the `virtual_load` defines the load that we want to plot
+and `bids` controls which bids we want to include in the plot.
 """
 function plot_revenue_curves_renewable_plus_virtual_load(
     market_simulator::UCEDRT,
@@ -1574,8 +1576,8 @@ end
     )
 
 Function to plot the virtual generation curve for the virtual offer bids. 
-The 'generator_name' defines which is the virtual generator that we want to plot it's results
-and 'periods' controls which periods we want to include in the plot.
+The `generator_name` defines which is the virtual generator that we want to plot it's results
+and `periods` controls which periods we want to include in the plot.
 """
 
 function plot_generation_curves(
@@ -1641,17 +1643,17 @@ function plot_generation_curves(
 end
 
 """
-plot_revenue_curves_renewable(
-    lmps_df::Dict{Any,Any},
-    results_df::Dict{Any,Any},
-    bids::Vector{Float64},
-    generator_name::String,
-    node::String,
-)
+    plot_revenue_curves_renewable(
+        lmps_df::Dict{Any,Any},
+        results_df::Dict{Any,Any},
+        bids::Vector{Float64},
+        generator_name::String,
+        node::String,
+    )
 
 Function to plot the renewable generation curve for the virtual offer bids. 
-The 'generator_name' defines which is the renewable generator that we want to plot it's results
-and 'bids' controls which possible virtual bids we want to include in the plot.
+The `generator_name` defines which is the renewable generator that we want to plot it's results
+and `bids` controls which possible virtual bids we want to include in the plot.
 """
 
 function plot_generation_curves_renewable(

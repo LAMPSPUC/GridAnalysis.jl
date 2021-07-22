@@ -40,7 +40,7 @@ base_da_system = build_5_bus_matpower_DA(
 
 [i for i in get_components(PowerLoad, base_system)][1]
 
-# create and set variable cost time-series for the load
+# create demand time-series for the load
 bidding_period = collect(1:24)
 ts_array = create_demand_series(;
     initial_bidding_time=DateTime("2020-01-01"),
@@ -54,6 +54,7 @@ node = "bus5" # define bus
 load = add_load!(base_da_system, node, 1.0)
 @test load in get_components(PowerLoad, base_da_system)
 
+# set demand time-series for the load
 add_time_series!(base_da_system, load, ts_array)
 
 # Define range quota

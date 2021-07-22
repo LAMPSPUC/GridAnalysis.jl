@@ -38,7 +38,7 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 # define systems with resolutions
 sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
 
-# create and set variable cost time-series for the generator
+# create demand time-series for the load
 bidding_period = collect(1:24)
 ts_array = create_demand_series(;
     initial_bidding_time=DateTime("2020-09-01"),
@@ -47,11 +47,12 @@ ts_array = create_demand_series(;
     demands=ones(length(bidding_period)),
 )
 
-# Add single generator at a defined bus
+# Add single load at a defined bus
 node = "Bach" # define bus
 load = add_load!(sys_DA, node, 1.0)
 @test load in get_components(PowerLoad, sys_DA)
 
+# set demand time-series for the load
 add_time_series!(sys_DA, load, ts_array)
 
 #Define range quota
