@@ -119,64 +119,48 @@ lmps_df, results_df = load_mix_pq_curves(market_simulator, range_quota, range_qu
 @test isa(results_df[[range_quota[1] range_quota[1]]], Dict{String,SimulationResults})
 @test isa(lmps_df[[range_quota[1] range_quota[1]]], Dict{String,DataFrame})
 
-#Select data to plot
-period = [19]
-
 # Plots
-heat_map_revenue_curves_mix(
+
+plt,h,sum_deficit=heat_map_deficit(
+    sys_rt,
+    results_df,
+    range_quota,
+    range_quota,
+    initial_time,
+    bidding_period,
+)
+
+h,plt=heat_map_coal_generation(
+    sys_uc,
+    results_df,
+    range_quota,
+    range_quota,
+    initial_time,
+    sum_deficit,
+    bidding_period,
+    [:P__ThermalStandard, :P__RenewableDispatch],
+)
+
+h,plt=heat_map_revenue_curves_mix(
     market_simulator,
     lmps_df,
     results_df,
-    period,
+    bidding_period,
     range_quota,
     range_quota,
     initial_time,
     load,
     name_gen,
+    "SolarBusC",
     sys_uc,
 )
 
-heat_map_coal_generation(
-    sys_uc,
-    results_df,
-    range_quota,
-    range_quota,
-    initial_time,
-    period,
-    [:P__ThermalStandard, :P__RenewableDispatch],
-)
 
-#test
-k="RT"
-for t in 1:24
-    prices_hour = lmps_df[[2.0 0.0]][k][
-        lmps_df[first(keys(lmps_df))][k][!, "DateTime"][t] .<= lmps_df[[2.0 0.0]][k].DateTime .< lmps_df[first(keys(lmps_df))][k][!, "DateTime"][t] + Hour(
-            1
-        ),
-        :,
-    ]
-    if t == 1
-        prices_hour[!, "DateTime"] .= lmps_df[first(keys(lmps_df))][k][
-            !, "DateTime"
-        ][t]
-        price[k] = combine(
-            groupby(prices_hour, :DateTime),
-            names(prices_hour, Not(:DateTime)) .=> sum;
-            renamecols=false,
-        )
-    else
-        prices_hour[!, "DateTime"] .= lmps_df[first(keys(lmps_df))][k][
-            !, "DateTime"
-        ][t]
-        price[k] = vcat(
-            price[k],
-            combine(
-                groupby(prices_hour, :DateTime),
-                names(prices_hour, Not(:DateTime)) .=> sum;
-                renamecols=false,
-            ),
-        )
-    end
-end
 
-dif=Matrix(price["RT"])-Matrix(price["DA"])
+
+rt_results = get_problem_results(results_df[[4.0 4.0]]["RT"],"RT")
+uc_results = get_problem_results(results_df[[4.0 4.0]]["DA"],"UC")
+plt=plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plt=plot_thermal_commit_generator_stack(sys_uc, uc_results)
+
+savefig(plt,"C:/Users/Daniele/Desktop/revenue-solar.png")

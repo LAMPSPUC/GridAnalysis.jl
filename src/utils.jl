@@ -1793,11 +1793,13 @@ function heat_map_revenue_curves_mix(
     initial_time::Date,
     load::PowerLoad,
     generator_name::String,
+    renewable_name::String,
     system::System,
 )
-
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_gen = get_name(get_bus(gen))
+    gen_r = get_component(RenewableDispatch, market_simulator.system_uc, renewable_name)
+    bus_r = get_name(get_bus(gen_r))
 
     loads = collect(get_components(PowerLoad, system))
     bus_load = get_name(get_bus(load))
@@ -1810,8 +1812,12 @@ function heat_map_revenue_curves_mix(
     for t in period
         aux_period = vcat(aux_period, start_time + Hour(t - 1))
     end
-    
-    data = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    data=Dict()
+    data["Virtual"] = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    data["Total"] = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    data["Virtual (load)"] = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    data["Virtual (gen)"] = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    data["Renewable"] = zeros(length(range_quota_load),length(range_quota_gen), length(period))
     price = zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
     price = Dict()
     for k in keys(lmps_df[collect(keys(lmps_df))[1]])
@@ -1820,11 +1826,31 @@ function heat_map_revenue_curves_mix(
 
     for (i,l) in enumerate(range_quota_load)
         for (j,g) in enumerate(range_quota_gen)
-            for t in 1:length(period)
-                variable_results = read_realized_variables(
-                    get_problem_results(results_df[[l g]]["DA"], "UC"); names=[:P__ThermalStandard]
+            variable_results_v = read_realized_variables(
+                get_problem_results(results_df[[l g]]["DA"], "UC"); names=[:P__ThermalStandard]
+            )
+
+            gen_r=Dict()
+            variable_results_r = read_realized_variables(
+                get_problem_results(results_df[[l g]]["DA"], "UC"); names=[:P__RenewableDispatch]
+            )
+            generator_data = getindex.(Ref(variable_results_r), [:P__RenewableDispatch])
+            gen_r["DA"] = generator_data[1][!, renewable_name]
+    
+            variable_results_r = read_realized_variables(
+                get_problem_results(results_df[[l g]]["RT"], "RT"); names=[:P__RenewableDispatch]
+            )
+            generator_data = getindex.(Ref(variable_results_r), [:P__RenewableDispatch])
+            gen_rt_aux = generator_data[1][!, renewable_name]
+            gen_r["RT"] = []
+    
+            for ii in 1:(round(Int, length(gen_rt_aux) / 12)) #TODO: Change "12" to get horizon
+                gen_r["RT"] = vcat(
+                    gen_r["RT"], [sum(gen_rt_aux[(1 + 12 * (ii - 1)):(12 + 12 * (ii - 1))]) / 12]
                 )
-                generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+            end
+            for t in 1:length(period)
+                generator_data = getindex.(Ref(variable_results_v), [:P__ThermalStandard])
                 virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
                 for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
                     prices_hour = lmps_df[[l g]][k][
@@ -1842,21 +1868,33 @@ function heat_map_revenue_curves_mix(
                 end
                 revenue_load = ((price["RT"][!,bus_load]-price["DA"][!,bus_load]) * ts_values[t] * range_quota_load[i])[1]
                 revenue_gen = ((price["DA"][!,bus_gen]-price["RT"][!,bus_gen]) * virtual_gen)[1] 
-                data[i,j,t] = revenue_load + revenue_gen
+                revenue_renew = (gen_r["DA"][t] * price["DA"][!, bus_r] +
+                (gen_r["RT"][t]- gen_r["DA"][t]) * price["RT"][!, bus_r])[1]
+                data["Total"][i,j,t] = revenue_load + revenue_gen + revenue_renew
+                data["Virtual"][i,j,t] = revenue_load + revenue_gen
+                data["Virtual (load)"][i,j,t] = revenue_load
+                data["Virtual (gen)"][i,j,t] = revenue_gen
+                data["Renewable"][i,j,t] = revenue_renew
             end
         end
     end
-    data_sum = sum(data[:,:,t] for t =1:length(period)) 
-    data_norm = data_sum
+    h=Dict()
     gr()
-    data_p = data_norm 
-    h=heatmap(range_quota_gen.*100,
-    range_quota_load.*100, data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
-    xlabel="INC Offer (MW/h)", ylabel="DEC bid (MW/h)",
-    title="Virtual Revenue (\$)")
+    for k in keys(data)
+        data_sum = sum(data[k][:,:,t] for t =1:length(period)) 
+        data_norm = data_sum
+        data_p = data_norm 
+        h[k]=heatmap(range_quota_gen.*get_base_power(system),
+        range_quota_load.*get_base_power(system), data_p,
+        c=cgrad([:blue, :white,:red, :yellow]),
+        xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
+        title= k*" Revenue (\$)")
+    end
+    width=700
+    height=500
+    plt = plot(h["Total"],h["Virtual"],h["Renewable"],layout=grid(3, 1,widths=[0.95, 0.95, 0.95]),size = (width, height))
     
-    return plot(h)
+    return plt, h
 end
 
 """
@@ -1878,6 +1916,7 @@ function heat_map_coal_generation(
     range_quota_load::Vector{Float64},
     range_quota_gen::Vector{Float64},
     initial_time::Date,
+    sum_deficit::Matrix{Float64},
     period::Vector{Int64}=[1],
     generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
 )
@@ -1889,15 +1928,18 @@ function heat_map_coal_generation(
         aux_period = vcat(aux_period, start_time + Hour(t - 1))
     end
 
-    for (z,t) in enumerate(aux_period)
-        for (x,l) in enumerate(range_quota_load)
-            for (y,g) in enumerate(range_quota_gen)
-                system_results = get_problem_results(results_df[[l g]]["RT"], "RT")
-                # get mapping from busname to fuel type
-                fuel_type_dict = fuel_type_mapping(system)
+    # get mapping from busname to fuel type
+    fuel_type_dict = fuel_type_mapping(system)
+    bus_map = bus_mapping(system)
+    fuel_names = unique(keys(fuel_type_dict))
 
-                # get the output data for given fuel types
-                variable_results = read_realized_variables(system_results; names=generator_fields)
+    
+    for (x,l) in enumerate(range_quota_load)
+        for (y,g) in enumerate(range_quota_gen)
+            system_results = get_problem_results(results_df[[l g]]["RT"], "RT")
+            # get the output data for given fuel types
+            variable_results = read_realized_variables(system_results; names=generator_fields)
+            for (z,t) in enumerate(aux_period)
                 generator_data = getindex.(Ref(variable_results), generator_fields)
                 for i in 1:length(generator_data)
                     generation = generator_data[i][t .<= generator_data[i].DateTime .< t + Hour(1), :]
@@ -1918,13 +1960,9 @@ function heat_map_coal_generation(
                 else
                     generator_data = first(generator_data)
                 end
-        
                 # stack the data and aggregate by fuel type
                 stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
-                bus_map = bus_mapping(system)
                 stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
-        
-                fuel_names = unique(keys(fuel_type_dict))
                 for (i, key) in enumerate(fuel_names)
                     if occursin("HYDRO", fuel_names[i]) == true
                         fuel_type_dict[key] = "HYDRO"
@@ -1966,15 +2004,135 @@ function heat_map_coal_generation(
             end
         end
     end
+  
     data_sum = sum(data[:,:,t] for t =1:length(period)) 
-    data_norm = data_sum./data_sum[1,1]
+    data_norm = data_sum./data_sum[1,1].-1
+    h=Dict()
     gr()
     data_p = data_norm 
-    h=heatmap(range_quota_gen.*100,
-    range_quota_load.*100, data_p,
+    h["Coal"]=heatmap(range_quota_gen.* get_base_power(system),
+    range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
-    xlabel="INC Offer (MW/h)", ylabel="DEC bid (MW/h)",
+    xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Coal Emission (%)")
+    data_p = data_norm.*sum_deficit
+    for i=1:size(data_p)[1]
+        for j=1:size(data_p)[2]
+            if abs(data_p[i,j])==0
+                data_p[i,j]=2
+            end
+        end
+    end
+    h["Coal_Def"]=heatmap(range_quota_gen.* get_base_power(system),
+    range_quota_load.* get_base_power(system), data_p,
+    c=cgrad([:blue, :white,:red, :yellow]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
+    title="Coal Emission without deficit")
+    width=700
+    height=400
+    plt = plot(h["Coal"],h["Coal_Def"],layout=grid(2, 1),size = (width, height))    
+    return plt, h
+end
+
+"""
+    heat_map_deficit(
+        system::System,
+        results_df::Dict{Any,Any},
+        range_quota_load::Vector{Float64},
+        range_quota_gen::Vector{Float64},
+        initial_time::Date,
+    )
+
+Function to plot the deficit heat map for the the mix of virtual INC and DEC bids.
+"""
+function heat_map_deficit(
+    system::System,
+    results_df::Dict{Any,Any},
+    range_quota_load::Vector{Float64},
+    range_quota_gen::Vector{Float64},
+    initial_time::Date,
+    bidding_period::Vector{Int64},
+)
+    aux_period=[]
+    for t in bidding_period
+        aux_period = vcat(aux_period, DateTime(initial_time) + Hour(t - 1))
+    end
+    var=[:γ⁺__P :γ⁻__P]
+    data_deficit=zeros(length(range_quota_load),length(range_quota_gen),length(aux_period),length(var))
+
+    for (x,l) in enumerate(range_quota_load)
+        for (y,g) in enumerate(range_quota_gen)
+            system_results = get_problem_results(results_df[[l g]]["RT"], "RT")
+            variable_results = read_realized_variables(system_results)
+            for (w,v) in enumerate(var)
+                for (z,t) in enumerate(aux_period)
+                    deficit_aux = variable_results[v][
+                        t .<= variable_results[v].DateTime .< t + Hour(
+                            1
+                        ),
+                        :,
+                    ]
+                    if t == aux_period[1]
+                        deficit_aux[!, "DateTime"] .= t
+                        global deficit = combine(
+                            groupby(deficit_aux, :DateTime),
+                            names(deficit_aux, Not(:DateTime)) .=> sum;
+                            renamecols=false,
+                        )
+                    else
+                        deficit_aux[!, "DateTime"] .= t
+                        global deficit = vcat(
+                            deficit,
+                            combine(
+                                groupby(deficit_aux, :DateTime),
+                                names(deficit_aux, Not(:DateTime)) .=> sum;
+                                renamecols=false,
+                            ),
+                        )
+                    end
+                    data_deficit[x,y,z,w] = data_deficit[x,y,z,w] + sum(sum(eachcol(select(deficit, Not(:DateTime)))))
+                end
+            end
+        end
+    end
+
+    sum_deficit=sum(sum(data_deficit[:,:,i,j] for i=1:length(aux_period)) for j=1:length(var))
+    for i=1:length(range_quota_load), j=1:length(range_quota_gen)
+        if abs(sum_deficit[i,j])<10E-3
+            sum_deficit[i,j]=1
+        else
+            sum_deficit[i,j]=0
+        end
+    end
+    sum_deficit_up=sum(data_deficit[:,:,i,1] for i=1:length(aux_period))
+    sum_deficit_down=sum(data_deficit[:,:,i,2] for i=1:length(aux_period))
+
+    h=Dict()
+    gr()
+    data_p = sum_deficit
+    h["sinal"]=heatmap(range_quota_gen.* get_base_power(system),
+    range_quota_load.* get_base_power(system), data_p,
+    c=cgrad([:yellow, :red, :white, :blue]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
+    title="Deficit")
+
+    data_p = sum_deficit_up
+    h["up"]=heatmap(range_quota_gen.* get_base_power(system),
+    range_quota_load.* get_base_power(system), data_p,
+    c=cgrad([:blue, :white,:red, :yellow]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
+    title="Deficit up")
+
+    data_p = sum_deficit_down
+    h["down"]=heatmap(range_quota_gen.* get_base_power(system),
+    range_quota_load.* get_base_power(system), data_p,
+    c=cgrad([:blue, :white,:red, :yellow]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
+    title="Deficit down")
+    width=600
+    height=600
+    plt = plot(h["sinal"],h["up"],h["down"],layout=grid(3, 1),size = (width, height))
     
-    return plot(h)
+    return plt,h,sum_deficit
+    
 end

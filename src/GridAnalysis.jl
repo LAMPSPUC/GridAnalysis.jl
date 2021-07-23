@@ -24,6 +24,7 @@ export plot_generation_curves
 export plot_generation_curves_renewable
 export get_time_series_params
 export heat_map_coal_generation
+export heat_map_deficit
 export heat_map_revenue_curves_mix
 export plot_generation_stack
 export plot_demand_stack
