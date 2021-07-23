@@ -97,7 +97,7 @@ period = [5] #bidding_period #[5,19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_ed, false, "DEC Bid")
 
 plot_revenue_curves_load(
     market_simulator, lmps_df, period, range_quota, initial_time, load, sys_ed, false

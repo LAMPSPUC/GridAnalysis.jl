@@ -73,6 +73,7 @@ and `generator_fields` control which buses, and generator types we want to inclu
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Generation stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -153,6 +154,7 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Prices over the hours"
 
     for i in Base.axes(plot_data, 2)
         @series begin
@@ -200,7 +202,7 @@ It groups by the generators.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    title --> "Thermal Standard Commit over the hours"
+    title --> "Thermal Standard Commit stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -270,7 +272,7 @@ It groups by the fuel type.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    title --> "Thermal Standard Commit over the hours"
+    title --> "Thermal Standard Commit stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -516,7 +518,8 @@ end
         system::System,
         results::SimulationProblemResults;
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-        period::Int=1
+        period::Int=1,
+        initial_time::Date,
     )
 
 Plot the generation mix during the time `period` for the range of virtual bids in `results`. 
@@ -624,11 +627,12 @@ Plot the generation mix during the time `period` for the range of virtual bids i
 
     label --> reduce(hcat, names(plot_data))
     yguide --> "Output (MWh)"
-    xguide --> "Bid offers (MW)"
+    xguide --> "Quantity (MW)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 0
     color_palette --> palette
+    title --> "Virtual Generation stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
