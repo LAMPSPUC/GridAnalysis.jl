@@ -298,6 +298,31 @@ function load_pq_curves(
 end
 
 """
+    load_mix_pq_curves(market_simulator::UCEDRT, range_quota_load::Vector{Float64}, range_quota_gen::Vector{Float64}, simulation_folder::String=pwd())
+
+Returns the results of a simulation done previously.
+"""
+function load_mix_pq_curves(
+    market_simulator::UCEDRT, range_quota_load::Vector{Float64}, range_quota_gen::Vector{Float64}, simulation_folder::String=pwd()
+)
+    lmps_df = Dict()
+    results_df = Dict()
+    for max_load in range_quota_load
+        for max_gen in range_quota_gen
+            results_df[[max_load max_gen]] = Dict(
+                "DA" =>
+                    SimulationResults(joinpath(simulation_folder, "da_quota_l_$max_load"*"_quota_g_$max_gen", "1")),
+                "RT" =>
+                    SimulationResults(joinpath(simulation_folder, "rt_quota_l_$max_load"*"_quota_g_$max_gen", "1")),
+            )
+            lmps_df[[max_load max_gen]] = evaluate_prices_UCEDRT(market_simulator, results_df[[max_load max_gen]])
+        end
+    end
+    return lmps_df, results_df
+end
+
+
+"""
     load_pq_curves(market_simulator::UCED, range_quota::Vector{Float64}, simulation_folder::String=pwd())
 
 Returns the results of a simulation done previously.
@@ -1741,4 +1766,215 @@ function plot_generation_curves_renewable(
         ylabel="Generation(MWh)",
         xlabel="Period",
     )
+end
+
+"""
+    heat_map_revenue_curves_mix(
+        market_simulator::UCEDRT,
+        lmps_df::Dict{Any,Any},
+        period::Vector{Int64},
+        range_quota::Vector{Float64},
+        initial_time::Date,
+        load::PowerLoad,
+        system::System,
+        ylimit::Bool,
+    )
+
+    Function to plot the virtual revenue heat map for the mix of virtual INC and DEC bids.
+"""
+
+function heat_map_revenue_curves_mix(
+    market_simulator::UCEDRT,
+    lmps_df::Dict{Any,Any},
+    results_df::Dict{Any,Any},
+    period::Vector{Int64},
+    range_quota_load::Vector{Float64},
+    range_quota_gen::Vector{Float64},
+    initial_time::Date,
+    load::PowerLoad,
+    generator_name::String,
+    system::System,
+)
+
+    gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
+    bus_gen = get_name(get_bus(gen))
+
+    loads = collect(get_components(PowerLoad, system))
+    bus_load = get_name(get_bus(load))
+    ts_names = get_time_series_names(SingleTimeSeries, loads[1])
+    start_time = DateTime(initial_time)
+    ts_values = get_time_series_values(Deterministic, load, ts_names[1]; start_time)#./range_quota_load[length(range_quota_load)]
+
+    aux_period = []
+
+    for t in period
+        aux_period = vcat(aux_period, start_time + Hour(t - 1))
+    end
+    
+    data = zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    price = zeros(length(keys(lmps_df[collect(keys(lmps_df))[1]])))
+    price = Dict()
+    for k in keys(lmps_df[collect(keys(lmps_df))[1]])
+        price[k] = 0
+    end
+
+    for (i,l) in enumerate(range_quota_load)
+        for (j,g) in enumerate(range_quota_gen)
+            for t in 1:length(period)
+                variable_results = read_realized_variables(
+                    get_problem_results(results_df[[l g]]["DA"], "UC"); names=[:P__ThermalStandard]
+                )
+                generator_data = getindex.(Ref(variable_results), [:P__ThermalStandard])
+                virtual_gen = generator_data[1][!, generator_name][[period[t]]][1]
+                for k in (keys(lmps_df[collect(keys(lmps_df))[1]]))
+                    prices_hour = lmps_df[[l g]][k][
+                        aux_period[t] .<= lmps_df[[l g]][k].DateTime .< aux_period[t] + Hour(1),
+                        :,
+                    ]
+                    prices_hour[!, "DateTime"] .= lmps_df[first(keys(lmps_df))]["DA"][
+                        !, "DateTime"
+                    ][t]
+                    price[k] = combine(
+                        groupby(prices_hour, :DateTime),
+                        names(prices_hour, Not(:DateTime)) .=> sum;
+                        renamecols=false,
+                    )
+                end
+                revenue_load = ((price["RT"][!,bus_load]-price["DA"][!,bus_load]) * ts_values[t] * range_quota_load[i])[1]
+                revenue_gen = ((price["DA"][!,bus_gen]-price["RT"][!,bus_gen]) * virtual_gen)[1] 
+                data[i,j,t] = revenue_load + revenue_gen
+            end
+        end
+    end
+    data_sum = sum(data[:,:,t] for t =1:length(period)) 
+    data_norm = data_sum
+    gr()
+    data_p = data_norm 
+    h=heatmap(range_quota_gen.*100,
+    range_quota_load.*100, data_p,
+    c=cgrad([:blue, :white,:red, :yellow]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC bid (MW/h)",
+    title="Virtual Revenue (\$)")
+    
+    return plot(h)
+end
+
+"""
+    heat_map_coal_generation(
+        system::System,
+        results_df::Dict{Any,Any},
+        range_quota_load::Vector{Float64},
+        range_quota_gen::Vector{Float64},
+        initial_time::Date,
+        period::Vector{Int64}=[1],
+        generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+    )
+
+Function to plot the coal generation heat map for the the mix of virtual INC and DEC bids.
+"""
+function heat_map_coal_generation(
+    system::System,
+    results_df::Dict{Any,Any},
+    range_quota_load::Vector{Float64},
+    range_quota_gen::Vector{Float64},
+    initial_time::Date,
+    period::Vector{Int64}=[1],
+    generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
+)
+    data=zeros(length(range_quota_load),length(range_quota_gen), length(period))
+    start_time = DateTime(initial_time)
+    aux_period = []
+
+    for t in period
+        aux_period = vcat(aux_period, start_time + Hour(t - 1))
+    end
+
+    for (z,t) in enumerate(aux_period)
+        for (x,l) in enumerate(range_quota_load)
+            for (y,g) in enumerate(range_quota_gen)
+                system_results = get_problem_results(results_df[[l g]]["RT"], "RT")
+                # get mapping from busname to fuel type
+                fuel_type_dict = fuel_type_mapping(system)
+
+                # get the output data for given fuel types
+                variable_results = read_realized_variables(system_results; names=generator_fields)
+                generator_data = getindex.(Ref(variable_results), generator_fields)
+                for i in 1:length(generator_data)
+                    generation = generator_data[i][t .<= generator_data[i].DateTime .< t + Hour(1), :]
+                    generation[!, "DateTime"] .= t
+                    generator_data[i] = combine(
+                        groupby(generation, :DateTime),
+                        names(generation, Not(:DateTime)) .=> sum;
+                        renamecols=false,
+                    )
+                    col = size(generator_data[i])[2]
+                    for j in 2:col
+                        generator_data[i][1, j] =
+                            generator_data[i][1, j] / length(generation[!, "DateTime"])
+                    end
+                end
+                if length(generator_data) > 1
+                    generator_data = innerjoin(generator_data...; on=:DateTime)
+                else
+                    generator_data = first(generator_data)
+                end
+        
+                # stack the data and aggregate by fuel type
+                stacked_data = stack(generator_data; variable_name="gen_name", value_name="output")
+                bus_map = bus_mapping(system)
+                stacked_data.bus_name = [bus_map[gen] for gen in stacked_data.gen_name]
+        
+                fuel_names = unique(keys(fuel_type_dict))
+                for (i, key) in enumerate(fuel_names)
+                    if occursin("HYDRO", fuel_names[i]) == true
+                        fuel_type_dict[key] = "HYDRO"
+                    elseif occursin("WIND", fuel_names[i]) == true
+                        fuel_type_dict[key] = "WIND"
+                    elseif occursin("PV", fuel_names[i]) == true ||
+                        occursin("CSP", fuel_names[i]) == true
+                        fuel_type_dict[key] = "SOLAR"
+                    end
+                end
+        
+                #= select rows for the given bus names, default to all buses.
+                if !isempty(bus_names)
+                    bus_names = String.(bus_names)
+                    @assert all(bus_names .∈ [stacked_data.bus_name])
+                    filter!(:bus_name => in(bus_names), stacked_data)
+                end
+                =#
+        
+                stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
+        
+                aggregated_data = combine(
+                    groupby(stacked_data, [:DateTime, :fuel_type]), :output => sum => :output
+                )
+        
+                # convert the output units into MWh.
+                aggregated_data.output = aggregated_data.output .* get_base_power(system)
+        
+                # unstack aggregated data and make area plot 
+                global unstacked_data = unstack(aggregated_data, :fuel_type, :output)
+                #=
+                if i==1 && j==1
+                    global data_frame = unstacked_data
+                else
+                    global data_frame = append!(data_frame, unstacked_data)
+                end
+                =#
+                data[x,y,z]=unstacked_data[!,"COAL"][1]
+            end
+        end
+    end
+    data_sum = sum(data[:,:,t] for t =1:length(period)) 
+    data_norm = data_sum./data_sum[1,1]
+    gr()
+    data_p = data_norm 
+    h=heatmap(range_quota_gen.*100,
+    range_quota_load.*100, data_p,
+    c=cgrad([:blue, :white,:red, :yellow]),
+    xlabel="INC Offer (MW/h)", ylabel="DEC bid (MW/h)",
+    title="Coal Emission (%)")
+    
+    return plot(h)
 end
