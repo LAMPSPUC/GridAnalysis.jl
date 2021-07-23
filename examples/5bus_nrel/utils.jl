@@ -108,7 +108,7 @@ function prep_systems_UCED(
 end
 
 """
-    plot_prices_RT_hour(prices, ylim::Tuple)
+    plot_prices_RT_hour(prices)
 
 Plot the RT prices with all simulator forecast
 """
@@ -152,7 +152,7 @@ function plot_prices_RT_hour(prices)
 end
 
 """
-    plot_prices_hour(prices, ylim::Tuple)
+    plot_DA_RT(prices)
 
 Plot both ED and RT in the same plot
 """
@@ -230,7 +230,7 @@ end
         path::String
     )
 
-Run a set of simulations to 5bus_nrel with descripted sistems as in 'df'
+Run a set of simulations to 5bus_nrel with descripted sistems as in `df`
 """
 #TODO: add changes to minimal_generation and ramp
 function run_set_of_simulations(df::DataFrame, 
@@ -359,7 +359,7 @@ end
         path::String,
     )
 
-Load a set of simulations of 5bus_nrel with descripted sistems in 'lines' from 'df'
+Load a set of simulations of 5bus_nrel with descripted sistems in `lines` from `df`
 """
 function load_set_of_simulations(
     df::DataFrame, 
@@ -484,7 +484,7 @@ end
         graphic::String,
     )
 
-Load and plot a set of simulations of 5bus_nrel with descripted sistems in 'lines' from 'df'
+Load and plot a set of simulations of 5bus_nrel with descripted sistems in `lines` from `df`
 """
 function load_plot_set_of_simulations(
     df::DataFrame, 

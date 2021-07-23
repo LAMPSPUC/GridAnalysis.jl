@@ -109,7 +109,7 @@ period = [19]
 bus_name = ["bus1", "bus2", "bus3", "bus4", "bus5"]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, true)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, true, "INC Offer")
 plot_revenue_curves(
     market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_rt, true
 )
@@ -141,11 +141,11 @@ plot_generation_stack_virtual(
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0], "SolarBusC", node, false
+    market_simulator, lmps_df, results_df, [0.0, 1.0], "SolarBusC", node, false, "INC Offer"
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node, false
+    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node, false, "INC Offer"
 )
 
 plot_revenue_curves_renewable_plus_virtual(
@@ -159,7 +159,9 @@ plot_revenue_curves_renewable_plus_virtual(
 )
 
 plot_generation_curves_renewable(
-    lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node
+    lmps_df, results_df, [0.0, 1.0, 2.0], "WindBusA", node, "INC Offer"
 )
 
-plot_thermal_commit_virtual(sys_uc, results_df; period=period, initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),)
+plot_thermal_commit_virtual(
+    sys_uc, results_df; period=period, initial_time, xtickfontsize=8, margin=8mm, size=(800, 600),
+)

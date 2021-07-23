@@ -6,7 +6,7 @@
         active_power_limits::NamedTuple{(:min, :max),Tuple{Float64,Float64}},
     )
 
-Set 'active_power_limits' to a generator whose name is 'name_generator' to any clearing market.
+Set `active_power_limits` to a generator whose name is `name_generator` to any clearing market.
 """
 
 function set_active_power_limits!(
@@ -26,9 +26,17 @@ function set_active_power_limits!(
 end
 
 """
-    pq_curves_virtuals(market_simulator::MarketSimulator, name_generator::AbstractString, range_quota::Vector{Int64}, initial_time::Date, steps::Int = 1, simulation_folder::String = pwd())
+    pq_curves_virtuals!(
+        market_simulator::MarketSimulator,
+        name_generator::AbstractString,
+        range_quota::Vector{Float64},
+        initial_time::Date,
+        steps::Int=1,
+        simulation_folder::String=pwd(),
+    )
 
-Creates a curve of generation and nodes prices for a vector 'range_quotas' that represents the max generation of a virtual 'generator' in a market clearing 'market_simulator'. 
+Creates a curve of generation and nodes prices for a vector `range_quotas` that represents the max 
+generation of a virtual `generator` in a market clearing `market_simulator`. 
 """
 function pq_curves_virtuals!(
     market_simulator::MarketSimulator,
@@ -78,7 +86,7 @@ end
         active_power_max::Float64,
     )
 
-Set 'active_power_max' to a load whose name is 'name_load' for any clearing market.
+Set `active_power_max` to a load whose name is `name_load` for any clearing market.
 """
 
 function set_active_power_max!(
@@ -107,8 +115,8 @@ end
         simulation_folder::String=pwd(),
     )
 
-Creates a curve of load and nodes prices for a vector 'range_quota' that represents 
-the max load of a virtual 'load' in a market clearing 'market_simulator'. 
+Creates a curve of load and nodes prices for a vector `range_quota` that represents 
+the max load of a virtual `load` in a market clearing `market_simulator`. 
 """
 function pq_curves_load_virtuals!(
     market_simulator::MarketSimulator,

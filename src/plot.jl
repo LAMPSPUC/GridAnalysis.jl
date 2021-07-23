@@ -73,6 +73,7 @@ and `generator_fields` control which buses, and generator types we want to inclu
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Generation stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -153,6 +154,7 @@ that evaluate the prices on Real Time (RT), it is on \$/MW-15min.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
+    title --> "Prices over the hours"
 
     for i in Base.axes(plot_data, 2)
         @series begin
@@ -170,7 +172,8 @@ end
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
-1 is ON, 0 is OFF.
+It stacks the data so that it is possible to know how many generators are ON in each hour.
+It groups by the generators.
 """
 @userplot plot_thermal_commit_generator_stack
 @recipe function f(p::plot_thermal_commit_generator_stack; bus_names::AbstractArray=[])
@@ -199,7 +202,7 @@ The `results` should be from the unit commitment problem.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    title --> "Thermal Standard Commit over the hours"
+    title --> "Thermal Standard Commit stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -220,7 +223,8 @@ end
 
 Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
 The `results` should be from the unit commitment problem.
-1 is ON, 0 is OFF.
+It stacks the data so that it is possible to know how many generators are ON in each hour.
+It groups by the fuel type.
 """
 @userplot plot_thermal_commit_type_stack
 @recipe function f(p::plot_thermal_commit_type_stack; bus_names::AbstractArray=[])
@@ -268,7 +272,7 @@ The `results` should be from the unit commitment problem.
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    title --> "Thermal Standard Commit over the hours"
+    title --> "Thermal Standard Commit stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
@@ -514,9 +518,11 @@ end
         system::System,
         results::SimulationProblemResults;
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-        period::Int=1)
+        period::Int=1,
+        initial_time::Date,
+    )
 
-Plot the generation mix during the time 'period' for the range of virtual bids in 'results'. 
+Plot the generation mix during the time `period` for the range of virtual bids in `results`. 
 """
 @userplot plot_generation_stack_virtual
 @recipe function f(
@@ -621,11 +627,12 @@ Plot the generation mix during the time 'period' for the range of virtual bids i
 
     label --> reduce(hcat, names(plot_data))
     yguide --> "Output (MWh)"
-    xguide --> "Bid offers (MW)"
+    xguide --> "Quantity (MW)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 0
     color_palette --> palette
+    title --> "Virtual Generation stacked over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
