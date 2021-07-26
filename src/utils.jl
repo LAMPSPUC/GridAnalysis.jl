@@ -2016,7 +2016,7 @@ function heat_map_coal_generation(
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Coal Emission (%)")
+    title="Coal Generation (%)")
     data_p = data_norm.*sum_deficit
     for i=1:size(data_p)[1]
         for j=1:size(data_p)[2]
@@ -2029,7 +2029,7 @@ function heat_map_coal_generation(
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Coal Emission without Energy Spillage/Fast-Starters")
+    title="")
     width=700
     height=400
     plt = plot(h["Coal"],h["Coal_Def"],layout=grid(2, 1),size = (width, height))    
