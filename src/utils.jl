@@ -1407,6 +1407,7 @@ function plot_revenue_curves_renewable_plus_virtual(
         return plot(
             plt...;
             layout=(3, 1),
+            xlabel="Hours",
             ylabel="Revenue (\$)",
             ylims=(min_element - 1, max_element * 1.1 + 1),
         )
@@ -1414,6 +1415,7 @@ function plot_revenue_curves_renewable_plus_virtual(
         return plot(
             plt...;
             layout=(3, 1),
+            xlabel="Hours",
             ylabel="Revenue (\$)",
         )
     end
@@ -2027,7 +2029,7 @@ function heat_map_coal_generation(
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Coal Emission without deficit")
+    title="Coal Emission without Energy Spillage/Fast-Starters")
     width=700
     height=400
     plt = plot(h["Coal"],h["Coal_Def"],layout=grid(2, 1),size = (width, height))    
@@ -2114,21 +2116,21 @@ function heat_map_deficit(
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:yellow, :red, :white, :blue]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Deficit")
+    title="Need for Energy Spillage/Fast-Starters")
 
     data_p = sum_deficit_up
     h["up"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Deficit up")
+    title="Need for Fast-Starters")
 
     data_p = sum_deficit_down
     h["down"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
     c=cgrad([:blue, :white,:red, :yellow]),
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Deficit down")
+    title="Need for Energy Spillage")
     width=600
     height=600
     plt = plot(h["sinal"],h["up"],h["down"],layout=grid(3, 1),size = (width, height))

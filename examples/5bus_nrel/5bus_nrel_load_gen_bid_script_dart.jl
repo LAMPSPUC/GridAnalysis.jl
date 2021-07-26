@@ -158,6 +158,7 @@ plt,h=heat_map_revenue_curves_mix(
 rt_results = get_problem_results(results_df[[4.0 4.0]]["RT"],"RT")
 uc_results = get_problem_results(results_df[[4.0 4.0]]["DA"],"UC")
 plt=plot_generation_stack(sys_rt, rt_results; xtickfontsize=8, margin=8mm, size=(800, 600))
+plt=plot_generation_stack(sys_uc, uc_results; xtickfontsize=8, margin=8mm, size=(800, 600))
 plt=plot_thermal_commit_generator_stack(sys_uc, uc_results)
 
-savefig(plt,"C:/Users/Daniele/Desktop/revenue-solar.png")
+savefig(plt,"C:/Users/Daniele/Desktop/uc_generation.png")
