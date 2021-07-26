@@ -707,6 +707,7 @@ function plot_sum_revenue_curves(
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
     bus_name = get_name(get_bus(gen))
+    system = market_simulator.system_uc
 
     index = []
     aux_period = []
