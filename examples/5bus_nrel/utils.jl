@@ -232,7 +232,6 @@ end
 
 Run a set of simulations to 5bus_nrel with descripted sistems as in 'df'
 """
-#TODO: add changes to minimal_generation and ramp
 function run_set_of_simulations(df::DataFrame, 
     data_dir::String, 
     example_dir::String, 
@@ -339,6 +338,148 @@ function run_set_of_simulations(df::DataFrame,
 
             lmps_df, results_df = pq_curves_virtuals!(
                 market_simulator, name_generator, range_quota, initial_time, steps, simulation_folder
+            )
+
+        end
+    end
+end
+
+"""
+    run_set_of_simulations_mix(
+        df::DataFrame, 
+        data_dir::String, 
+        example_dir::String, 
+        solver_uc, 
+        solver_ed, 
+        solver_rt, 
+        range_quota_load::Vector{Float64}, 
+        range_quota_gen::Vector{Float64}, 
+        initial_time::Date, 
+        initial_bidding_time::DateTime,
+        path::String
+    )
+
+Run a set of simulations to 5bus_nrel with descripted sistems as in 'df'
+"""
+function run_set_of_simulations_mix(df::DataFrame, 
+    data_dir::String, 
+    example_dir::String, 
+    solver_uc, 
+    solver_ed, 
+    solver_rt, 
+    range_quota_load::Vector{Float64}, 
+    range_quota_gen::Vector{Float64}, 
+    initial_time::Date, 
+    initial_bidding_time::DateTime,
+    path::String
+)
+    for l=1:size(df)[1]
+
+        directory_name= df.directory_name[l]
+
+        if isdir(joinpath(example_dir, path, directory_name))==false
+
+            # call our data preparation to build base system
+            # the case was modified to not have hydros nor transformers
+            sys_rt = build_5_bus_matpower_RT(data_dir;)
+
+            base_da_system = build_5_bus_matpower_DA(
+                data_dir;
+                # using a modified (mod) file that reduced load for feasibility in DC-OPF
+                forecasts_pointers_file=joinpath(
+                    data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
+                ),
+                add_reserves=df.Reserve[l],
+            )
+
+            generator_metadata = Dict()
+            generator_metadata["RT"] = [gen for gen in get_components(Generator, sys_rt)]
+            generator_metadata["DA"] = [gen for gen in get_components(Generator, base_da_system)]
+
+            for i in keys(generator_metadata)
+                #change minimal generation if it is false
+                if df.Minimal_generation[l][i]==false
+                    for generator in generator_metadata[i]
+                        try
+                            active_power_limits = (min=0.0, max=generator.active_power_limits[:max])              
+                            PowerSystems.set_active_power_limits!(generator, active_power_limits)
+                        catch
+                        end
+                    end
+                end
+                #change ramp if it is false
+                if df.Ramp[l][i]==false
+                    for generator in generator_metadata[i]
+                        try
+                            ramp_limits = (up=0.0, down=0.0)                
+                            PowerSystems.set_ramp_limits!(generator, ramp_limits) 
+                        catch
+                        end
+                    end
+                end
+            end
+
+            # create and set variable time-series for the load
+            ts_array = create_demand_series(;
+                initial_bidding_time=initial_bidding_time,
+                bidding_periods=df.bidding_period[l],
+                system=base_da_system,
+                demands=ones(length(df.bidding_period[l])),
+            )
+
+            # Add single load at a defined bus
+            node_load = df.Load_Bus[l] # define bus
+            load = add_load!(base_da_system, node_load, 1.0)
+
+            add_time_series!(base_da_system, load, ts_array)
+
+            # Add single generator at a defined bus
+            gen = add_generator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+
+            # create and set variable cost time-series for the generator
+            ts_array = create_generator_bids(;
+                initial_bidding_time=initial_bidding_time,
+                bidding_periods=df.bidding_period[l],
+                system=base_da_system,
+                costs=zeros(length(df.bidding_period[l])),
+            )
+            set_variable_cost!(base_da_system, gen, ts_array)
+
+            # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
+            sys_uc, sys_ed = prep_systems_UCED(base_da_system)
+
+            # generic market formulation templates with defined network formulation
+            # CopperPlate-OPF: network=CopperPlatePowerModel
+            # DC-OPF: network=DCPPowerModel
+            # NFA-OPF (only line limit constraints): network=NFAPowerModel
+            # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
+            template_uc = template_unit_commitment(; network=df.Network[l]["DA"])
+            template_rt = template_economic_dispatch(; network=df.Network[l]["RT"])
+            template_ed = template_economic_dispatch(; network=df.Network[l]["DA"])
+
+            # build a market clearing simulator
+            market_simulator = UCEDRT(;
+                system_uc=sys_uc,
+                system_rt=sys_rt,
+                system_ed=sys_ed,
+                template_uc=template_uc,
+                template_rt=template_rt,
+                template_ed=template_ed,
+                solver_uc=solver_uc,
+                solver_rt=solver_rt,
+                solver_ed=solver_ed,
+            )
+
+            #Calculates the dispatch result for a bid curve
+            name_load = get_name(load);
+            name_gen = get_name(gen);
+            steps = 1;
+
+            mkdir(joinpath(example_dir, path, directory_name))
+            simulation_folder = joinpath(example_dir, path, directory_name)
+
+            lmps_df, results_df = pq_curves_load_gen_virtuals!(
+                market_simulator, name_load, range_quota_load, initial_time, name_gen, range_quota_gen, steps, simulation_folder
             )
 
         end
@@ -468,7 +609,7 @@ function load_set_of_simulations(
 end
 
 """
-    load_set_of_simulations(
+    load_plot_set_of_simulations(
         df::DataFrame, 
         data_dir::String, 
         example_dir::String, 
@@ -602,5 +743,168 @@ function load_plot_set_of_simulations(
         
     end
     return plt
+end
+
+"""
+    load_plot_set_of_simulations_mix(
+        df::DataFrame, 
+        data_dir::String, 
+        example_dir::String, 
+        solver_uc, 
+        solver_ed, 
+        solver_rt, 
+        range_quota_load::Vector{Float64},
+        range_quota_gen::Vector{Float64},  
+        initial_time::Date,
+        lines::Vector{Int64},
+        initial_bidding_time::DateTime,
+        path::String,
+        graphic::String,
+    )
+
+Load and plot a set of simulations of 5bus_nrel with descripted sistems in 'lines' from 'df'
+"""
+function load_plot_set_of_simulations_mix(
+    df::DataFrame, 
+    data_dir::String, 
+    example_dir::String, 
+    solver_uc, 
+    solver_ed, 
+    solver_rt, 
+    range_quota_load::Vector{Float64}, 
+    range_quota_gen::Vector{Float64},
+    initial_time::Date,
+    lines::Vector{Int64},
+    initial_bidding_time::DateTime,
+    path::String,
+)
+    global plt = Dict()
+    global h = Dict()
+   
+    for l in lines
+
+        # call our data preparation to build base system
+        # the case was modified to not have hydros nor transformers
+        sys_rt = build_5_bus_matpower_RT(data_dir;)
+
+        base_da_system = build_5_bus_matpower_DA(
+            data_dir;
+            # using a modified (mod) file that reduced load for feasibility in DC-OPF
+            forecasts_pointers_file=joinpath(
+                data_dir, "forecasts", "timeseries_pointers_da_7day_mod.json"
+            ),
+            add_reserves=df.Reserve[l],
+        )
+
+        # create and set variable time-series for the load
+        ts_array = create_demand_series(;
+            initial_bidding_time=initial_bidding_time,
+            bidding_periods=df.bidding_period[l],
+            system=base_da_system,
+            demands=ones(length(df.bidding_period[l])),
+        )
+
+        # Add single load at a defined bus
+        node_load = df.Load_Bus[l] # define bus
+        load = add_load!(base_da_system, node_load, 1.0)
+
+        add_time_series!(base_da_system, load, ts_array)
+
+        # Add single generator at a defined bus
+        gen = add_generator!(base_da_system, df.Offer_Bus[l], (min=0.0, max=0.0))
+
+        # create and set variable cost time-series for the generator
+        ts_array = create_generator_bids(;
+            initial_bidding_time=initial_bidding_time,
+            bidding_periods=df.bidding_period[l],
+            system=base_da_system,
+            costs=zeros(length(df.bidding_period[l])),
+        )
+        set_variable_cost!(base_da_system, gen, ts_array)
+        # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
+        sys_uc, sys_ed = prep_systems_UCED(base_da_system)
+
+        # generic market formulation templates with defined network formulation
+        # CopperPlate-OPF: network=CopperPlatePowerModel
+        # DC-OPF: network=DCPPowerModel
+        # NFA-OPF (only line limit constraints): network=NFAPowerModel
+        # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
+        template_uc = template_unit_commitment(; network=df.Network[l]["DA"])
+        template_rt = template_economic_dispatch(; network=df.Network[l]["RT"])
+        template_ed = template_economic_dispatch(; network=df.Network[l]["DA"])
+
+        # build a market clearing simulator
+        market_simulator = UCEDRT(;
+            system_uc=sys_uc,
+            system_rt=sys_rt,
+            system_ed=sys_ed,
+            template_uc=template_uc,
+            template_rt=template_rt,
+            template_ed=template_ed,
+            solver_uc=solver_uc,
+            solver_rt=solver_rt,
+            solver_ed=solver_ed,
+        )
+
+        directory_name= df.directory_name[l]
+
+        simulation_folder = joinpath(example_dir, path, directory_name)
+
+        lmps_df, results_df = load_mix_pq_curves(market_simulator, range_quota_load, range_quota_gen, simulation_folder)
+
+        plt[l]=Dict()
+        h[l]=Dict()
+
+        plt[l]["deficit"],h[l]["deficit"],sum_deficit=heat_map_deficit(
+        sys_rt,
+        results_df,
+        range_quota_load,
+        range_quota_gen,
+        initial_time,
+        df.bidding_period[l],
+        )
+
+        plt[l]["coal"],h[l]["coal"]=heat_map_coal_generation(
+        sys_uc,
+        results_df,
+        range_quota_load,
+        range_quota_gen,
+        initial_time,
+        sum_deficit,
+        df.bidding_period[l],
+        [:P__ThermalStandard, :P__RenewableDispatch],
+        )
+
+        plt[l]["revenue - solar"],h[l]["revenue - solar"]=heat_map_revenue_curves_mix(
+            market_simulator,
+            lmps_df,
+            results_df,
+            df.bidding_period[l],
+            range_quota_load,
+            range_quota_gen,
+            initial_time,
+            load,
+            get_name(gen),
+            "SolarBusC",
+            sys_uc,
+        )
+
+        plt[l]["revenue - wind"],h[l]["revenue - wind"]=heat_map_revenue_curves_mix(
+            market_simulator,
+            lmps_df,
+            results_df,
+            df.bidding_period[l],
+            range_quota_load,
+            range_quota_gen,
+            initial_time,
+            load,
+            get_name(gen),
+            "WindBusA",
+            sys_uc,
+        )
+        
+        
+    end
+    return plt,h
 end
 

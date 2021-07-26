@@ -130,7 +130,7 @@ plt,h,sum_deficit=heat_map_deficit(
     bidding_period,
 )
 
-h,plt=heat_map_coal_generation(
+plt,h=heat_map_coal_generation(
     sys_uc,
     results_df,
     range_quota,
@@ -141,7 +141,7 @@ h,plt=heat_map_coal_generation(
     [:P__ThermalStandard, :P__RenewableDispatch],
 )
 
-h,plt=heat_map_revenue_curves_mix(
+plt,h=heat_map_revenue_curves_mix(
     market_simulator,
     lmps_df,
     results_df,
@@ -154,9 +154,6 @@ h,plt=heat_map_revenue_curves_mix(
     "SolarBusC",
     sys_uc,
 )
-
-
-
 
 rt_results = get_problem_results(results_df[[4.0 4.0]]["RT"],"RT")
 uc_results = get_problem_results(results_df[[4.0 4.0]]["DA"],"UC")
