@@ -127,7 +127,7 @@ period = [16]
 bus_name = [get_name(i) for i in get_components(Bus,sys_rt)]
 
 # Plots
-plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, false)
+plot_price_curves(lmps_df, period, bus_name, node, initial_time, sys_rt, false, "INC Offer")
 plot_revenue_curves(
     market_simulator, lmps_df, results_df, period, generator_name, initial_time, sys_rt, false
 )
@@ -159,11 +159,11 @@ plot_generation_stack_virtual(
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0], "101_PV_1", node, false
+    market_simulator, lmps_df, results_df, [0.0, 1.0], "101_PV_1", node, false, "INC Offer"
 )
 
 plot_revenue_curves_renewable(
-    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "122_WIND_1", node, false
+    market_simulator, lmps_df, results_df, [0.0, 1.0, 2.0], "122_WIND_1", node, false, "INC Offer"
 )
 
 plot_revenue_curves_renewable_plus_virtual(
@@ -177,5 +177,5 @@ plot_revenue_curves_renewable_plus_virtual(
 )
 
 plot_generation_curves_renewable(
-    lmps_df, results_df, [0.0, 1.0, 2.0], "122_WIND_1", node
+    lmps_df, results_df, [0.0, 1.0, 2.0], "122_WIND_1", node, "INC Offer"
 )
