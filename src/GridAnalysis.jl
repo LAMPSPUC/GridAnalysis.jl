@@ -23,6 +23,9 @@ export fuel_type_mapping
 export plot_generation_curves
 export plot_generation_curves_renewable
 export get_time_series_params
+export heat_map_coal_generation
+export heat_map_deficit
+export heat_map_revenue_curves_mix
 export plot_generation_stack
 export plot_demand_stack
 export plot_net_demand_stack
@@ -37,8 +40,10 @@ export plot_sum_revenue_curves
 export plot_thermal_commit_generator_stack
 export plot_thermal_commit_type_stack
 export plot_thermal_commit_virtual
+export load_mix_pq_curves
 export load_pq_curves
 export pq_curves_virtuals!
+export pq_curves_load_gen_virtuals!
 export pq_curves_load_virtuals!
 export run_multiday_simulation
 export set_active_power_limits
