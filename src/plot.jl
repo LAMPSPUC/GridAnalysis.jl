@@ -531,6 +531,7 @@ Plot the generation mix during the time `period` for the range of virtual bids i
     type::AbstractString,
     period::Int=1,
     initial_time::Date,
+    bus_names::AbstractArray=[]
 )
     system, results_df, = p.args
     results_df = sort(results_df)
@@ -588,13 +589,13 @@ Plot the generation mix during the time `period` for the range of virtual bids i
             end
         end
 
-        #= select rows for the given bus names, default to all buses.
+        # select rows for the given bus names, default to all buses.
         if !isempty(bus_names)
             bus_names = String.(bus_names)
-            @assert all(bus_names .∈ [stacked_data.bus_name])
+            #@assert all(bus_names .∈ [stacked_data.bus_name])
+            @assert issubset(bus_names, stacked_data.bus_name)
             filter!(:bus_name => in(bus_names), stacked_data)
         end
-        =#
 
         stacked_data.fuel_type = get.(Ref(fuel_type_dict), stacked_data.gen_name, missing)
 
@@ -614,7 +615,7 @@ Plot the generation mix during the time `period` for the range of virtual bids i
         end
     end
 
-    if type == "ED" || type == "DA"
+    if (type == "ED" || type == "DA") && "OTHER" in names(data_frame)
         aux = data_frame[!, "OTHER"]
         global data_frame = select(data_frame, Not(:OTHER))
         global data_frame[!, "OTHER"] = aux
@@ -662,6 +663,7 @@ The `results` should be from the unit commitment problem.
     p::plot_thermal_commit_virtual; 
     period::Int=1,
     initial_time::Date,
+    bus_names::AbstractArray=[]
 )
 
     system, results_df, = p.args
@@ -705,8 +707,9 @@ The `results` should be from the unit commitment problem.
     NG = vec(sum(NG, dims = 2))
     nuclear = vec(sum(nuclear, dims = 2))
     plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
+    =#
 
-    #= select rows for the given bus names, default to all buses.
+    # select rows for the given bus names, default to all buses.
     if !isempty(bus_names)
         generator_names = names(plot_data)
         bus_map = bus_mapping(system)
@@ -715,8 +718,6 @@ The `results` should be from the unit commitment problem.
         generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
         select!(plot_data, generator_names)
     end
-    =#
-    =#
 
     times = collect(keys(results_df)) * get_base_power(system)
 
