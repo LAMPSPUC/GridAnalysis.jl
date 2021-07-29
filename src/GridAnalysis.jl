@@ -20,6 +20,7 @@ export duals_constraint_names
 export evaluate_prices
 export evaluate_prices_UCEDRT
 export fuel_type_mapping
+#export get_demand
 export plot_generation_curves
 export plot_generation_curves_renewable
 export get_time_series_params

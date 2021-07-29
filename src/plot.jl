@@ -3,7 +3,7 @@
         system::System,
         results::SimulationProblemResults;
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-        bus_names::AbstractArray=[]
+        bus_names::AbstractArray=[],
     )
 
 Plot the generation mix over the time period covered by the `results`. The `bus_names`
@@ -520,6 +520,7 @@ end
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
         period::Int=1,
         initial_time::Date,
+        #gen_max::Float64,
     )
 
 Plot the generation mix during the time `period` for the range of virtual bids in `results`. 
@@ -531,7 +532,8 @@ Plot the generation mix during the time `period` for the range of virtual bids i
     type::AbstractString,
     period::Int=1,
     initial_time::Date,
-    bus_names::AbstractArray=[]
+    bus_names::AbstractArray=[],
+    #gen_max::Float64=[],
 )
     system, results_df, = p.args
     results_df = sort(results_df)
@@ -628,6 +630,9 @@ Plot the generation mix during the time `period` for the range of virtual bids i
 
     label --> reduce(hcat, names(plot_data))
     yguide --> "Output (MWh)"
+    #if gen_max != []
+    #    ylim --> (0, gen_max)
+    #end
     xguide --> "Quantity (MW)"
     legend --> :outertopright
     seriestype --> :line
@@ -818,5 +823,43 @@ end
         end
     end
 
+end
+=#
+#=
+"""
+
+
+
+"""
+function get_demand(
+    system=sys_uc,
+    start_time::Union{Nothing,Dates.DateTime}=nothing,
+)
+
+    # Getting the time series of the Demand
+    loads = collect(get_components(PowerLoad, system))
+
+    ts_array = Dict()
+    ts_names = get_time_series_names(Deterministic, loads[1])
+
+    for load in loads
+        if !haskey(ts_array, get_bus_name(load))
+            ts_array[get_bus_name(load)] = get_time_series_values(
+                Deterministic, load, ts_names[1]; start_time
+            )
+        else
+            ts_array[get_bus_name(load)] =
+                ts_array[get_bus_name(load)] .+
+                get_time_series_values(Deterministic, load, ts_names[1]; start_time)
+        end
+    end
+
+    ts_array = DataFrame(ts_array)
+
+    plot_data = ts_array .* get_base_power(system)
+
+    demand_serie = [sum(plot_data[!, c] for c in names(plot_data))]
+
+    return demand_serie
 end
 =#

@@ -512,6 +512,8 @@ function load_plot_set_of_simulations(
         simulation_folder = joinpath(example_dir, path, directory_name)
 
         lmps_df, results_df = load_pq_curves(market_simulator, range_quota, simulation_folder)
+
+        #all_demand = get_demand(sys_uc, initial_bidding_time)
         
         if graphic == "plot_price_curves" 
             for (y,t) in enumerate(period_analysed)
@@ -519,8 +521,9 @@ function load_plot_set_of_simulations(
             end
         elseif graphic == "plot_generation_stack_virtual"
             for (y,t) in enumerate(period_analysed)
-                global plt[x,y,1] = plot_generation_stack_virtual(sys_uc, results_df; type="DA", period=period_analysed[y], initial_time, bus_names, xtickfontsize=8, margin=8mm, size=(800, 600),)
-                global plt[x,y,2] = plot_generation_stack_virtual(sys_rt, results_df; type="RT", period=period_analysed[y], initial_time, bus_names, xtickfontsize=8, margin=8mm, size=(800, 600),)
+                #gen_max = all_demand[1][t]
+                global plt[x,y,1] = plot_generation_stack_virtual(sys_uc, results_df; type="DA", period=period_analysed[y], initial_time, bus_names, xtickfontsize=8, margin=8mm, size=(800, 600),)# gen_max,)
+                global plt[x,y,2] = plot_generation_stack_virtual(sys_rt, results_df; type="RT", period=period_analysed[y], initial_time, bus_names, xtickfontsize=8, margin=8mm, size=(800, 600),)# gen_max,)
             end
         elseif graphic == "plot_thermal_commit_virtual"
             for (y,t) in enumerate(period_analysed)
