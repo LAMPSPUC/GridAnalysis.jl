@@ -379,6 +379,14 @@ function run_set_of_simulations_mix(
             # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
             sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 
+            reserves = get_components(VariableReserve{ReserveUp}, sys_uc)
+            list_reserve = [i for i in get_components(VariableReserve{ReserveUp}, sys_uc)]
+            list_reserve_original = deepcopy(list_reserve)
+
+            for r in 1:length(reserves)
+                list_reserve[r].requirement = list_reserve_original[r].requirement*3.0
+            end
+
             # generic market formulation templates with defined network formulation
             # CopperPlate-OPF: network=CopperPlatePowerModel
             # DC-OPF: network=DCPPowerModel
@@ -749,6 +757,14 @@ function load_plot_set_of_simulations_mix(
         # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
         sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 
+        reserves = get_components(VariableReserve{ReserveUp}, sys_uc)
+        list_reserve = [i for i in get_components(VariableReserve{ReserveUp}, sys_uc)]
+        list_reserve_original = deepcopy(list_reserve)
+
+        for r in 1:length(reserves)
+            list_reserve[r].requirement = list_reserve_original[r].requirement*3.0
+        end
+
         # generic market formulation templates with defined network formulation
         # CopperPlate-OPF: network=CopperPlatePowerModel
         # DC-OPF: network=DCPPowerModel
@@ -800,7 +816,7 @@ function load_plot_set_of_simulations_mix(
         [:P__ThermalStandard, :P__RenewableDispatch],
         )
 
-        plt[l]["revenue - solar"],h[l]["revenue - solar"]=heat_map_revenue_curves_mix(
+        plt[l]["revenue"],h[l]["revenue"]=heat_map_revenue_curves_mix(
             market_simulator,
             lmps_df,
             results_df,
@@ -810,21 +826,7 @@ function load_plot_set_of_simulations_mix(
             initial_time,
             load,
             get_name(gen),
-            "212_CSP_1",
-            sys_uc,
-        )
-
-        plt[l]["revenue - wind"],h[l]["revenue - wind"]=heat_map_revenue_curves_mix(
-            market_simulator,
-            lmps_df,
-            results_df,
-            df.bidding_period[l],
-            range_quota_load,
-            range_quota_gen,
-            initial_time,
-            load,
-            get_name(gen),
-            "303_WIND_1",
+            df.renewable[l],
             sys_uc,
         )
     end
