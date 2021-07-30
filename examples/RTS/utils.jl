@@ -832,3 +832,117 @@ function load_plot_set_of_simulations_mix(
     end
     return plt,h
 end
+
+"""
+    load_plot_set_of_simulations_mix(
+        df::DataFrame, 
+        example_dir::String, 
+        rts_src_dir::String,
+        rts_siip_dir::String,
+        solver_uc, 
+        solver_ed, 
+        solver_rt, 
+        range_quota_load::Vector{Float64},
+        range_quota_gen::Vector{Float64},  
+        lines::Vector{Int64},
+        initial_bidding_time::DateTime,
+        path::String,
+        graphic::String,
+    )
+
+Load a set of simulations of RTS example with descripted sistems in `lines` from `df`
+"""
+function load_set_of_simulations_mix(
+    df::DataFrame, 
+    example_dir::String, 
+    rts_src_dir::String,
+    rts_siip_dir::String,
+    solver_uc, 
+    solver_ed, 
+    solver_rt, 
+    range_quota_load::Vector{Float64}, 
+    range_quota_gen::Vector{Float64},
+    lines::Vector{Int64},
+    initial_bidding_time::DateTime,
+    path::String,
+)
+
+    global lmps_df=Array{Any}(nothing, length(lines))
+    global results_df=Array{Any}(nothing, length(lines))
+    global sys_uc_d=Array{Any}(nothing, length(lines))
+    global sys_rt_d=Array{Any}(nothing, length(lines))
+  
+    for l in lines
+
+        # define systems with resolutions
+        sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
+
+        # create and set variable time-series for the load
+        ts_array = create_demand_series(;
+            initial_bidding_time=initial_bidding_time,
+            bidding_periods=df.bidding_period[l],
+            system=sys_DA,
+            demands=ones(length(df.bidding_period[l])),
+        )
+
+        # Add single load at a defined bus
+        node_load = df.Load_Bus[l] # define bus
+        load = add_load!(sys_DA, node_load, 1.0)
+
+        add_time_series!(sys_DA, load, ts_array)
+
+        # Add single generator at a defined bus
+        gen = add_generator!(sys_DA, df.Offer_Bus[l], (min=0.0, max=0.0))
+
+        # create and set variable cost time-series for the generator
+        ts_array = create_generator_bids(;
+            initial_bidding_time=initial_bidding_time,
+            bidding_periods=df.bidding_period[l],
+            system=sys_DA,
+            costs=zeros(length(df.bidding_period[l])),
+        )
+        set_variable_cost!(sys_DA, gen, ts_array)
+        # duplicate system and prepare times series for the time varying parameters (loads, renewables, ...)
+        sys_uc, sys_ed = prep_systems_UCED(sys_DA)
+        sys_uc_d[l] = sys_uc
+        sys_rt_d[l] = sys_rt
+
+        reserves = get_components(VariableReserve{ReserveUp}, sys_uc)
+        list_reserve = [i for i in get_components(VariableReserve{ReserveUp}, sys_uc)]
+        list_reserve_original = deepcopy(list_reserve)
+
+        for r in 1:length(reserves)
+            list_reserve[r].requirement = list_reserve_original[r].requirement*3.0
+        end
+
+        # generic market formulation templates with defined network formulation
+        # CopperPlate-OPF: network=CopperPlatePowerModel
+        # DC-OPF: network=DCPPowerModel
+        # NFA-OPF (only line limit constraints): network=NFAPowerModel
+        # DC-PTDF-OPF (what ISOs do): network=StandardPTDFModel
+        template_uc = template_unit_commitment(; network=df.Network[l]["DA"])
+        template_rt = template_economic_dispatch(; network=df.Network[l]["RT"])
+        template_ed = template_economic_dispatch(; network=df.Network[l]["DA"])
+
+        # build a market clearing simulator
+        market_simulator = UCEDRT(;
+            system_uc=sys_uc,
+            system_rt=sys_rt,
+            system_ed=sys_ed,
+            template_uc=template_uc,
+            template_rt=template_rt,
+            template_ed=template_ed,
+            solver_uc=solver_uc,
+            solver_rt=solver_rt,
+            solver_ed=solver_ed,
+        )
+
+        directory_name= df.directory_name[l]
+
+        simulation_folder = joinpath(example_dir, path, directory_name)
+
+        lmps_df[l], results_df[l] = load_mix_pq_curves(market_simulator, range_quota_load, range_quota_gen, simulation_folder)
+        
+    end
+    return lmps_df, results_df, sys_uc_d, sys_rt_d
+end
