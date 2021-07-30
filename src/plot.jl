@@ -924,11 +924,11 @@ The `start_time` controls in which day is going to be ploted for the Determinist
     plot_data = all_data .* get_base_power(system)
 
     label --> reduce(hcat, names(plot_data))
-    yguide --> "Net Demand (MWh)"
+    yguide --> "Generation (MWh)"
     legend --> :outertopright
     seriestype --> :line
     xrotation --> 45
-    title --> "Net Demand over the hours"
+    title --> "Generation over the hours"
 
     # now stack the matrix to get the cumulative values over all fuel types
     data = cumsum(Matrix(plot_data); dims=2)
