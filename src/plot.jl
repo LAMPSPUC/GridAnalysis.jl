@@ -438,7 +438,7 @@ The `start_time` controls in which day is going to be ploted for the Determinist
     ts_array = DataFrame(ts_array)
 
     # Getting the Renewable Data from the time series
-    renewables = collect(get_components(RenewableDispatch, system))
+    renewables = collect(get_components(RenewableGen, system))
 
     ts_renewable = Dict()
     if type == "SingleTimeSeries"
@@ -864,7 +864,7 @@ The `start_time` controls in which day is going to be ploted for the Determinist
     system, = p.args
 
     # Getting the Renewable Data from the time series
-    renewables = collect(get_components(RenewableDispatch, system))
+    renewables = collect(get_components(RenewableGen, system))
     loads = collect(get_components(PowerLoad, system))
 
     ts_renewable = Dict()
