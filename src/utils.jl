@@ -1901,7 +1901,7 @@ function heat_map_revenue_curves_mix(
     gr()
     for k in keys(data)
         data_sum = sum(data[k][:,:,t] for t =1:length(period)) 
-        data_norm = data_sum
+        data_norm = data_sum .- data_sum[1,1]
         data_p = data_norm 
         h[k]=heatmap(range_quota_gen.*get_base_power(system),
         range_quota_load.*get_base_power(system), data_p,
@@ -2037,7 +2037,7 @@ function heat_map_coal_generation(
     data_p = data_norm.*sum_deficit
     for i=1:size(data_p)[1]
         for j=1:size(data_p)[2]
-            if abs(data_p[i,j])==0
+            if abs(sum_deficit[i,j])==0
                 data_p[i,j]=2
             end
         end
