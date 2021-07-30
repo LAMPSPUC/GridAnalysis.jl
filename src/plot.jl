@@ -3,7 +3,7 @@
         system::System,
         results::SimulationProblemResults;
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
-        bus_names::AbstractArray=[]
+        bus_names::AbstractArray=[],
     )
 
 Plot the generation mix over the time period covered by the `results`. The `bus_names`
@@ -531,7 +531,7 @@ Plot the generation mix during the time `period` for the range of virtual bids i
     type::AbstractString,
     period::Int=1,
     initial_time::Date,
-    bus_names::AbstractArray=[]
+    bus_names::AbstractArray=[],
 )
     system, results_df, = p.args
     results_df = sort(results_df)
