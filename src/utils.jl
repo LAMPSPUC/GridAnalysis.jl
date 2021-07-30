@@ -715,6 +715,7 @@ end
         period::Vector{Int64},
         generator_name::String,
         initial_time::Date,
+        ylimit::Bool,
     )
 
 Function to plot the total revenue curve for the the virtual offer bids. 
@@ -728,6 +729,7 @@ function plot_sum_revenue_curves(
     period::Vector{Int64},
     generator_name::String,
     initial_time::Date,
+    ylimit::Bool,
 )
     lmps_df = sort(lmps_df)
     gen = get_component(ThermalStandard, market_simulator.system_uc, generator_name)
@@ -793,12 +795,21 @@ function plot_sum_revenue_curves(
         palette=palette,
     )
 
-    return plot!(;
-        title=" Total Revenue per Virtual INC Offer on " * bus_name,
-        ylabel="Revenue (\$)",
-        xlabel="Quantity (MWh)",
-        ylims=(min_element - 1, max_element * 1.1 + 1),
-    )
+    
+    if ylimit == true
+        return plot!(;
+            title=" Total Revenue per Virtual INC Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Quantity (MWh)",
+            ylims=(min_element - 1, max_element * 1.1 + 1),
+        )
+    else
+        return plot!(;
+            title=" Total Revenue per Virtual INC Offer on " * bus_name,
+            ylabel="Revenue (\$)",
+            xlabel="Quantity (MWh)",
+        )
+    end   
 end
 
 """
