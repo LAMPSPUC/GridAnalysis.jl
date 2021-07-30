@@ -435,7 +435,8 @@ function load_plot_set_of_simulations(
     path::String,
     graphic::String,
     bool::Bool,
-    plot_buses::Vector{Vector{Any}},
+    plot_buses::Vector{Vector{String}},
+    virtual_type::String="",
 )
 
     if graphic == "plot_price_curves" 
@@ -509,7 +510,7 @@ function load_plot_set_of_simulations(
         if graphic == "plot_price_curves" 
             for (y,t) in enumerate(period_analysed)
                 for (z,b) in enumerate(plot_buses)
-                    global plt[x,y,z] = plot_price_curves(lmps_df, period_analysed[y], unique(plot_buses[z]), df.Offer_Bus[l], initial_time, sys_uc, bool)
+                    global plt[x,y,z] = plot_price_curves(lmps_df, period_analysed[y], unique(plot_buses[z]), df.Offer_Bus[l], initial_time, sys_uc, bool, virtual_type)
             
                 end
             end
