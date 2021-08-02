@@ -564,7 +564,8 @@ end
         path::String,
         graphic::String,
         bool::Bool,
-        bus_names::AbstractArray=[],
+        plot_buses::Vector{Vector{String}}=[],
+        virtual_type::String="",,
     )
 
 Load and plot a set of simulations of RTS example with descripted sistems in `lines` from `df`
@@ -648,6 +649,8 @@ function load_plot_set_of_simulations(
             solver_rt=solver_rt,
             solver_ed=solver_ed,
         )
+
+        bus_names = plot_buses[1]
 
         directory_name = "Net_"*string(df.Network[l]["DA"])[1:4]*"_"*string(df.Network[l]["RT"])[1:4]* "__Ramp_"*string(df.Ramp[l]["DA"])*
         "_"*string(df.Ramp[l]["RT"])*"__Min_gen_"*string(df.Minimal_generation[l]["DA"])*"_"*string(df.Minimal_generation[l]["RT"])* "__Reserve_" * string(df.Reserve[l]) *
