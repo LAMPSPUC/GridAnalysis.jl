@@ -393,7 +393,7 @@ version = "2.59.0+4"
 deps = ["DataFrames", "Dates", "Logging", "Plots", "PowerSimulations", "PowerSystems", "RecipesBase", "TimeSeries"]
 path = "../../.."
 uuid = "d5f1b6c7-e3b5-43c8-80a6-68bc79cffae2"
-version = "0.1.2"
+version = "0.1.8"
 
 [[Grisu]]
 git-tree-sha1 = "53bb909d1151e57e2484c3d1b53e19552b887fb2"

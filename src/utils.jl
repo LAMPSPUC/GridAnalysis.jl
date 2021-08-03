@@ -1905,7 +1905,7 @@ function heat_map_revenue_curves_mix(
         data_p = data_norm 
         h[k]=heatmap(range_quota_gen.*get_base_power(system),
         range_quota_load.*get_base_power(system), data_p,
-        c=cgrad([:blue, :white,:red, :yellow]),
+        c=:RdBu,
         xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
         title= k*" Revenue (\$)")
     end
@@ -2023,7 +2023,7 @@ function heat_map_coal_generation(
             end
         end
     end
-  
+    
     data_sum = sum(data[:,:,t] for t =1:length(period)) 
     data_norm = data_sum./data_sum[1,1].-1
     h=Dict()
@@ -2031,7 +2031,7 @@ function heat_map_coal_generation(
     data_p = data_norm 
     h["Coal"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Coal Generation (%)")
     data_p = data_norm.*sum_deficit
@@ -2044,7 +2044,7 @@ function heat_map_coal_generation(
     end
     h["Coal_Def"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="")
     width=700
@@ -2131,21 +2131,21 @@ function heat_map_deficit(
     data_p = sum_deficit
     h["sinal"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:yellow, :red, :white, :blue]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Energy Spillage/Fast-Starters")
 
     data_p = sum_deficit_up
     h["up"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Fast-Starters")
 
     data_p = sum_deficit_down
     h["down"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Energy Spillage")
     width=600
