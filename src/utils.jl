@@ -1801,7 +1801,6 @@ end
 
     Function to plot the virtual revenue heat map for the mix of virtual INC and DEC bids.
 """
-
 function heat_map_revenue_curves_mix(
     market_simulator::UCEDRT,
     lmps_df::Dict{Any,Any},
@@ -1901,11 +1900,11 @@ function heat_map_revenue_curves_mix(
     gr()
     for k in keys(data)
         data_sum = sum(data[k][:,:,t] for t =1:length(period)) 
-        data_norm = data_sum.- data_sum[1,1]
+        data_norm = data_sum .- data_sum[1,1]
         data_p = data_norm 
         h[k]=heatmap(range_quota_gen.*get_base_power(system),
         range_quota_load.*get_base_power(system), data_p,
-        c=cgrad([:blue, :white,:red, :yellow]),
+        c=:RdBu,
         xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
         title= k*" Revenue (\$)")
     end
@@ -2023,30 +2022,32 @@ function heat_map_coal_generation(
             end
         end
     end
-  
+
     data_sum = sum(data[:,:,t] for t =1:length(period)) 
     data_norm = data_sum./data_sum[1,1].-1
     h=Dict()
     gr()
     data_p = data_norm 
+    data_plot_1 = data_p .* (-1) .* (100)
     h["Coal"]=heatmap(range_quota_gen.* get_base_power(system),
-    range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    range_quota_load.* get_base_power(system), data_plot_1,
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Coal Generation (%)")
-    data_p = data_norm.*sum_deficit
+    title="Decrease in Coal Generation (% no Virtual Bid/Offer)")
+
     for i=1:size(data_p)[1]
         for j=1:size(data_p)[2]
-            if abs(sum_deficit[i,j])==0
+            if abs(sum_deficit[i,j])==1
                 data_p[i,j]=2
             end
         end
     end
+    data_plot_2 = data_p .* (-1) .* (100)
     h["Coal_Def"]=heatmap(range_quota_gen.* get_base_power(system),
-    range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    range_quota_load.* get_base_power(system), data_plot_2,
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="")
+    title="Decrease in Coal Generation and Fast Starters/Energy Spillage\n    (% no Virtual Bid/Offer)")
     width=700
     height=400
     plt = plot(h["Coal"],h["Coal_Def"],layout=grid(2, 1),size = (width, height))    
@@ -2118,9 +2119,9 @@ function heat_map_deficit(
     sum_deficit=sum(sum(data_deficit[:,:,i,j] for i=1:length(aux_period)) for j=1:length(var))
     for i=1:length(range_quota_load), j=1:length(range_quota_gen)
         if abs(sum_deficit[i,j])<10E-3
-            sum_deficit[i,j]=1
-        else
             sum_deficit[i,j]=0
+        else
+            sum_deficit[i,j]=1
         end
     end
     sum_deficit_up=sum(data_deficit[:,:,i,1] for i=1:length(aux_period))
@@ -2131,21 +2132,21 @@ function heat_map_deficit(
     data_p = sum_deficit
     h["sinal"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:yellow, :red, :white, :blue]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Energy Spillage/Fast-Starters")
 
     data_p = sum_deficit_up
     h["up"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Fast-Starters")
 
     data_p = sum_deficit_down
     h["down"]=heatmap(range_quota_gen.* get_base_power(system),
     range_quota_load.* get_base_power(system), data_p,
-    c=cgrad([:blue, :white,:red, :yellow]),
+    c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
     title="Need for Energy Spillage")
     width=600
