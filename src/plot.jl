@@ -520,6 +520,7 @@ end
         generator_fields::AbstractArray=[:P__ThermalStandard, :P__RenewableDispatch],
         period::Int=1,
         initial_time::Date,
+        bus_names::AbstractArray=[],
     )
 
 Plot the generation mix during the time `period` for the range of virtual bids in `results`. 

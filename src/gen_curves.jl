@@ -8,7 +8,6 @@
 
 Set `active_power_limits` to a generator whose name is `name_generator` to any clearing market.
 """
-
 function set_active_power_limits!(
     market_simulator::MarketSimulator,
     name_generator::AbstractString,
@@ -88,7 +87,6 @@ end
 
 Set `active_power_max` to a load whose name is `name_load` for any clearing market.
 """
-
 function set_active_power_max!(
     market_simulator::MarketSimulator,
     name_load::AbstractString,
