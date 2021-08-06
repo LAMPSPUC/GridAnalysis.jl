@@ -2047,7 +2047,7 @@ function heat_map_coal_generation(
     range_quota_load.* get_base_power(system), data_plot_2,
     c=:RdBu,
     xlabel="INC Offer (MW/h)", ylabel="DEC Bid (MW/h)",
-    title="Decrease in Coal Generation and Fast Starters/Energy Spillage (% no Virtual Bid/Offer)")
+    title="Decrease in Coal Generation and Fast Starters/Energy Spillage\n    (% no Virtual Bid/Offer)")
     width=700
     height=400
     plt = plot(h["Coal"],h["Coal_Def"],layout=grid(2, 1),size = (width, height))    
