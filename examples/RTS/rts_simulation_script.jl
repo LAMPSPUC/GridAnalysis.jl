@@ -39,6 +39,11 @@ solver_ed = optimizer_with_attributes(Gurobi.Optimizer)
 sys_DA, sys_rt = get_rts_sys(rts_src_dir, rts_siip_dir;)
 sys_uc, sys_ed = prep_systems_UCED(sys_DA)
 
+bus_names_thermal = [get_name(get_bus(i)) for i in get_components(ThermalStandard,sys_rt)]
+bus_names_renewable = [get_name(get_bus(i)) for i in get_components(RenewableDispatch,sys_rt)]
+bus_names = vcat(bus_names_thermal, bus_names_renewable)
+bus_names = [sort(unique(bus_names))]
+
 # generic market formulation templates with defined network formulation
 # CopperPlate-OPF: network=CopperPlatePowerModel
 # DC-OPF: network=DCPPowerModel
@@ -188,6 +193,13 @@ plot_prices(
     xtickfontsize=8,
     size=(800, 600),
 )
+plot_prices(
+    market_simulator,
+    results;
+    bus_names=bus_names[1],
+    xtickfontsize=8,
+    size=(800, 600),
+)
 
 plot_thermal_commit_generator_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
 plot_thermal_commit_type_stack(sys_DA, uc_results; xtickfontsize=8, size=(800, 600))
@@ -303,7 +315,7 @@ plot_prices(market_simulator, results; xtickfontsize=8, size=(800, 600))
 plot_prices(
     market_simulator,
     results;
-    bus_names=["Calvin", "Beethoven", "Anna", "Cole", "Curie"],
+    bus_names=bus_names[1],
     xtickfontsize=8,
     size=(800, 600),
 )
@@ -349,7 +361,7 @@ plot_net_demand_stack(
     start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
 
-plot_prices_RT_hour(prices, sys_rt, (-10, 50))
+plot_prices_RT_hour(market_simulator, results, sys_rt, (-10, 50))
 
 # UCEDRT
 
@@ -500,5 +512,5 @@ plot_net_demand_stack(
     start_time=DateTime("2020-09-01"),
 ) # TO-DO: make it plot the whole day
 
-plot_prices_RT_hour(prices, sys_rt, (-10, 50))
-plot_DA_RT(prices, sys_rt, (-10, 50))
+plot_prices_RT_hour(market_simulator, results, sys_rt, (-10, 50))
+plot_DA_RT(market_simulator, results, sys_rt, (-10, 50))

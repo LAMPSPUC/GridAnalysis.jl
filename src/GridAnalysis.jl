@@ -26,11 +26,13 @@ export get_time_series_params
 export heat_map_coal_generation
 export heat_map_deficit
 export heat_map_revenue_curves_mix
+export plot_DA_RT
 export plot_generation_stack
 export plot_demand_stack
 export plot_net_demand_stack
 export plot_prices
 export plot_price_curves
+export plot_prices_RT_hour
 export plot_revenue_curves
 export plot_revenue_curves_load
 export plot_revenue_curves_renewable

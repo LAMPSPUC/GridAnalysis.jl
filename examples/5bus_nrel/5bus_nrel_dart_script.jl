@@ -159,7 +159,7 @@ plot_net_demand_stack(
     base_da_system; xtickfontsize=8, size=(800, 600), type="Deterministic"
 )
 
-plot_prices_RT_hour(prices)
+plot_prices_RT_hour(market_simulator, results, sys_rt, nothing)
 
 # RT with ED
 
@@ -286,5 +286,5 @@ plot_net_demand_stack(sys_uc; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_rt; xtickfontsize=8, size=(800, 600))
 plot_net_demand_stack(sys_uc; bus_names=["bus2", "bus3"], xtickfontsize=8, size=(800, 600))
 
-plot_prices_RT_hour(prices)
-plot_DA_RT(prices)
+plot_prices_RT_hour(market_simulator, results, sys_rt, nothing)
+plot_DA_RT(market_simulator, results, sys_rt, nothing)
