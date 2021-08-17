@@ -27,130 +27,6 @@ function prep_systems_UCED(
 end
 
 """
-    plot_prices_RT_hour(prices, system, ylim::Tuple)
-
-Plot the RT prices with all simulator forecast
-"""
-function plot_prices_RT_hour(prices, system, ylim::Tuple)
-    prices_keys = collect(keys(prices))
-    prices_rt_df = prices[prices_keys[1]]
-
-    values = select(prices_rt_df, Not(:DateTime))
-    n_prev, n_bus = size(values)
-
-    resolution_mili_seg = get_time_series_resolution(system)
-    resolution_seg = resolution_mili_seg/1000
-    resolution_min = resolution_seg/60
-    int_resolution = Int(resolution_min.value)
-    
-    n_prev_hour = Int(60 / int_resolution)
-    n_days = Int(n_prev / n_prev_hour)
-
-    names_bus = names(values)
-    prices_rt = zeros(n_days, n_bus)
-
-    i = 1
-    while i < n_days
-        for j in 1:(n_prev_hour):n_prev
-            prices_hour = prices_rt_df[
-                prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
-                    1
-                ),
-                :,
-            ]
-            prices_hour = select(prices_hour, Not(:DateTime))
-            prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
-            i = i + 1
-        end
-    end
-
-    times = prices_rt_df[1:n_prev_hour:n_prev, 1]
-
-    labels = permutedims(names_bus)
-
-    return plot(
-        prices_rt;
-        legend=:outertopright,
-        xlab="Hours",
-        ylab="Prices (\$/MWh)",
-        label=labels,
-        ylim=ylim,
-        xlim=(1,length(times)),
-    )
-end
-
-"""
-    plot_prices_hour(prices, system, ylim::Tuple)
-
-Plot Both ED and RT in the same plot
-"""
-function plot_DA_RT(prices, system, ylim::Tuple)
-    prices_keys = collect(keys(prices))
-    prices_rt_df = prices[prices_keys[1]]
-
-    values = select(prices_rt_df, Not(:DateTime))
-    n_prev, n_bus = size(values)
-
-    resolution_mili_seg = get_time_series_resolution(system)
-    resolution_seg = resolution_mili_seg/1000
-    resolution_min = resolution_seg/60
-    int_resolution = Int(resolution_min.value)
-    
-    n_prev_hour = Int(60 / int_resolution)
-    n_days = Int(n_prev / n_prev_hour)
-
-    names_bus = names(values)
-    prices_rt = zeros(n_days, n_bus)
-
-    i = 1
-    while i < n_days
-        for j in 1:(n_prev_hour):n_prev
-            prices_hour = prices_rt_df[
-                prices_rt_df[j, :DateTime] .<= prices_rt_df.DateTime .< prices_rt_df[j, :DateTime] + Hour(
-                    1
-                ),
-                :,
-            ]
-            prices_hour = select(prices_hour, Not(:DateTime))
-            prices_rt[i, :] = sum(Matrix(prices_hour); dims=1)
-            i = i + 1
-        end
-    end
-
-    times = prices_rt_df[1:n_prev_hour:n_prev, 1]
-
-    labels = permutedims(names_bus)
-
-    prices_ed_df = prices[prices_keys[2]]
-    values_ed = select(prices_ed_df, Not(:DateTime))
-    values_ed = Matrix(values_ed)
-
-    palette = ["RoyalBlue", "Aquamarine", "DeepPink", "Coral", "Green"]
-
-    plot(
-        prices_rt;
-        legend=:outertopright,
-        xlab="Hours",
-        ylab="Prices (\$/MWh)",
-        label=labels,
-        linestyle=:dash,
-        palette=palette,
-        ylim=ylim,
-        xlim=(1,length(times)),
-    )
-    return plot!(
-        values_ed;
-        legend=:outertopright,
-        xlab="Hours",
-        ylab="Prices (\$/MWh)",
-        label=labels,
-        palette=palette,
-        ylim=ylim,
-        xlim=(1,length(times)),
-    )
-end
-
-"""
     run_set_of_simulations(
         df::DataFrame, 
         rts_src_dir::String,
@@ -952,4 +828,74 @@ function load_set_of_simulations_mix(
         
     end
     return lmps_df, results_df, sys_uc_d, sys_rt_d
+end
+
+"""
+    plot_thermal_commit_type_stack(
+        system::System,
+        results::SimulationProblemResults;
+        bus_names::AbstractArray=[],
+    )
+
+Function to plot the Thermal Standard Commit variables over the time period covered by the `results`.
+The `results` should be from the unit commitment problem.
+It stacks the data so that it is possible to know how many generators are ON in each hour.
+It groups by the fuel type.
+"""
+@userplot plot_thermal_commit_type_stack
+@recipe function f(p::plot_thermal_commit_type_stack; bus_names::AbstractArray=[])
+    system, system_results, = p.args
+
+    # get the output data for all fuel types
+    variable_results = read_realized_variables(system_results)
+    thermal_commit_results = variable_results[:On__ThermalStandard]
+
+    plot_data = select(thermal_commit_results, Not(:DateTime))
+
+    names_plot_data = names(plot_data)
+    steam = zeros(24)
+    NG = zeros(24)
+    nuclear = zeros(24)
+    for i in 1:length(names_plot_data)
+        if occursin("STEAM", names_plot_data[i]) == true
+            steam = hcat(steam, plot_data[!,i])
+        elseif occursin("CT", names_plot_data[i]) == true || occursin("CC", names_plot_data[i]) == true
+            NG = hcat(NG, plot_data[!,i])
+        elseif occursin("NUCLEAR", names_plot_data[i]) == true
+            nuclear = hcat(nuclear, plot_data[!,i])
+        end
+    end
+
+    steam = vec(sum(steam, dims = 2))
+    NG = vec(sum(NG, dims = 2))
+    nuclear = vec(sum(nuclear, dims = 2))
+    plot_data = DataFrame(Coal = steam, Natural_Gas = NG, Nuclear = nuclear)
+    
+    times = thermal_commit_results[!, 1]
+
+    # select rows for the given bus names, default to all buses.
+    if !isempty(bus_names)
+        generator_names = names(plot_data)
+        bus_map = bus_mapping(system)
+        bus_names = String.(bus_names)
+        @assert issubset(bus_names, [bus_map[gen] for gen in generator_names])
+        generator_names = [gen for gen in generator_names if in(bus_map[gen], bus_names)]
+        select!(plot_data, generator_names)
+    end
+
+    label --> reduce(hcat, names(plot_data))
+    yguide --> "Commitment"
+    legend --> :outertopright
+    seriestype --> :line
+    xrotation --> 45
+    title --> "Thermal Standard Commit stacked over the hours"
+
+    # now stack the matrix to get the cumulative values over all fuel types
+    data = cumsum(Matrix(plot_data); dims=2)
+    for i in Base.axes(data, 2)
+        @series begin
+            fillrange := i > 1 ? data[:, i - 1] : 0
+            times, data[:, i]
+        end
+    end
 end
