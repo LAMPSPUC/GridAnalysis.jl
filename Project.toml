@@ -15,6 +15,7 @@ TimeSeries = "9e3dc215-6440-5c97-bce1-76c03772f85e"
 
 [compat]
 DataFrames = "1.1"
+Plots = "1"
 PowerSimulations = ">= 0.13"
 PowerSystems = ">= 1.0.0"
 RecipesBase = "1.1"
